@@ -12,3 +12,4 @@ python-ceilometerclient
 
 dirq
 python-dateutil
+netaddr
