@@ -38,3 +38,15 @@ Or, if you have virtualenvwrapper installed::
 
     $ mkvirtualenv caso
     $ pip install caso
+    
+On CentOS 6, you can use Software Collections to install Python 2.7 and then libffi-devel, which is also required::
+    
+    $ yum -y install centos-release-SCL
+    $ yum -y install python27
+    $ yum -y install libffi-devel
+    
+You can then install pip for that version of Python and use that to install caso::
+
+    $ scl enable python27
+    $ easy_install-2.7 pip
+    $ pip install caso
