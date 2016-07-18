@@ -90,10 +90,21 @@ class OpenStackExtractor(base.BaseExtractor):
             status = self.vm_status(server.status)
             image_id = None
             for image in images:
-                if image.id == server.image['id']:
-                    image_id = image.metadata.get("vmcatcher_event_ad_mpuri",
+# For some old severs, server.image is an empty string, perhaps image was deleted
+# so server.image["id"] causes exception if not checked
+                if isinstance(server.image, dict):
+                    if image.id == server.image['id']:
+                        image_id = image.metadata.get("vmcatcher_event_ad_mpuri",
                                                   None)
+                        break
+                else:
+                    image_id = ''
                     break
+
+#                if image.id == server.image['id']:
+#                    image_id = image.metadata.get("vmcatcher_event_ad_mpuri",
+#                                                  None)
+#                    break
 
             if image_id is None:
                 image_id = server.image['id']
