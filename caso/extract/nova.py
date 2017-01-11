@@ -34,6 +34,8 @@ CONF.import_opt("user", "caso.extract.base", "extractor")
 CONF.import_opt("password", "caso.extract.base", "extractor")
 CONF.import_opt("endpoint", "caso.extract.base", "extractor")
 CONF.import_opt("insecure", "caso.extract.base", "extractor")
+CONF.import_opt("user_domain_id", "caso.extract.base", "extractor")
+CONF.import_opt("project_domain_id", "caso.extract.base", "extractor")
 
 
 class OpenStackExtractor(base.BaseExtractor):
@@ -42,8 +44,8 @@ class OpenStackExtractor(base.BaseExtractor):
                                  username=CONF.extractor.user,
                                  password=CONF.extractor.password,
                                  project_name=tenant,
-				 user_domain_id='default',
-                    		 project_domain_id='default')
+				 user_domain_id=CONF.extractor.user_domain_id,
+                    		 project_domain_id=CONF.extractor.project_domain_id)
 	sess = session.Session(auth=auth)
 	conn = novaclient.client.Client(2, session=sess)
         return conn
@@ -57,7 +59,6 @@ class OpenStackExtractor(base.BaseExtractor):
                                  project_domain_id='default')
         sess = session.Session(auth=auth)
         keystone = ksclient.Client (session=sess)
-	print dir(keystone.users)
         return keystone
 
     def extract_for_tenant(self, tenant, lastrun):
@@ -80,9 +81,7 @@ class OpenStackExtractor(base.BaseExtractor):
         # Try and except here
         conn = self._get_conn(tenant)
         tenant_id = conn.client.get_project_id()
-	print dir(conn.client)
 	user_id = conn.client.get_user_id()
-	print user_id
         ks_conn = self._get_keystone_conn(tenant)
         servers = conn.servers.list(search_opts={"changes-since": lastrun})
 
