@@ -55,8 +55,8 @@ class OpenStackExtractor(base.BaseExtractor):
                                  username=CONF.extractor.user,
                                  password=CONF.extractor.password,
                                  project_name=tenant,
-                                 user_domain_id='default',
-                                 project_domain_id='default')
+                                 user_domain_id=CONF.extractor.user_domain_id,
+                                 project_domain_id=CONF.extractor.project_domain_id)
         sess = session.Session(auth=auth)
         keystone = ksclient.Client (session=sess)
         return keystone
