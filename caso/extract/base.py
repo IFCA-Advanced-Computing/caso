@@ -41,6 +41,12 @@ opts = [
                default='/etc/caso/voms.json',
                help='File containing the VO <-> tenant mapping as used '
                'in Keystone-VOMS.'),
+    cfg.StrOpt('project_domain_id',
+               default='',
+               help='Project domain id. Required for Keystone v3.'),
+    cfg.StrOpt('user_domain_id',
+               default='',
+               help='User domaing id. Required for Keystone v3.'),
 ]
 
 CONF = cfg.CONF
@@ -94,16 +100,6 @@ class BaseExtractor(object):
                     LOG.warning("No tenant mapping found for VO %s" % tenant)
                 for tenant in tenants:
                     self.voms_map[tenant] = vo
-
-    def _get_keystone_client(self, tenant):
-        client = keystoneclient.v2_0.client.Client(
-            username=CONF.extractor.user,
-            password=CONF.extractor.password,
-            tenant_name=tenant,
-            auth_url=CONF.extractor.endpoint,
-            insecure=CONF.extractor.insecure)
-        client.authenticate()
-        return client
 
     def _get_keystone_users(self, ks_client):
         tenant_id = ks_client.tenant_id

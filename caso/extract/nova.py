@@ -14,15 +14,19 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import datetime
 import operator
 
 import dateutil.parser
+from dateutil import tz
 import novaclient.client
 from oslo_config import cfg
 
 from caso.extract import base
-from caso.extract import utils
 from caso import record
+from keystoneauth1 import session
+from keystoneclient.v3 import client as ksclient
+from keystoneauth1.identity import v3
 
 CONF = cfg.CONF
 CONF.import_opt("site_name", "caso.extract.manager")
@@ -34,19 +38,29 @@ CONF.import_opt("insecure", "caso.extract.base", "extractor")
 
 class OpenStackExtractor(base.BaseExtractor):
     def _get_conn(self, tenant):
-        client = novaclient.client.Client
-        conn = client(
-            2,
-            CONF.extractor.user,
-            CONF.extractor.password,
-            tenant,
-            CONF.extractor.endpoint,
-            insecure=CONF.extractor.insecure,
-            service_type="compute")
-        conn.authenticate()
+	auth = v3.Password(auth_url=CONF.extractor.endpoint,
+                                 username=CONF.extractor.user,
+                                 password=CONF.extractor.password,
+                                 project_name=tenant,
+				 user_domain_id='default',
+                    		 project_domain_id='default')
+	sess = session.Session(auth=auth)
+	conn = novaclient.client.Client(2, session=sess)
         return conn
 
-    def extract_for_tenant(self, tenant, lastrun, extract_to):
+    def _get_keystone_conn(self, tenant):
+        auth = v3.Password(auth_url=CONF.extractor.endpoint,
+                                 username=CONF.extractor.user,
+                                 password=CONF.extractor.password,
+                                 project_name=tenant,
+                                 user_domain_id='default',
+                                 project_domain_id='default')
+        sess = session.Session(auth=auth)
+        keystone = ksclient.Client (session=sess)
+	print dir(keystone.users)
+        return keystone
+
+    def extract_for_tenant(self, tenant, lastrun):
         """Extract records for a tenant from given date querying nova.
 
         This method will get information from nova.
@@ -54,20 +68,22 @@ class OpenStackExtractor(base.BaseExtractor):
         :param tenant: Tenant to extract records for.
         :param extract_from: datetime.datetime object indicating the date to
                              extract records from
-        :param extract_to: datetime.datetime object indicating the date to
-                           extract records to
         :returns: A dictionary of {"server_id": caso.record.Record"}
         """
         # Some API calls do not expect a TZ, so we have to remove the timezone
         # from the dates. We assume that all dates coming from upstream are
         # in UTC TZ.
         lastrun = lastrun.replace(tzinfo=None)
+        now = datetime.datetime.now(tz.tzutc()).replace(tzinfo=None)
+        end = now + datetime.timedelta(days=1)
 
         # Try and except here
         conn = self._get_conn(tenant)
-        ks_conn = self._get_keystone_client(tenant)
-        users = self._get_keystone_users(ks_conn)
-        tenant_id = conn.client.tenant_id
+        tenant_id = conn.client.get_project_id()
+	print dir(conn.client)
+	user_id = conn.client.get_user_id()
+	print user_id
+        ks_conn = self._get_keystone_conn(tenant)
         servers = conn.servers.list(search_opts={"changes-since": lastrun})
 
         servers = sorted(servers, key=operator.attrgetter("created"))
@@ -78,7 +94,7 @@ class OpenStackExtractor(base.BaseExtractor):
         else:
             start = lastrun
 
-        aux = conn.usage.get(tenant_id, start, extract_to)
+        aux = conn.usage.get(tenant_id, start, end)
         usages = getattr(aux, "server_usages", [])
 
         images = conn.images.list()
@@ -107,7 +123,7 @@ class OpenStackExtractor(base.BaseExtractor):
                                    cloud_type="OpenStack",
                                    status=status,
                                    image_id=image_id,
-                                   user_dn=users.get(server.user_id, None))
+                                   user_dn=ks_conn.users.get(server.user_id))
             records[server.id] = r
 
         for usage in usages:
@@ -119,25 +135,13 @@ class OpenStackExtractor(base.BaseExtractor):
             records[instance_id].disk = usage["local_gb"]
 
             started = dateutil.parser.parse(usage["started_at"])
-            if usage.get('ended_at', None) is not None:
-                ended = dateutil.parser.parse(usage["ended_at"])
-            else:
-                ended = None
-
-            # Since the nova API only gives you the "changes-since",
-            # we need to filter the machines that changed outside
-            # the interval
-            if utils.server_outside_interval(lastrun, extract_to, started,
-                                             ended):
-                del records[instance_id]
-                continue
-
             records[instance_id].start_time = int(started.strftime("%s"))
-            if ended is not None:
+            if usage.get("ended_at", None) is not None:
+                ended = dateutil.parser.parse(usage['ended_at'])
                 records[instance_id].end_time = int(ended.strftime("%s"))
                 wall = ended - started
             else:
-                wall = extract_to - started
+                wall = now - started
 
             wall = int(wall.total_seconds())
             records[instance_id].wall_duration = wall
