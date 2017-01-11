@@ -144,6 +144,13 @@
 # Keystone endpoint to autenticate with. (string value)
 #endpoint =
 
+# User domaing id. Required for Keystone v3
+#user_domain_id = default
+
+# Project domain id. Required for Keystone v3
+#project_domain_id = default
+
+
 # Perform an insecure connection (i.e. do not verify the server's certificate.
 # DO NOT USE IN PRODUCTION. (boolean value)
 #insecure = false
