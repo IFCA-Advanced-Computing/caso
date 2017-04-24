@@ -19,11 +19,11 @@ import operator
 import dateutil.parser
 import glanceclient.client
 import novaclient.client
+import novaclient.exceptions
 from oslo_config import cfg
 from oslo_log import log
 
 from caso.extract import base
-from caso.extract import utils
 from caso import keystone_client
 from caso import record
 
@@ -48,7 +48,49 @@ class OpenStackExtractor(base.BaseExtractor):
         session = keystone_client.get_session(CONF, project)
         return glanceclient.client.Client(2, session=session)
 
-    def extract_for_project(self, project, lastrun, extract_to):
+    def build_record(self, server, vo, images, flavors, users):
+        status = self.vm_status(server.status)
+        image_id = None
+        if server.image:
+            image = images.get(server.image['id'])
+            image_id = server.image['id']
+            if image:
+                if image.get("vmcatcher_event_ad_mpuri", None) is not None:
+                    image_id = image.get("vmcatcher_event_ad_mpuri", None)
+
+        flavor = flavors.get(server.flavor["id"])
+        if flavor:
+            bench_name = flavor.get_keys().get(CONF.benchmark_name_key)
+            bench_value = flavor.get_keys().get(CONF.benchmark_value_key)
+        else:
+            bench_name = bench_value = None
+
+        if not all([bench_name, bench_value]):
+            if any([bench_name, bench_value]):
+                LOG.warning("Benchmark for flavor %s not properly set" %
+                            flavor)
+            else:
+                LOG.debug("Benchmark information for flavor %s not set,"
+                          "plase indicate the corret benchmark_name_key "
+                          "and benchmark_value_key in the configuration "
+                          "file or set the correct properties in the "
+                          "flavor." % flavor)
+
+        r = record.CloudRecord(server.id,
+                               CONF.site_name,
+                               server.name,
+                               server.user_id,
+                               server.tenant_id,
+                               vo,
+                               compute_service=CONF.service_name,
+                               status=status,
+                               image_id=image_id,
+                               user_dn=users.get(server.user_id, None),
+                               benchmark_type=bench_name,
+                               benchmark_value=bench_value)
+        return r
+
+    def extract_for_project(self, project, extract_from, extract_to):
         """Extract records for a project from given date querying nova.
 
         This method will get information from nova.
@@ -63,7 +105,7 @@ class OpenStackExtractor(base.BaseExtractor):
         # Some API calls do not expect a TZ, so we have to remove the timezone
         # from the dates. We assume that all dates coming from upstream are
         # in UTC TZ.
-        lastrun = lastrun.replace(tzinfo=None)
+        extract_from = extract_from.replace(tzinfo=None)
 
         # Try and except here
         nova = self._get_nova_client(project)
@@ -79,9 +121,11 @@ class OpenStackExtractor(base.BaseExtractor):
         marker = None
         # Iter over results until we do not have more to get
         while True:
-            aux = nova.servers.list(search_opts={"changes-since": lastrun},
-                                    limit=limit,
-                                    marker=marker)
+            aux = nova.servers.list(
+                search_opts={"changes-since": extract_from},
+                limit=limit,
+                marker=marker
+            )
             servers.extend(aux)
 
             if len(aux) < limit:
@@ -94,7 +138,7 @@ class OpenStackExtractor(base.BaseExtractor):
             start = dateutil.parser.parse(servers[0].created)
             start = start.replace(tzinfo=None)
         else:
-            start = lastrun
+            start = extract_from
 
         aux = nova.usage.get(project_id, start, extract_to)
         usages = getattr(aux, "server_usages", [])
@@ -105,72 +149,45 @@ class OpenStackExtractor(base.BaseExtractor):
         vo = self.voms_map.get(project)
 
         for server in servers:
-            status = self.vm_status(server.status)
-            image_id = None
-            if server.image:
-                image = images.get(server.image['id'])
-                image_id = server.image['id']
-                if image:
-                    if image.get("vmcatcher_event_ad_mpuri", None) is not None:
-                        image_id = image.get("vmcatcher_event_ad_mpuri", None)
-
-            flavor = flavors.get(server.flavor["id"])
-            if flavor:
-                bench_name = flavor.get_keys().get(CONF.benchmark_name_key)
-                bench_value = flavor.get_keys().get(CONF.benchmark_value_key)
-            else:
-                bench_name = bench_value = None
-
-            if not all([bench_name, bench_value]):
-                if any([bench_name, bench_value]):
-                    LOG.warning("Benchmark for flavor %s not properly set" %
-                                flavor)
-                else:
-                    LOG.debug("Benchmark information for flavor %s not set,"
-                              "plase indicate the corret benchmark_name_key "
-                              "and benchmark_value_key in the configuration "
-                              "file or set the correct properties in the "
-                              "flavor." % flavor)
-
-            r = record.CloudRecord(server.id,
-                                   CONF.site_name,
-                                   server.name,
-                                   server.user_id,
-                                   server.tenant_id,
-                                   vo,
-                                   compute_service=CONF.service_name,
-                                   status=status,
-                                   image_id=image_id,
-                                   user_dn=users.get(server.user_id, None),
-                                   benchmark_type=bench_name,
-                                   benchmark_value=bench_value)
-            records[server.id] = r
+            records[server.id] = self.build_record(server, vo, images,
+                                                   flavors, users)
 
         for usage in usages:
             if usage["instance_id"] not in records:
-                continue
+                try:
+                    server = nova.servers.get(usage["instance_id"])
+                except novaclient.exceptions.ClientException:
+                    # Maybe the instance is completely missing
+                    continue
+                records[server.id] = self.build_record(server, vo, images,
+                                                       flavors, users)
             instance_id = usage["instance_id"]
             records[instance_id].memory = usage["memory_mb"]
             records[instance_id].cpu_count = usage["vcpus"]
             records[instance_id].disk = usage["local_gb"]
 
+            # Start time must be the time when the machine was created
             started = dateutil.parser.parse(usage["started_at"])
+            records[instance_id].start_time = int(started.strftime("%s"))
+
+            # End time must ben the time when the machine was ended, but it may
+            # be none
             if usage.get('ended_at', None) is not None:
                 ended = dateutil.parser.parse(usage["ended_at"])
+                records[instance_id].end_time = int(ended.strftime("%s"))
             else:
                 ended = None
 
-            # Since the nova API only gives you the "changes-since",
-            # we need to filter the machines that changed outside
-            # the interval
-            if utils.server_outside_interval(lastrun, extract_to, started,
-                                             ended):
-                del records[instance_id]
-                continue
+            # Wall and CPU durations are absolute values, not deltas for the
+            # reporting period. The nova API only gives use the "changes-since"
+            # usages, therefore we need to calculate the wall duration by
+            # ourselves, then multiply by the nr of CPUs to get the CPU
+            # duration.
 
-            records[instance_id].start_time = int(started.strftime("%s"))
-            if ended is not None:
-                records[instance_id].end_time = int(ended.strftime("%s"))
+            # If the machine has not ended, report consumption until
+            # extract_to, otherwise get its consuption by substracting ended -
+            # started.
+            if ended is not None and ended < extract_to:
                 wall = ended - started
             else:
                 wall = extract_to - started
@@ -178,8 +195,7 @@ class OpenStackExtractor(base.BaseExtractor):
             wall = int(wall.total_seconds())
             records[instance_id].wall_duration = wall
 
-            cput = int(usage["hours"] * 3600)
-            # NOTE(aloga): in some cases there may be rounding errors and cput
-            # may be larger than wall.
-            records[instance_id].cpu_duration = cput if cput < wall else wall
+            cput = wall * usage["vcpus"]
+            records[instance_id].cpu_duration = cput
+
         return records

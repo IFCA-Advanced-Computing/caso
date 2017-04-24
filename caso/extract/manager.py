@@ -55,13 +55,20 @@ opts = [
 
 cli_opts = [
     cfg.StrOpt('extract_to',
-               help='Extract records until this date. If it is not set, '
-               'we use now'),
+               help='Extract record changes until this date. '
+                    'If it is not set, we use now. If a server has '
+                    'ended after this date, it will be included, but '
+                    'the consuption reported will end on this date. '
+                    'If no time zone is specified, UTC will be used.'),
     cfg.StrOpt('extract_from',
-               help='Extract records from this date. If it is not set, '
-               'extract records from last run. If none are set, extract '
-               'records from the beginning of time. If no time zone is '
-               'specified, UTC will be used.'),
+               help='Extract records that have changed after this date. This '
+                    'means that if a record has started before this date, and '
+                    'it has changed after this date (i.e. it is still running '
+                    'or it has ended) it will be reported. \n'
+                    'If it is not set, extract records from last run. '
+                    'If it is set to None and last run file is not present, '
+                    'it will extract records from the beginning of time. '
+                    'If no time zone is specified, UTC will be used.'),
     cfg.StrOpt('extractor',
                choices=SUPPORTED_EXTRACTORS.keys(),
                default='nova',
