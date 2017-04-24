@@ -74,7 +74,19 @@ class OpenStackExtractor(base.BaseExtractor):
 
         flavors = {flavor.id: flavor for flavor in nova.flavors.list()}
 
-        servers = nova.servers.list(search_opts={"changes-since": lastrun})
+        servers = []
+        limit = 200
+        marker = None
+        # Iter over results until we do not have more to get
+        while True:
+            aux = nova.servers.list(search_opts={"changes-since": lastrun},
+                                    limit=limit,
+                                    marker=marker)
+            servers.extend(aux)
+
+            if len(aux) < limit:
+                break
+            marker = aux[-1].id
 
         servers = sorted(servers, key=operator.attrgetter("created"))
 
