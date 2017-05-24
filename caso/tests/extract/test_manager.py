@@ -29,8 +29,8 @@ from caso.tests import base
 class TestCasoManager(base.TestCase):
     def setUp(self):
         super(TestCasoManager, self).setUp()
-        manager.SUPPORTED_EXTRACTORS = {"foo": "foo.Bar"}
-        self.flags(extractor="foo")
+        manager.SUPPORTED_EXTRACTORS = {"nova": "foo.Bar"}
+        self.flags(extractor="nova")
         self.p_extractor = mock.patch.dict('sys.modules',
                                            {'foo': mock.MagicMock()})
         self.p_extractor.start()
