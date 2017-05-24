@@ -24,7 +24,7 @@ command line
 your OpenStack deployment.
 ``caso-extract -h`` will show a complete list of available arguments.
 
-Use the ``--extract_from`` argument to specify the date from when the records
+Use the ``--extract-from`` argument to specify the date from when the records
 should be extracted. If no value is set, then ``cASO`` will extract the records
 from the last run. If equal to "None", then extract records from the beggining
 of time.  If not time zone is specified, UTC will be used.

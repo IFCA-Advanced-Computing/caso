@@ -54,13 +54,15 @@ opts = [
 ]
 
 cli_opts = [
-    cfg.StrOpt('extract_to',
+    cfg.StrOpt('extract-to',
+               deprecated_name='extract_to',
                help='Extract record changes until this date. '
                     'If it is not set, we use now. If a server has '
                     'ended after this date, it will be included, but '
                     'the consuption reported will end on this date. '
                     'If no time zone is specified, UTC will be used.'),
-    cfg.StrOpt('extract_from',
+    cfg.StrOpt('extract-from',
+               deprecated_name='extract_from',
                help='Extract records that have changed after this date. This '
                     'means that if a record has started before this date, and '
                     'it has changed after this date (i.e. it is still running '
