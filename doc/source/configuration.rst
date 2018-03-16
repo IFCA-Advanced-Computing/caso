@@ -57,13 +57,13 @@ User credentials
 ----------------
 
 The user configured in the previous section has to be a member of each of the
-tenants (another option is to convert that user in an administrator, but the
+project (another option is to convert that user in an administrator, but the
 former option is a safer approach) for which it is extracting the accounting.
 Otherwise, ``cASO`` will not be able to get the usages and will fail::
 
     openstack role create accounting
     openstack user create --password <password> accounting
-    # For each of the tenants, add the user with the accounting role
+    # For each of the projects, add the user with the accounting role
     openstack role add --user accounting --project <project> accounting
 
 Also, this user needs access to Keystone so as to extract the users
@@ -103,7 +103,7 @@ of every option. You should check at least the following options:
   GOCDB.
 * ``service_name`` (default value: ``$site_name``). Name of the service within
   a site. This is used if you have several endpoints within your site.
-* ``tenants`` (list value, default empty). List of the tenants to extract
+* ``projects`` (list value, default empty). List of the projects to extract
   records from.
 * ``messengers`` (list, default: ``caso.messenger.noop.NoopMessenger``). List
   of the messengers to publish data to. Valid messenges are:
@@ -111,11 +111,11 @@ of every option. You should check at least the following options:
     * ``caso.messenger.ssm.SSMMessengerV04`` for publishing APEL V0.4 records.
     * ``caso.messenger.logstash.LogstashMessenger`` for publishing to Logstash.
 * ``mapping_file`` (default: ``/etc/caso/voms.json``). File containing the
-  mapping from VOs to local tenants as configured in Keystone-VOMS, in the
+  mapping from VOs to local projects as configured in Keystone-VOMS, in the
   form::
     {
         "VO": {
-            "tenants": ["foo", "bar"],
+            "projects": ["foo", "bar"],
         }
     }
 * ``benchmark_name_key`` and ``benchmark_value_key``. These two configuration
