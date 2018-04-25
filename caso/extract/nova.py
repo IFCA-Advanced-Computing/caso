@@ -119,10 +119,29 @@ class OpenStackExtractor(base.BaseExtractor):
             flavors[flavor.id] = flavor.to_dict()
             flavors[flavor.id]["extra"] = flavor.get_keys()
 
+        images = {image.id: image for image in glance.images.list()}
+        records = {}
+
+        vo = self.voms_map.get(project)
+
+        # We cannot use 'changes-since' in the servers.list() API query, as it
+        # will only include changes that have changed its status after that
+        # date. However we cannot just get all the usages and then query
+        # server by server, as deleted servers are not returned  by this
+        # servers.get() call. What we do is the following:
+        #
+        # 1.- List all the deleted servers that changed after the start date
+        # 2.- Build the records for the period [start, end]
+        # 3.- Get all the usages
+        # 4.- Iter over the usages and:
+        # 4.1.- get information for non deleted servers
+        # 4.2.- do nothing with deleted servers, as we collected in in step (2)
+
+        # 1.- List all the deleted servers from that period.
         servers = []
         limit = 200
         marker = None
-        # Iter over results until we do not have more to get
+        # Use a marker and iter over results until we do not have more to get
         while True:
             aux = nova.servers.list(
                 search_opts={"changes-since": extract_from,
@@ -138,35 +157,41 @@ class OpenStackExtractor(base.BaseExtractor):
 
         servers = sorted(servers, key=operator.attrgetter("created"))
 
-        # We are going to query for the sever usages below. It will return the
-        # usages for the specified period. However, usages should be absolute
-        # values, not deltas. Therefore we need to change the start time for
-        # the query with that of the oldest server.
-        if servers:
-            start = dateutil.parser.parse(servers[0].created)
-            start = start.replace(tzinfo=None)
-        else:
-            start = extract_from
-
-        aux = nova.usage.get(project_id, start, extract_to)
-        usages = getattr(aux, "server_usages", [])
-
-        images = {image.id: image for image in glance.images.list()}
-        records = {}
-
-        vo = self.voms_map.get(project)
-
+        # 2.- Build the records for the period. Drop servers outside the period
+        # (we do this manually as we cannot limit the query to a period, only
+        # changes after start date).
         for server in servers:
             server_start = dateutil.parser.parse(server.created)
             server_start = server_start.replace(tzinfo=None)
-            if server_start > extract_to:
+            # Some servers may be deleted before 'extract_from' but updated
+            # afterwards
+            server_end = server.__getattr__('OS-SRV-USG:terminated_at')
+            if server_end:
+                server_end = dateutil.parser.parse(server_end)
+                server_end = server_end.replace(tzinfo=None)
+            if (server_start > extract_to or
+                    (server_end and server_end < extract_from)):
                 continue
             records[server.id] = self.build_record(server, vo, images,
                                                    flavors, users)
 
+        # 3.- Get all the usages for the period
+        start = extract_from
+        aux = nova.usage.get(project_id, start, extract_to)
+        usages = getattr(aux, "server_usages", [])
+
+        # 4.- Iter over the results and
         for usage in usages:
+            # 4.1 and 4.2 Get the server if it is not yet there
             if usage["instance_id"] not in records:
-                continue
+                server = nova.servers.get(usage["instance_id"])
+
+                server_start = dateutil.parser.parse(server.created)
+                server_start = server_start.replace(tzinfo=None)
+                if server_start > extract_to:
+                    continue
+                records[server.id] = self.build_record(server, vo, images,
+                                                       flavors, users)
             instance_id = usage["instance_id"]
             records[instance_id].memory = usage["memory_mb"]
             records[instance_id].cpu_count = usage["vcpus"]
@@ -185,10 +210,10 @@ class OpenStackExtractor(base.BaseExtractor):
                 ended = None
 
             # Wall and CPU durations are absolute values, not deltas for the
-            # reporting period. The nova API only gives use the "changes-since"
-            # usages, therefore we need to calculate the wall duration by
-            # ourselves, then multiply by the nr of CPUs to get the CPU
-            # duration.
+            # reporting period. The nova API only gives use the usages for the
+            # requested period, therefore we need to calculate the wall
+            # duration by ourselves, then multiply by the nr of CPUs to get the
+            # CPU duration.
 
             # If the machine has not ended, report consumption until
             # extract_to, otherwise get its consuption by substracting ended -
