@@ -60,8 +60,8 @@ class OpenStackExtractor(base.BaseExtractor):
 
         flavor = flavors.get(server.flavor["id"])
         if flavor:
-            bench_name = flavor.get_keys().get(CONF.benchmark_name_key)
-            bench_value = flavor.get_keys().get(CONF.benchmark_value_key)
+            bench_name = flavor["extra"].get(CONF.benchmark_name_key)
+            bench_value = flavor["extra"].get(CONF.benchmark_value_key)
         else:
             bench_name = bench_value = None
 
@@ -114,7 +114,10 @@ class OpenStackExtractor(base.BaseExtractor):
         users = self._get_keystone_users(ks_client)
         project_id = nova.client.session.get_project_id()
 
-        flavors = {flavor.id: flavor for flavor in nova.flavors.list()}
+        flavors = {}
+        for flavor in nova.flavors.list():
+            flavors[flavor.id] = flavor.to_dict()
+            flavors[flavor.id]["extra"] = flavor.get_keys()
 
         servers = []
         limit = 200
