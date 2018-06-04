@@ -15,6 +15,7 @@
 
 # Extract records but do not push records to SSM. This will not update the last
 # run date. (boolean value)
+# Deprecated group/name - [DEFAULT]/dry_run
 #dry_run = false
 
 # Site name as in GOCDB. (string value)
@@ -29,28 +30,37 @@
 
 # File containing the VO <-> project mapping as used in Keystone-VOMS. (string
 # value)
-# Deprecated group/name - [extractor]/mapping_file
 #mapping_file = /etc/caso/voms.json
 
 # Metadata key used to retrieve the benchmark type from the flavor properties.
 # (string value)
-#benchmark_name_key = benchmark_type
+#benchmark_name_key = accounting:benchmark_type
 
 # Metadata key used to retrieve the benchmark value from the flavor properties.
 # (string value)
-#benchmark_value_key = benchmark_value
+#benchmark_value_key = accounting:benchmark_value
 
-# Extract records until this date. If it is not set, we use now (string value)
+# Extract record changes until this date. If it is not set, we use now. If a
+# server has ended after this date, it will be included, but the consuption
+# reported will end on this date. If no time zone is specified, UTC will be
+# used. (string value)
+# Deprecated group/name - [DEFAULT]/extract_to
 #extract_to = <None>
 
-# Extract records from this date. If it is not set, extract records from last
-# run. If none are set, extract records from the beginning of time. If no time
-# zone is specified, UTC will be used. (string value)
+# Extract records that have changed after this date. This means that if a
+# record has started before this date, and it has changed after this date (i.e.
+# it is still running or it has ended) it will be reported.
+# If it is not set, extract records from last run. If it is set to None and
+# last run file is not present, it will extract records from the beginning of
+# time. If no time zone is specified, UTC will be used. (string value)
+# Deprecated group/name - [DEFAULT]/extract_from
 #extract_from = <None>
 
 # Which extractor to use for getting the data. If you do not specify anything,
 # nova will be used. (string value)
-# Allowed values: ceilometer, nova
+# Possible values:
+# nova - <No description provided>
+# ceilometer - <No description provided>
 #extractor = nova
 
 #
@@ -61,12 +71,6 @@
 # INFO level. (boolean value)
 # Note: This option can be changed without restarting.
 #debug = false
-
-# DEPRECATED: If set to false, the logging level will be set to WARNING instead
-# of the default INFO level. (boolean value)
-# This option is deprecated for removal.
-# Its value may be silently ignored in the future.
-#verbose = true
 
 # The name of a logging configuration file. This file is appended to any
 # existing logging configuration files. For details about logging configuration
@@ -106,9 +110,19 @@
 # is set. (boolean value)
 #use_syslog = false
 
+# Enable journald for logging. If running in a systemd environment you may wish
+# to enable journal support. Doing so will use the journal native protocol
+# which includes structured metadata in addition to log messages.This option is
+# ignored if log_config_append is set. (boolean value)
+#use_journal = false
+
 # Syslog facility to receive log lines. This option is ignored if
 # log_config_append is set. (string value)
 #syslog_log_facility = LOG_USER
+
+# Use JSON formatting for logging. This option is ignored if log_config_append
+# is set. (boolean value)
+#use_json = false
 
 # Log output to standard error. This option is ignored if log_config_append is
 # set. (boolean value)
@@ -134,7 +148,7 @@
 
 # List of package logging levels in logger=LEVEL pairs. This option is ignored
 # if log_config_append is set. (list value)
-#default_log_levels = amqp=WARN,amqplib=WARN,boto=WARN,qpid=WARN,sqlalchemy=WARN,suds=INFO,oslo.messaging=INFO,iso8601=WARN,requests.packages.urllib3.connectionpool=WARN,urllib3.connectionpool=WARN,websocket=WARN,requests.packages.urllib3.util.retry=WARN,urllib3.util.retry=WARN,keystonemiddleware=WARN,routes.middleware=WARN,stevedore=WARN,taskflow=WARN,keystoneauth=WARN,oslo.cache=INFO,dogpile.core.dogpile=INFO
+#default_log_levels = amqp=WARN,amqplib=WARN,boto=WARN,qpid=WARN,sqlalchemy=WARN,suds=INFO,oslo.messaging=INFO,oslo_messaging=INFO,iso8601=WARN,requests.packages.urllib3.connectionpool=WARN,urllib3.connectionpool=WARN,websocket=WARN,requests.packages.urllib3.util.retry=WARN,urllib3.util.retry=WARN,keystonemiddleware=WARN,routes.middleware=WARN,stevedore=WARN,taskflow=WARN,keystoneauth=WARN,oslo.cache=INFO,dogpile.core.dogpile=INFO
 
 # Enables or disables publication of error events. (boolean value)
 #publish_errors = false
@@ -192,8 +206,17 @@
 # Timeout value for http requests (integer value)
 #timeout = <None>
 
+# Collect per-API call timing information. (boolean value)
+#collect_timing = false
+
+# Log requests to multiple loggers. (boolean value)
+#split_loggers = false
+
 # Authentication URL (string value)
 #auth_url = <None>
+
+# Scope for system operations (string value)
+#system_scope = <None>
 
 # Domain ID to scope to (string value)
 #domain_id = <None>
@@ -202,11 +225,11 @@
 #domain_name = <None>
 
 # Project ID to scope to (string value)
-# Deprecated group/name - [keystone_auth]/tenant-id
+# Deprecated group/name - [keystone_auth]/tenant_id
 #project_id = <None>
 
 # Project name to scope to (string value)
-# Deprecated group/name - [keystone_auth]/tenant-name
+# Deprecated group/name - [keystone_auth]/tenant_name
 #project_name = <None>
 
 # Domain ID containing project (string value)
@@ -232,7 +255,7 @@
 #user_id = <None>
 
 # Username (string value)
-# Deprecated group/name - [keystone_auth]/user-name
+# Deprecated group/name - [keystone_auth]/user_name
 #username = <None>
 
 # User's domain id (string value)
