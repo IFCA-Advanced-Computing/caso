@@ -15,10 +15,12 @@
 # under the License.
 
 import datetime
+import os
 import os.path
 
 import dateutil.parser
 from dateutil import tz
+from oslo_concurrency import lockutils
 from oslo_config import cfg
 
 import caso.extract.manager
@@ -37,6 +39,16 @@ opts = [
                help='Spool directory.'),
 ]
 
+override_lock = cfg.StrOpt(
+    "lock_path",
+    default=os.environ.get("CASO_LOCK_PATH", "$spooldir"),
+    help="Directory to use for lock files. For security, the specified "
+         "directory should only be writable by the user running the "
+         "processes that need locking. Defaults to environment variable "
+         "CASO_LOCK_PATH or $spooldir"
+)
+opts.append(override_lock)
+
 cli_opts = [
     cfg.BoolOpt('dry-run',
                 deprecated_name='dry_run',
@@ -49,6 +61,8 @@ CONF = cfg.CONF
 
 CONF.register_opts(opts)
 CONF.register_cli_opts(cli_opts)
+
+CONF.set_override("lock_path", override_lock, group="oslo_concurrency")
 
 
 class Manager(object):
@@ -74,6 +88,7 @@ class Manager(object):
             raise
         return date
 
+    @lockutils.synchronized("caso_should_not_run_in_parallel", external=True)
     def run(self):
         records = self.extractor_manager.get_records(lastrun=self.lastrun)
         if not CONF.dry_run:

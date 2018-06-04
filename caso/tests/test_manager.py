@@ -20,6 +20,7 @@ import datetime
 
 from dateutil import tz
 import mock
+from oslo_concurrency.fixture import lockutils as lock_fixture
 import six
 
 from caso import manager
@@ -28,6 +29,7 @@ from caso.tests import base
 
 class TestCasoManager(base.TestCase):
     def setUp(self):
+        self.useFixture(lock_fixture.ExternalLockFixture())
         super(TestCasoManager, self).setUp()
         self.patchers = {
             "makedirs": mock.patch('caso.utils.makedirs'),

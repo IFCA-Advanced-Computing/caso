@@ -13,6 +13,11 @@
 # Spool directory. (string value)
 #spooldir = /var/spool/caso
 
+# Directory to use for lock files. For security, the specified directory should
+# only be writable by the user running the processes that need locking.
+# Defaults to environment variable CASO_LOCK_PATH or $spooldir (string value)
+#lock_path = $spooldir
+
 # Extract records but do not push records to SSM. This will not update the last
 # run date. (boolean value)
 # Deprecated group/name - [DEFAULT]/dry_run
@@ -279,6 +284,22 @@
 
 # Logstash server port. (integer value)
 #port = 5000
+
+
+[oslo_concurrency]
+
+#
+# From oslo.concurrency
+#
+
+# Enables or disables inter-process locks. (boolean value)
+#disable_process_locking = false
+
+# Directory to use for lock files.  For security, the specified directory
+# should only be writable by the user running the processes that need locking.
+# Defaults to environment variable OSLO_LOCK_PATH. If external locks are used,
+# a lock path must be set. (string value)
+#lock_path = <None>
 
 
 [ssm]
