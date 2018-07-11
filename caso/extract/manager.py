@@ -20,35 +20,9 @@ import dateutil.parser
 from dateutil import tz
 from oslo_config import cfg
 from oslo_log import log
-from oslo_utils import importutils
 import six
 
-SUPPORTED_EXTRACTORS = {
-    'nova': 'caso.extract.nova.OpenStackExtractor',
-    'ceilometer': 'caso.extract.ceilometer.CeilometerExtractor',
-}
-
-opts = [
-    cfg.StrOpt('site_name',
-               help='Site name as in GOCDB.'),
-    cfg.StrOpt('service_name',
-               default='$site_name',
-               help='Service name within the site'),
-    cfg.StrOpt('mapping_file',
-               default='/etc/caso/voms.json',
-               deprecated_group="extractor",
-               help='File containing the VO <-> project mapping as used '
-               'in Keystone-VOMS.'),
-    cfg.StrOpt('benchmark_name_key',
-               default='accounting:benchmark_type',
-               help='Metadata key used to retrieve the benchmark type '
-                    'from the flavor properties.'),
-    cfg.StrOpt('benchmark_value_key',
-               default='accounting:benchmark_value',
-               help='Metadata key used to retrieve the benchmark value '
-                    'from the flavor properties.'),
-
-]
+from caso import loading
 
 cli_opts = [
     cfg.ListOpt('projects',
@@ -73,7 +47,7 @@ cli_opts = [
                     'it will extract records from the beginning of time. '
                     'If no time zone is specified, UTC will be used.'),
     cfg.StrOpt('extractor',
-               choices=SUPPORTED_EXTRACTORS.keys(),
+               choices=loading.get_available_extractor_names(),
                default='nova',
                help='Which extractor to use for getting the data. '
                     'If you do not specify anything, nova will be '
@@ -82,18 +56,17 @@ cli_opts = [
 
 CONF = cfg.CONF
 
-CONF.register_opts(opts)
 CONF.register_cli_opts(cli_opts)
+CONF.import_opt("projects", "caso.extract.base")
 
 LOG = log.getLogger(__name__)
 
 
 class Manager(object):
     def __init__(self):
-        extractor_class = importutils.import_class(
-            SUPPORTED_EXTRACTORS[CONF.extractor])
-        self.extractor = extractor_class()
-
+        extractor = loading.get_available_extractors()[CONF.extractor]
+        self.extractor = extractor
+        self.records = None
         self.last_run_base = os.path.join(CONF.spooldir, "lastrun")
 
     def get_lastrun(self, project):

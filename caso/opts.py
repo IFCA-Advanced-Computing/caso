@@ -16,6 +16,7 @@
 
 import itertools
 
+import caso.extract.base
 import caso.extract.manager
 import caso.keystone_client
 import caso.manager
@@ -27,7 +28,7 @@ def list_opts():
     return [
         ('DEFAULT', itertools.chain(caso.manager.opts,
                                     caso.manager.cli_opts,
-                                    caso.extract.manager.opts,
+                                    caso.extract.base.opts,
                                     caso.extract.manager.cli_opts)
          ),
         ('keystone_auth', caso.keystone_client.opts),

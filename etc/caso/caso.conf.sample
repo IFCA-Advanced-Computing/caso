@@ -30,14 +30,6 @@
 # Service name within the site (string value)
 #service_name = $site_name
 
-# List of projects to extract accounting records from. (list value)
-# Deprecated group/name - [DEFAULT]/tenants
-#projects =
-
-# File containing the VO <-> project mapping as used in Keystone-VOMS. (string
-# value)
-#mapping_file = /etc/caso/voms.json
-
 # Metadata key used to retrieve the benchmark type from the flavor properties.
 # (string value)
 #benchmark_name_key = accounting:benchmark_type
@@ -45,6 +37,14 @@
 # Metadata key used to retrieve the benchmark value from the flavor properties.
 # (string value)
 #benchmark_value_key = accounting:benchmark_value
+
+# List of projects to extract accounting records from. (list value)
+# Deprecated group/name - [DEFAULT]/tenants
+#projects =
+
+# File containing the VO <-> project mapping as used in Keystone-VOMS. (string
+# value)
+#mapping_file = /etc/caso/voms.json
 
 # Extract record changes until this date. If it is not set, we use now. If a
 # server has ended after this date, it will be included, but the consuption
@@ -65,8 +65,8 @@
 # Which extractor to use for getting the data. If you do not specify anything,
 # nova will be used. (string value)
 # Possible values:
-# nova - <No description provided>
 # ceilometer - <No description provided>
+# nova - <No description provided>
 #extractor = nova
 
 #

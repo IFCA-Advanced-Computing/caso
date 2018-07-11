@@ -24,8 +24,33 @@ import six
 
 from caso import keystone_client
 
+opts = [
+    cfg.StrOpt('site_name',
+               help='Site name as in GOCDB.'),
+    cfg.StrOpt('service_name',
+               default='$site_name',
+               help='Service name within the site'),
+    cfg.StrOpt('benchmark_name_key',
+               default='accounting:benchmark_type',
+               help='Metadata key used to retrieve the benchmark type '
+                    'from the flavor properties.'),
+    cfg.StrOpt('benchmark_value_key',
+               default='accounting:benchmark_value',
+               help='Metadata key used to retrieve the benchmark value '
+                    'from the flavor properties.'),
+    cfg.ListOpt('projects',
+                default=[],
+                deprecated_name='tenants',
+                help='List of projects to extract accounting records from.'),
+    cfg.StrOpt('mapping_file',
+               default='/etc/caso/voms.json',
+               deprecated_group="extractor",
+               help='File containing the VO <-> project mapping as used '
+               'in Keystone-VOMS.'),
+]
+
 CONF = cfg.CONF
-CONF.import_opt("mapping_file", "caso.extract.manager")
+CONF.register_opts(opts)
 
 LOG = log.getLogger(__name__)
 

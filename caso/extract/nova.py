@@ -28,10 +28,10 @@ from caso import keystone_client
 from caso import record
 
 CONF = cfg.CONF
-CONF.import_opt("extractor", "caso.extract.manager")
-CONF.import_opt("site_name", "caso.extract.manager")
-CONF.import_opt("benchmark_name_key", "caso.extract.manager")
-CONF.import_opt("benchmark_value_key", "caso.extract.manager")
+
+CONF.import_opt("site_name", "caso.extract.base")
+CONF.import_opt("benchmark_name_key", "caso.extract.base")
+CONF.import_opt("benchmark_value_key", "caso.extract.base")
 
 LOG = log.getLogger(__name__)
 
