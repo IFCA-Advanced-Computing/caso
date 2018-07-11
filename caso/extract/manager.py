@@ -21,11 +21,7 @@ from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import importutils
 import six
-
-SUPPORTED_EXTRACTORS = {
-    'nova': 'caso.extract.nova.OpenStackExtractor',
-    'ceilometer': 'caso.extract.ceilometer.CeilometerExtractor',
-}
+from stevedore.extension import ExtensionManager
 
 opts = [
     cfg.StrOpt('site_name',
@@ -72,7 +68,7 @@ cli_opts = [
                     'it will extract records from the beginning of time. '
                     'If no time zone is specified, UTC will be used.'),
     cfg.StrOpt('extractor',
-               choices=SUPPORTED_EXTRACTORS.keys(),
+               choices=ExtensionManager(namespace='extractors', invoke_on_load=True).entry_points_names(),
                default='nova',
                help='Which extractor to use for getting the data. '
                     'If you do not specify anything, nova will be '
@@ -89,9 +85,9 @@ LOG = log.getLogger(__name__)
 
 class Manager(object):
     def __init__(self):
-        extractor_class = importutils.import_class(
-            SUPPORTED_EXTRACTORS[CONF.extractor])
-        self.extractor = extractor_class()
+        mgr = ExtensionManager(namespace='extractors', invoke_on_load=True)
+        extractor = mgr.__getitem__(CONF.extractor).obj
+        self.extractor = extractor
         self.records = None
 
     def _extract(self, extract_from, extract_to):
