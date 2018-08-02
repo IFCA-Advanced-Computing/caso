@@ -19,9 +19,12 @@ import dateutil.parser
 from dateutil import tz
 from oslo_config import cfg
 from oslo_log import log
-from oslo_utils import importutils
 import six
-from stevedore.extension import ExtensionManager
+from stevedore import extension
+
+manager = extension.ExtensionManager(namespace='extractors',
+                                     invoke_on_load=True)
+
 
 opts = [
     cfg.StrOpt('site_name',
@@ -68,7 +71,7 @@ cli_opts = [
                     'it will extract records from the beginning of time. '
                     'If no time zone is specified, UTC will be used.'),
     cfg.StrOpt('extractor',
-               choices=ExtensionManager(namespace='extractors', invoke_on_load=True).entry_points_names(),
+               choices=manager.entry_points_names(),
                default='nova',
                help='Which extractor to use for getting the data. '
                     'If you do not specify anything, nova will be '
@@ -85,7 +88,8 @@ LOG = log.getLogger(__name__)
 
 class Manager(object):
     def __init__(self):
-        mgr = ExtensionManager(namespace='extractors', invoke_on_load=True)
+        mgr = extension.ExtensionManager(namespace='extractors',
+                                         invoke_on_load=True)
         extractor = mgr.__getitem__(CONF.extractor).obj
         self.extractor = extractor
         self.records = None
