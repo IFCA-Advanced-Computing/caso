@@ -36,7 +36,7 @@ class CasoException(Exception):
                 # kwargs doesn't match a variable in the message
                 # log the issue and the kwargs
                 LOG.exception('Exception in string format operation')
-                for name, value in kwargs.iteritems():
+                for name, value in kwargs.items():
                     LOG.error("%s: %s" % (name, value))
                 six.reraise(exc_info[0], exc_info[1], exc_info[2])
 

@@ -56,9 +56,9 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
             return
 
         entries = []
-        for _, record in records.iteritems():
+        for _, record in records.items():
             aux = ""
-            for k, v in record.as_dict(version=self.version).iteritems():
+            for k, v in record.as_dict(version=self.version).items():
                 if v is not None:
                     aux += "%s: %s\n" % (k, v)
             entries.append(aux)

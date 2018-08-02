@@ -19,7 +19,6 @@ import os
 
 import fixtures
 from oslo_config import cfg
-import six
 import testtools
 
 CONF = cfg.CONF
@@ -59,7 +58,7 @@ class TestCase(testtools.TestCase):
     def flags(self, **kw):
         """Override flag variables for a test."""
         group = kw.pop('group', None)
-        for k, v in six.iteritems(kw):
+        for k, v in kw.items():
             CONF.set_override(k, v, group)
 
     def reset_flags(self):

@@ -52,7 +52,7 @@ class LogstashMessenger(caso.messenger.BaseMessenger):
         """Push records to logstash using tcp."""
         try:
             self.sock.connect((self.host, self.port))
-            for _, record in records.iteritems():
+            for _, record in records.items():
                 self.sock.sendall(record.as_json() + "\n")
         except socket.error as e:
             raise exception.LogstashConnectionError(host=self.host,

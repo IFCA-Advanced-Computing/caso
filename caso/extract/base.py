@@ -64,7 +64,7 @@ class BaseExtractor(object):
             raise
         else:
             self.voms_map = {}
-            for vo, vomap in mapping.iteritems():
+            for vo, vomap in mapping.items():
                 tenant = vomap.get("tenant", None)
                 tenants = vomap.get("tenants", [])
                 if tenant is not None:
