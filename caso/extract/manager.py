@@ -37,7 +37,7 @@ opts = [
                 deprecated_name='tenants',
                 help='List of projects to extract accounting records from.'),
     cfg.StrOpt('mapping_file',
-               default='/etc/caso/voms.json',
+               default='etc/caso/voms.json.sample',
                deprecated_group="extractor",
                help='File containing the VO <-> project mapping as used '
                'in Keystone-VOMS.'),
