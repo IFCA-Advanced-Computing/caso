@@ -22,7 +22,9 @@ from oslo_log import log
 import six
 from stevedore import extension
 
-manager = extension.ExtensionManager(namespace='extractors',
+NAMESPACE = "caso.extractors"
+
+manager = extension.ExtensionManager(namespace=NAMESPACE,
                                      invoke_on_load=True)
 
 
@@ -88,7 +90,7 @@ LOG = log.getLogger(__name__)
 
 class Manager(object):
     def __init__(self):
-        mgr = extension.ExtensionManager(namespace='extractors',
+        mgr = extension.ExtensionManager(namespace=NAMESPACE,
                                          invoke_on_load=True)
         extractor = mgr.__getitem__(CONF.extractor).obj
         self.extractor = extractor
