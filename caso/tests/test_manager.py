@@ -28,6 +28,9 @@ from caso.tests import base
 
 
 class TestCasoManager(base.TestCase):
+
+    REQUIRES_LOCKING = True
+
     def setUp(self):
         self.useFixture(lock_fixture.ExternalLockFixture())
         super(TestCasoManager, self).setUp()
