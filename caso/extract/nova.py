@@ -198,7 +198,7 @@ class OpenStackExtractor(base.BaseExtractor):
             records[instance_id].disk = usage["local_gb"]
 
             # Start time must be the time when the machine was created
-            started = dateutil.parser.parse(usage["started_at"])
+            started = server_start
             records[instance_id].start_time = int(started.strftime("%s"))
 
             # End time must ben the time when the machine was ended, but it may
