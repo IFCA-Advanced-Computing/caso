@@ -62,8 +62,6 @@ CONF = cfg.CONF
 CONF.register_opts(opts)
 CONF.register_cli_opts(cli_opts)
 
-CONF.set_override("lock_path", override_lock, group="oslo_concurrency")
-
 
 class Manager(object):
     def __init__(self):
@@ -72,6 +70,8 @@ class Manager(object):
 
         self.extractor_manager = caso.extract.manager.Manager()
         self.messenger = caso.messenger.Manager()
+
+        self.lock_path = CONF.lock_path
 
     @property
     def lastrun(self):
@@ -88,10 +88,14 @@ class Manager(object):
             raise
         return date
 
-    @lockutils.synchronized("caso_should_not_run_in_parallel", external=True)
     def run(self):
-        records = self.extractor_manager.get_records(lastrun=self.lastrun)
-        if not CONF.dry_run:
-            self.messenger.push_to_all(records)
-            with open(self.last_run_file, "w") as fd:
-                fd.write(str(datetime.datetime.now(tz.tzutc())))
+        @lockutils.synchronized("caso_should_not_run_in_parallel",
+                                lock_path=self.lock_path, external=True)
+        def synchronized():
+            records = self.extractor_manager.get_records(lastrun=self.lastrun)
+            if not CONF.dry_run:
+                self.messenger.push_to_all(records)
+                with open(self.last_run_file, "w") as fd:
+                    fd.write(str(datetime.datetime.now(tz.tzutc())))
+
+        return synchronized()
