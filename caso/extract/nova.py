@@ -76,12 +76,16 @@ class OpenStackExtractor(base.BaseExtractor):
                           "file or set the correct properties in the "
                           "flavor." % flavor)
 
+        server_start = dateutil.parser.parse(server.created)
+        server_start = server_start.replace(tzinfo=None)
+
         r = record.CloudRecord(server.id,
                                CONF.site_name,
                                server.name,
                                server.user_id,
                                server.tenant_id,
                                vo,
+                               start_time=server_start,
                                compute_service=CONF.service_name,
                                status=status,
                                image_id=image_id,
@@ -198,14 +202,13 @@ class OpenStackExtractor(base.BaseExtractor):
             records[instance_id].disk = usage["local_gb"]
 
             # Start time must be the time when the machine was created
-            started = server_start
-            records[instance_id].start_time = int(started.strftime("%s"))
+            started = records[instance_id].start_time
 
             # End time must ben the time when the machine was ended, but it may
             # be none
             if usage.get('ended_at', None) is not None:
                 ended = dateutil.parser.parse(usage["ended_at"])
-                records[instance_id].end_time = int(ended.strftime("%s"))
+                records[instance_id].end_time = ended
             else:
                 ended = None
 
