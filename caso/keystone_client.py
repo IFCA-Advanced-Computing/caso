@@ -41,4 +41,4 @@ def get_session(conf, project):
 def get_client(conf, project):
     """Return a client for Keystone."""
     sess = get_session(conf, project)
-    return ks_client_v3.Client(session=sess)
+    return ks_client_v3.Client(session=sess, interface='public')
