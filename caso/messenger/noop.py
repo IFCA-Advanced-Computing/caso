@@ -15,6 +15,7 @@
 # under the License.
 
 from oslo_log import log
+import six
 
 import caso.messenger
 
@@ -25,5 +26,5 @@ class NoopMessenger(caso.messenger.BaseMessenger):
     """Noop messenger that does nothing."""
     def push(self, records):
         """Push records to nowhere."""
-        for uuid, _ in records.iteritems():
+        for uuid, _ in six.iteritems(records):
             LOG.info("nooping %s" % uuid)

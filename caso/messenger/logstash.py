@@ -18,6 +18,7 @@ import socket
 
 from oslo_config import cfg
 from oslo_log import log
+import six
 
 from caso import exception
 import caso.messenger
@@ -52,7 +53,7 @@ class LogstashMessenger(caso.messenger.BaseMessenger):
         """Push records to logstash using tcp."""
         try:
             self.sock.connect((self.host, self.port))
-            for _, record in records.iteritems():
+            for _, record in six.iteritems(records):
                 self.sock.sendall(record.as_json() + "\n")
         except socket.error as e:
             raise exception.LogstashConnectionError(host=self.host,
