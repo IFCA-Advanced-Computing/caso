@@ -81,7 +81,13 @@ information.
 
 * If you are using the V3 identity API you can grant the user just the rights
   for listing the users adding the appropriate rules in the
-  ``/etc/keystone/policy.json``.
+  ``/etc/keystone/policy.json`` as follows. Replace the line::
+
+      "identity:list_users": "rule:admin_required",
+
+  with::
+
+      "identity:list_users": "rule:admin_required or role:accounting",
 
 cASO configuration
 ==================
