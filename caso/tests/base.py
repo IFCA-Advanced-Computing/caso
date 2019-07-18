@@ -18,7 +18,9 @@
 import os
 
 import fixtures
+from oslo_concurrency import lockutils
 from oslo_config import cfg
+from oslo_config import fixture as config_fixture
 import six
 import testtools
 
@@ -30,6 +32,8 @@ _TRUE_VALUES = ('True', 'true', '1', 'yes')
 class TestCase(testtools.TestCase):
 
     """Test case base class for all unit tests."""
+
+    REQUIRES_LOCKING = False
 
     def setUp(self):
         """Run before each test method to initialize test environment."""
@@ -55,6 +59,12 @@ class TestCase(testtools.TestCase):
             self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
 
         self.log_fixture = self.useFixture(fixtures.FakeLogger())
+
+        if self.REQUIRES_LOCKING:
+            lock_path = self.useFixture(fixtures.TempDir()).path
+            self.fixture = self.useFixture(
+                config_fixture.Config(lockutils.CONF))
+            self.fixture.config(lock_path=lock_path)
 
     def flags(self, **kw):
         """Override flag variables for a test."""

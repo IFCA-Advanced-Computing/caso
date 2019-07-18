@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import datetime
 import json
 import pprint
 
@@ -130,6 +131,56 @@ class CloudRecord(object):
                 if k in self._version_field_map[version]}
 
     @property
+    def wall_duration(self):
+        duration = None
+        if self._wall_duration is not None:
+            duration = self._wall_duration
+        elif None not in (self._start_time, self._end_time):
+            duration = (self.end_time - self.start_time).total_seconds()
+        return int(duration) if duration else duration
+
+    @wall_duration.setter
+    def wall_duration(self, value):
+        if value and not isinstance(value, (int, float)):
+            raise ValueError("Duration must be a number")
+        self._wall_duration = value
+
+    @property
+    def cpu_duration(self):
+        duration = None
+        if self._cpu_duration is not None:
+            duration = self._cpu_duration
+        elif self.wall_duration is not None and self.cpu_count:
+            duration = self.wall_duration * self.cpu_count
+        return int(duration) if duration else duration
+
+    @cpu_duration.setter
+    def cpu_duration(self, value):
+        if value and not isinstance(value, (int, float)):
+            raise ValueError("Duration must be a number")
+        self._cpu_duration = value
+
+    @property
+    def start_time(self):
+        return self._start_time
+
+    @start_time.setter
+    def start_time(self, value):
+        if value and not isinstance(value, datetime.datetime):
+            raise ValueError("Dates must be datetime.datetime objects")
+        self._start_time = value
+
+    @property
+    def end_time(self):
+        return self._end_time
+
+    @end_time.setter
+    def end_time(self, value):
+        if value and not isinstance(value, datetime.datetime):
+            raise ValueError("Dates must be datetime.datetime objects")
+        self._end_time = value
+
+    @property
     def map(self):
         d = {'VMUUID': self.uuid,
              'SiteName': self.site,
@@ -138,8 +189,10 @@ class CloudRecord(object):
              'LocalGroupId': self.group_id,
              'FQAN': self.fqan,
              'Status': self.status,
-             'StartTime': self.start_time,
-             'EndTime': self.end_time,
+             'StartTime': self.start_time and int(
+                 self.start_time.strftime("%s")
+             ),
+             'EndTime': self.end_time and int(self.end_time.strftime("%s")),
              'SuspendDuration': self.suspend_duration,
              'WallDuration': self.wall_duration,
              'CpuDuration': self.cpu_duration,

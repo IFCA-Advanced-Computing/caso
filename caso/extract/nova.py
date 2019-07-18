@@ -49,7 +49,11 @@ class OpenStackExtractor(base.BaseExtractor):
         return glanceclient.client.Client(2, session=session)
 
     def build_record(self, server, vo, images, flavors, users):
+        server_start = self._get_server_start(server)
+        server_end = self._get_server_end(server)
+
         status = self.vm_status(server.status)
+
         image_id = None
         if server.image:
             image = images.get(server.image['id'])
@@ -62,8 +66,12 @@ class OpenStackExtractor(base.BaseExtractor):
         if flavor:
             bench_name = flavor["extra"].get(CONF.benchmark_name_key)
             bench_value = flavor["extra"].get(CONF.benchmark_value_key)
+            memory = flavor["ram"]
+            cpu_count = flavor["vcpus"]
+            disk = flavor["disk"] + flavor["OS-FLV-EXT-DATA:ephemeral"]
         else:
             bench_name = bench_value = None
+            memory = cpu_count = disk = None
 
         if not all([bench_name, bench_value]):
             if any([bench_name, bench_value]):
@@ -82,13 +90,33 @@ class OpenStackExtractor(base.BaseExtractor):
                                server.user_id,
                                server.tenant_id,
                                vo,
+                               start_time=server_start,
+                               end_time=server_end,
                                compute_service=CONF.service_name,
                                status=status,
                                image_id=image_id,
                                user_dn=users.get(server.user_id, None),
                                benchmark_type=bench_name,
-                               benchmark_value=bench_value)
+                               benchmark_value=bench_value,
+                               memory=memory,
+                               cpu_count=cpu_count,
+                               disk=disk)
         return r
+
+    @staticmethod
+    def _get_server_start(server):
+        # We use created, as the start_time may change upon certain actions!
+        server_start = dateutil.parser.parse(server.created)
+        server_start = server_start.replace(tzinfo=None)
+        return server_start
+
+    @staticmethod
+    def _get_server_end(server):
+        server_end = server.__getattr__('OS-SRV-USG:terminated_at')
+        if server_end:
+            server_end = dateutil.parser.parse(server_end)
+            server_end = server_end.replace(tzinfo=None)
+        return server_end
 
     def extract_for_project(self, project, extract_from, extract_to):
         """Extract records for a project from given date querying nova.
@@ -124,18 +152,30 @@ class OpenStackExtractor(base.BaseExtractor):
 
         vo = self.voms_map.get(project)
 
-        # We cannot use 'changes-since' in the servers.list() API query, as it
-        # will only include changes that have changed its status after that
-        # date. However we cannot just get all the usages and then query
-        # server by server, as deleted servers are not returned  by this
-        # servers.get() call. What we do is the following:
+        # We cannot use just 'changes-since' in the servers.list() API query,
+        # as it will only include servers that have changed its status after
+        # that date. However we cannot just get all the usages and then query
+        # server by server, as deleted servers are not returned  by the usages
+        # call. Moreover, Nova resets the start_time after performing some
+        # actions on the server (rebuild, resize, rescue). If we use that time,
+        # we may get a drop in the wall time, as a server that has been resized
+        # in the middle of its lifetime will suddenly change its start_time
         #
-        # 1.- List all the deleted servers that changed after the start date
-        # 2.- Build the records for the period [start, end]
-        # 3.- Get all the usages
+        # Therefore, what we do is the following (hackish approach)
+        #
+        # 1.- List all the servers that changed its status after the start time
+        #     for the reporting period
+        # 2.- Build the records for the period [start, end] using those servers
+        # 3.- Get all the usages, being aware that the start time may be wrong
         # 4.- Iter over the usages and:
-        # 4.1.- get information for non deleted servers
-        # 4.2.- do nothing with deleted servers, as we collected in in step (2)
+        # 4.1.- get information for servers that are not returned by the query
+        #       in (1), for instance servers that have not changed it status.
+        #       We build then the records for those severs
+        # 4.2.- For all the servers, adjust the CPU, memory and disk resources
+        #       as the flavor may not exist, but we can get those resources
+        #       from the usages API.
+
+        # Lets start
 
         # 1.- List all the deleted servers from that period.
         servers = []
@@ -144,8 +184,7 @@ class OpenStackExtractor(base.BaseExtractor):
         # Use a marker and iter over results until we do not have more to get
         while True:
             aux = nova.servers.list(
-                search_opts={"changes-since": extract_from,
-                             "deleted": True},
+                search_opts={"changes-since": extract_from},
                 limit=limit,
                 marker=marker
             )
@@ -161,19 +200,39 @@ class OpenStackExtractor(base.BaseExtractor):
         # (we do this manually as we cannot limit the query to a period, only
         # changes after start date).
         for server in servers:
-            server_start = dateutil.parser.parse(server.created)
-            server_start = server_start.replace(tzinfo=None)
+
+            server_start = self._get_server_start(server)
+            server_end = self._get_server_end(server)
+
             # Some servers may be deleted before 'extract_from' but updated
             # afterwards
-            server_end = server.__getattr__('OS-SRV-USG:terminated_at')
-            if server_end:
-                server_end = dateutil.parser.parse(server_end)
-                server_end = server_end.replace(tzinfo=None)
             if (server_start > extract_to or
                     (server_end and server_end < extract_from)):
                 continue
+
             records[server.id] = self.build_record(server, vo, images,
                                                    flavors, users)
+
+            # Wall and CPU durations are absolute values, not deltas for the
+            # reporting period. The nova API only gives use the usages for the
+            # requested period, therefore we need to calculate the wall
+            # duration by ourselves, then multiply by the nr of CPUs to get the
+            # CPU duration.
+
+            # If the machine has not ended, report consumption until
+            # extract_to, otherwise get its consuption by substracting ended -
+            # started (done by the record).
+            if server_end is None or server_end > extract_to:
+                wall = extract_to - server_start
+                wall = int(wall.total_seconds())
+                records[server.id].wall_duration = wall
+                # If we are republishing, the machine reports status completed,
+                # but it is not True for this period, so we need to fake the
+                # status and remove the end time for the server
+                records[server.id].end_time = None
+
+                if records[server.id].status == "completed":
+                    records[server.id].status = self.vm_status("active")
 
         # 3.- Get all the usages for the period
         start = extract_from
@@ -186,47 +245,50 @@ class OpenStackExtractor(base.BaseExtractor):
             if usage["instance_id"] not in records:
                 server = nova.servers.get(usage["instance_id"])
 
-                server_start = dateutil.parser.parse(server.created)
-                server_start = server_start.replace(tzinfo=None)
+                server_start = self._get_server_start(server)
                 if server_start > extract_to:
                     continue
-                records[server.id] = self.build_record(server, vo, images,
-                                                       flavors, users)
-            instance_id = usage["instance_id"]
-            records[instance_id].memory = usage["memory_mb"]
-            records[instance_id].cpu_count = usage["vcpus"]
-            records[instance_id].disk = usage["local_gb"]
+                record = self.build_record(server, vo, images,
+                                           flavors, users)
 
-            # Start time must be the time when the machine was created
-            started = dateutil.parser.parse(usage["started_at"])
-            records[instance_id].start_time = int(started.strftime("%s"))
+                server_start = record.start_time
 
-            # End time must ben the time when the machine was ended, but it may
-            # be none
-            if usage.get('ended_at', None) is not None:
-                ended = dateutil.parser.parse(usage["ended_at"])
-                records[instance_id].end_time = int(ended.strftime("%s"))
-            else:
-                ended = None
+                # End time must ben the time when the machine was ended, but it
+                # may be none
+                if usage.get('ended_at', None) is not None:
+                    server_end = dateutil.parser.parse(usage["ended_at"])
+                    record.end_time = server_end
+                else:
+                    server_end = None
 
-            # Wall and CPU durations are absolute values, not deltas for the
-            # reporting period. The nova API only gives use the usages for the
-            # requested period, therefore we need to calculate the wall
-            # duration by ourselves, then multiply by the nr of CPUs to get the
-            # CPU duration.
+                # Wall and CPU durations are absolute values, not deltas for
+                # the reporting period. The nova API only gives use the usages
+                # for the requested period, therefore we need to calculate the
+                # wall duration by ourselves, then multiply by the nr of CPUs
+                # to get the CPU duration.
 
-            # If the machine has not ended, report consumption until
-            # extract_to, otherwise get its consuption by substracting ended -
-            # started.
-            if ended is not None and ended < extract_to:
-                wall = ended - started
-            else:
-                wall = extract_to - started
+                # If the machine has not ended, report consumption until
+                # extract_to, otherwise get its consuption by substracting
+                # ended - started (done by the record).
+                if server_end is None or server_end > extract_to:
+                    wall = extract_to - server_start
+                    wall = int(wall.total_seconds())
+                    record.wall_duration = wall
+                    # If we are republishing, the machine reports status
+                    # completed, but it is not True for this period, so we need
+                    # to fake the status
+                    if records[server.id].status == "completed":
+                        records[server.id].status = self.vm_status("active")
 
-            wall = int(wall.total_seconds())
-            records[instance_id].wall_duration = wall
+                cput = wall * usage["vcpus"]
+                record.cpu_duration = cput
 
-            cput = wall * usage["vcpus"]
-            records[instance_id].cpu_duration = cput
+                records[server.id] = record
+
+            # Adjust resources that may not be
+            record = records[usage["instance_id"]]
+            record.memory = usage["memory_mb"]
+            record.cpu_count = usage["vcpus"]
+            record.disk = usage["local_gb"]
 
         return records

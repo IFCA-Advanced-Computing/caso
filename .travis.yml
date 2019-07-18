@@ -10,6 +10,6 @@ script:
 
 env:
         - TOXENV=py27
-        - TOXENV=py34
+        - TOXENV=py36
         - TOXENV=pep8
         - TOXENV=coveralls
