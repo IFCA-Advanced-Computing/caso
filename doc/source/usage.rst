@@ -40,6 +40,57 @@ of time.  If not time zone is specified, UTC will be used.
    all your accounting). If this is your case, adjust the ``osapi_max_limit``
    to a larger value in ``/etc/nova/nova.conf``.
 
+Available options
+=================
+
+.. option:: --config-dir DIR
+
+  Path to a config directory to pull `*.conf` files from. This file set is
+  sorted, so as to provide a predictable parse order if individual options are
+  over-ridden. The set is parsed after the file(s) specified via previous
+  --config-file, arguments hence over-ridden options in the directory take
+  precedence.  This option must be set from the command-line.
+
+.. option:: --config-file PATH
+
+  Path to a config file to use. Multiple config files can be specified, with
+  values in later files taking precedence. Defaults to None. This option must
+  be set from the command-line.
+
+.. option:: --debug, -d
+
+  If set to true, the logging level will be set to DEBUG
+                        instead of the default INFO level.
+.. option:: --dry-run, --dry_run
+
+  Extract records but do not push records to SSM. This will not update the last
+  run date.
+
+.. option:: --extract-from EXTRACT_FROM, --extract_from EXTRACT_FROM
+
+   Extract records that have changed after this date.  This means that if a
+   record has started before this date, and it has changed after this date
+   (i.e. it is still running or it has ended) it will be reported. If it is not
+   set, extract records from last run. If it is set to None and last run file
+   is not present, it will extract records from the beginning of time. If no
+   time zone is specified, UTC will be used.
+
+.. option:: --extract-to EXTRACT_TO, --extract_to EXTRACT_TO
+
+   Extract record changes until this date. If it is not set, we use now. If a
+   server has ended after this date, it will be included, but the consuption
+   reported will end on this date. If no time zone is specified, UTC will be
+   used.
+.. option:: --extractor EXTRACTOR
+
+   Which extractor to use for getting the data. If you do not specify anything,
+   nova will be used. Allowed values: nova, ceilometer
+
+.. option:: --projects PROJECTS, --tenants PROJECTS
+
+   List of projects to extract accounting records from.
+
+
 Running as a cron job
 ---------------------
 
