@@ -21,6 +21,7 @@ import uuid
 
 import dateutil.parser
 import mock
+import six
 
 from caso.extract import manager
 from caso.tests import base
@@ -47,22 +48,46 @@ class TestCasoManager(base.TestCase):
 
         with mock.patch.object(self.manager.extractor,
                                "extract_for_project") as m:
-            self.manager._extract("1999-12-19", "2015-10-23")
+            ret = self.manager.get_records()
             self.assertFalse(m.called)
-        self.assertEqual({}, self.manager.records)
+        self.assertEqual({}, ret)
 
     def test_extract(self):
         records = {uuid.uuid4().hex: None}
         self.flags(projects=["bazonk"])
+        extract_from = "1999-12-19"
+        extract_to = "2015-12-19"
+        self.flags(extract_from=extract_from)
+        self.flags(extract_to=extract_to)
 
-        with mock.patch.object(self.manager.extractor,
-                               "extract_for_project") as m:
+        if six.PY3:
+            builtins_open = 'builtins.open'
+        else:
+            builtins_open = '__builtin__.open'
+
+        with mock.patch(builtins_open) as fopen, \
+                mock.patch.object(self.manager.extractor,
+                                  "extract_for_project") as m:
+
+            aux = six.StringIO()
+            fopen.return_value.__enter__ = lambda x: aux
+            fopen.return_value.__exit__ = mock.Mock()
+
             m.return_value = records
-            self.manager._extract("1999-12-19", "2015-12-19")
-            m.assert_called_once_with("bazonk", "1999-12-19", "2015-12-19")
-        self.assertEqual(records, self.manager.records)
+            ret = self.manager.get_records()
+            m.assert_called_once_with(
+                "bazonk",
+                dateutil.parser.parse(extract_from),
+                dateutil.parser.parse(extract_to)
+            )
+            fopen.assert_called_once_with(
+                '/var/spool/caso/lastrun.bazonk',
+                'w'
+            )
+        self.assertEqual(records, ret)
 
     def test_get_records_wrong_extract_from(self):
+        self.flags(projects=["foo"])
         self.flags(extract_from="1999-12-99")
         self.assertRaises(ValueError,
                           self.manager.get_records)
@@ -72,31 +97,60 @@ class TestCasoManager(base.TestCase):
         self.assertRaises(ValueError,
                           self.manager.get_records)
 
-    def test_get_records_wrong_lastrun(self):
-        self.assertRaises(ValueError,
-                          self.manager.get_records,
-                          lastrun="1999-12-99")
-
-    def test_get_records_with_extract_from_and_to(self):
-        date = "1999-12-11"
-        end_date = "2015-12-11"
-        dt = dateutil.parser.parse(date)
-        parsed_end_date = dateutil.parser.parse(end_date)
-        self.flags(extract_from=date, extract_to=end_date)
-
-        with mock.patch.object(self.manager, "_extract") as m:
-            self.manager.get_records()
-            m.assert_called_with(dt, parsed_end_date)
-
     def test_get_records_with_lastrun(self):
-        date = "1999-12-11"
+        records = {uuid.uuid4().hex: None}
+        self.flags(dry_run=True)
+        self.flags(projects=["bazonk"])
+        lastrun = "1999-12-11"
+        extract_to = "2015-12-19"
+        self.flags(extract_to=extract_to)
 
-        dt = dateutil.parser.parse(date)
-        mock_now = datetime.datetime(2016, 4, 19, 15, 4, 14, 468060)
+        with mock.patch.object(self.manager.extractor,
+                               "extract_for_project") as m, \
+                mock.patch.object(self.manager, "get_lastrun") as m_lr:
 
-        with mock.patch.object(self.manager, "_extract") as m:
-            with mock.patch('caso.extract.manager.datetime') as MockDatetime:
-                MockDatetime.datetime.utcnow.return_value = mock_now
+            m_lr.return_value = lastrun
+            m.return_value = records
 
-                self.manager.get_records(lastrun=date)
-                m.assert_called_with(dt, mock_now)
+            ret = self.manager.get_records()
+
+            m_lr.assert_called_once_with("bazonk")
+            m.assert_called_once_with(
+                "bazonk",
+                dateutil.parser.parse(lastrun),
+                dateutil.parser.parse(extract_to)
+            )
+        self.assertEqual(records, ret)
+
+    def test_lastrun_exists(self):
+        expected = datetime.datetime(2014, 12, 10, 13, 10, 26, 664598)
+        aux = six.StringIO(str(expected))
+
+        if six.PY3:
+            builtins_open = 'builtins.open'
+        else:
+            builtins_open = '__builtin__.open'
+
+        with mock.patch("os.path.exists") as path, \
+                mock.patch(builtins_open) as fopen:
+            fopen.return_value.__enter__ = lambda x: aux
+            fopen.return_value.__exit__ = mock.Mock()
+            path.return_value = True
+
+            self.assertEqual(expected, self.manager.get_lastrun("foo"))
+
+    def test_lastrun_is_invalid(self):
+        aux = six.StringIO("foo")
+
+        if six.PY3:
+            builtins_open = 'builtins.open'
+        else:
+            builtins_open = '__builtin__.open'
+
+        with mock.patch("os.path.exists") as path:
+            with mock.patch(builtins_open) as fopen:
+                fopen.return_value.__enter__ = lambda x: aux
+                fopen.return_value.__exit__ = mock.Mock()
+                path.return_value = True
+
+                self.assertRaises(ValueError, self.manager.get_lastrun, "foo")

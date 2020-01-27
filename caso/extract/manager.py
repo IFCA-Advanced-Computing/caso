@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 import datetime
+import os.path
 
 import dateutil.parser
 from dateutil import tz
@@ -33,10 +34,6 @@ opts = [
     cfg.StrOpt('service_name',
                default='$site_name',
                help='Service name within the site'),
-    cfg.ListOpt('projects',
-                default=[],
-                deprecated_name='tenants',
-                help='List of projects to extract accounting records from.'),
     cfg.StrOpt('mapping_file',
                default='/etc/caso/voms.json',
                deprecated_group="extractor",
@@ -54,6 +51,10 @@ opts = [
 ]
 
 cli_opts = [
+    cfg.ListOpt('projects',
+                default=[],
+                deprecated_name='tenants',
+                help='List of projects to extract accounting records from.'),
     cfg.StrOpt('extract-to',
                deprecated_name='extract_to',
                help='Extract record changes until this date. '
@@ -92,47 +93,76 @@ class Manager(object):
         extractor_class = importutils.import_class(
             SUPPORTED_EXTRACTORS[CONF.extractor])
         self.extractor = extractor_class()
-        self.records = None
 
-    def _extract(self, extract_from, extract_to):
-        self.records = {}
-        for project in CONF.projects:
-            LOG.info("Extracting records for project '%s'" % project)
-            try:
-                records = self.extractor.extract_for_project(project,
-                                                             extract_from,
-                                                             extract_to)
-            except Exception:
-                records = []
-                LOG.exception("Cannot extract records for '%s'" % project)
-            else:
-                LOG.info("Extracted %d records for project '%s' from "
-                         "%s to %s" % (len(records), project, extract_from,
-                                       extract_to))
-            self.records.update(records)
+        self.last_run_base = os.path.join(CONF.spooldir, "lastrun")
 
-    def get_records(self, lastrun="1970-01-01"):
+    def get_lastrun(self, project):
+        lfile = "%s.%s" % (self.last_run_base, project)
+        if not os.path.exists(lfile):
+            LOG.warning("WARNING: Old global lastrun file detected and no "
+                        "project specific file found, using it for this run")
+            lfile = self.last_run_base
+
+        date = "1970-01-01"
+
+        if os.path.exists(lfile):
+            with open(lfile, "r") as fd:
+                date = fd.read()
+        else:
+            LOG.info("No lastrun file found, using '%s'" % date)
+        try:
+            date = dateutil.parser.parse(date)
+        except Exception:
+            LOG.error("ERROR: Could not read date from lastrun file '%s'" %
+                      lfile)
+            raise
+        else:
+            LOG.debug("Got '%s' from lastrun file '%s'" % (date, lfile))
+        return date
+
+    def write_lastrun(self, project):
+        if CONF.dry_run:
+            return
+        lfile = "%s.%s" % (self.last_run_base, project)
+        with open(lfile, "w") as fd:
+            fd.write(str(datetime.datetime.now(tz.tzutc())))
+
+    def get_records(self):
         """Get records from given date
-
-        :param lastrun: date to get records from (optional).
 
         If CONF.extract_from is present, it will be used instead of the
         lastrun parameter. If CONF.extract_to is present, it will be used
         instead of the extract_to parameter
         """
-        extract_from = CONF.extract_from or lastrun
         extract_to = CONF.extract_to or datetime.datetime.utcnow()
-
-        if isinstance(extract_from, six.string_types):
-            extract_from = dateutil.parser.parse(extract_from)
         if isinstance(extract_to, six.string_types):
             extract_to = dateutil.parser.parse(extract_to)
-
-        if extract_from.tzinfo is None:
-            extract_from.replace(tzinfo=tz.tzutc())
         if extract_to.tzinfo is None:
             extract_to.replace(tzinfo=tz.tzutc())
 
-        if self.records is None:
-            self._extract(extract_from, extract_to)
-        return self.records
+        records = {}
+        for project in CONF.projects:
+            LOG.info("Extracting records for project '%s'" % project)
+
+            extract_from = CONF.extract_from or self.get_lastrun(project)
+            if isinstance(extract_from, six.string_types):
+                extract_from = dateutil.parser.parse(extract_from)
+            if extract_from.tzinfo is None:
+                extract_from.replace(tzinfo=tz.tzutc())
+
+            LOG.debug("Extracting records from '%s'" % extract_from)
+            LOG.debug("Extracting records to '%s'" % extract_to)
+            try:
+                records = self.extractor.extract_for_project(project,
+                                                             extract_from,
+                                                             extract_to)
+            except Exception:
+                LOG.exception("Cannot extract records for '%s', got "
+                              "the following exception: " % project)
+            else:
+                LOG.info("Extracted %d records for project '%s' from "
+                         "%s to %s" % (len(records), project, extract_from,
+                                       extract_to))
+                records.update(records)
+                self.write_lastrun(project)
+        return records

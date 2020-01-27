@@ -14,12 +14,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import datetime
 import os
 import os.path
 
-import dateutil.parser
-from dateutil import tz
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 
@@ -66,36 +63,18 @@ CONF.register_cli_opts(cli_opts)
 class Manager(object):
     def __init__(self):
         utils.makedirs(CONF.spooldir)
-        self.last_run_file = os.path.join(CONF.spooldir, "lastrun")
 
         self.extractor_manager = caso.extract.manager.Manager()
         self.messenger = caso.messenger.Manager()
 
         self.lock_path = CONF.lock_path
 
-    @property
-    def lastrun(self):
-        if os.path.exists(self.last_run_file):
-            with open(self.last_run_file, "r") as fd:
-                date = fd.read()
-        else:
-            date = "1970-01-01"
-
-        try:
-            date = dateutil.parser.parse(date)
-        except Exception:
-            # FIXME(aloga): raise a proper exception here
-            raise
-        return date
-
     def run(self):
         @lockutils.synchronized("caso_should_not_run_in_parallel",
                                 lock_path=self.lock_path, external=True)
         def synchronized():
-            records = self.extractor_manager.get_records(lastrun=self.lastrun)
+            records = self.extractor_manager.get_records()
             if not CONF.dry_run:
                 self.messenger.push_to_all(records)
-                with open(self.last_run_file, "w") as fd:
-                    fd.write(str(datetime.datetime.now(tz.tzutc())))
 
         return synchronized()
