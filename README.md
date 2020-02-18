@@ -1,5 +1,7 @@
 # caso
 
+<img src="https://github.com/IFCA/caso/blob/master/doc/source/static/caso.png" width="300">
+
 [![Travis](https://img.shields.io/travis/IFCA/caso.svg)](https://travis-ci.org/IFCA/caso)
 [![Coveralls](https://img.shields.io/coveralls/IFCA/caso.svg)](https://coveralls.io/github/IFCA/caso)
 [![PyPI](https://img.shields.io/pypi/v/caso.svg)](https://pypi.python.org/pypi/caso)
