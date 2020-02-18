@@ -65,7 +65,7 @@ LOG = log.getLogger(__name__)
 class Manager(object):
     def __init__(self):
         extractor = loading.get_available_extractors()[CONF.extractor]
-        self.extractor = extractor
+        self.extractor = extractor()
         self.records = None
         self.last_run_base = os.path.join(CONF.spooldir, "lastrun")
 
