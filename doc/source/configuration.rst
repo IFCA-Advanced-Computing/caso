@@ -111,11 +111,14 @@ of every option. You should check at least the following options:
   a site. This is used if you have several endpoints within your site.
 * ``projects`` (list value, default empty). List of the projects to extract
   records from.
-* ``messengers`` (list, default: ``caso.messenger.noop.NoopMessenger``). List
-  of the messengers to publish data to. Valid messenges are:
-    * ``caso.messenger.ssm.SSMMessengerV02`` for publishing APEL V0.2 records.
-    * ``caso.messenger.ssm.SSMMessengerV04`` for publishing APEL V0.4 records.
-    * ``caso.messenger.logstash.LogstashMessenger`` for publishing to Logstash.
+* ``messengers`` (list, default: ``noop``). List of the messengers to publish
+  data to. Records will be pushed to all these messengers, in order. Valid
+  messengers shipped with cASO are:
+    * ``ssm`` for publishing APEL V0.4 records.
+    * ``logstash`` for publishing to Logstash.
+    * ``noop`` do nothing at all.
+  Note that there might be other messengers available in the system if they are
+  registered into the ``caso.messenger`` entry point namespace.
 * ``mapping_file`` (default: ``/etc/caso/voms.json``). File containing the
   mapping from VOs to local projects as configured in Keystone-VOMS, in the
   form::

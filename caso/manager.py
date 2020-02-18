@@ -21,19 +21,25 @@ from oslo_concurrency import lockutils
 from oslo_config import cfg
 
 import caso.extract.manager
+from caso import loading
 import caso.messenger
 from caso import utils
 
 opts = [
-    cfg.ListOpt('messengers',
-                default=['caso.messenger.noop.NoopMessenger'],
-                help='List of messenger that will dispatch records. '
-                'valid values are %s' %
-                ["%s.%s" % (i.__module__, i.__name__)
-                 for i in caso.messenger.all_managers()]),
-    cfg.StrOpt('spooldir',
-               default='/var/spool/caso',
-               help='Spool directory.'),
+    cfg.ListOpt(
+        'messengers',
+        default=['noop'],
+        help='List of messengers that will dispatch records. '
+             'valid values are {}. You can specify more than '
+             'one messenger.'.format(
+                 ",".join(loading.get_available_messenger_names())
+        )
+    ),
+    cfg.StrOpt(
+        'spooldir',
+        default='/var/spool/caso',
+        help='Spool directory.'
+    ),
 ]
 
 override_lock = cfg.StrOpt(
@@ -64,12 +70,17 @@ class Manager(object):
     def __init__(self):
         utils.makedirs(CONF.spooldir)
 
-        self.extractor_manager = caso.extract.manager.Manager()
-        self.messenger = caso.messenger.Manager()
+        self.extractor_manager = None
+        self.messenger = None
 
         self.lock_path = CONF.lock_path
 
     def run(self):
+        # Load the managers here to have the config options loaded and
+        # available
+        self.extractor_manager = caso.extract.manager.Manager()
+        self.messenger = caso.messenger.Manager()
+
         @lockutils.synchronized("caso_should_not_run_in_parallel",
                                 lock_path=self.lock_path, external=True)
         def synchronized():

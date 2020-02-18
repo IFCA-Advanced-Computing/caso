@@ -41,7 +41,7 @@ CONF = cfg.CONF
 CONF.register_opts(opts, group="ssm")
 
 
-__all__ = ["SsmMessager", "SSMMessengerV02", "SSMMessengerV04"]
+__all__ = ["SsmMessenger", "SSMMessengerV02", "SSMMessengerV04"]
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -88,11 +88,11 @@ class SSMMessengerV04(_SSMBaseMessenger):
     version = "0.4"
 
 
-class SsmMessager(SSMMessengerV02):
+class SsmMessenger(SSMMessengerV02):
     def __init__(self):
         msg = ("Using deprecated caso.messenger.ssm.SsmMessager, "
                "please use caso.messenger.ssm.SSMMessengerV02 if you "
                "wish to continue usinf the 0.2 version of the record, "
                "or refer to the cASO documentation.")
         warnings.warn(msg, DeprecationWarning)
-        super(SsmMessager, self).__init__()
+        super(SsmMessenger, self).__init__()

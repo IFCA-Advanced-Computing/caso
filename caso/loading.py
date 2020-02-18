@@ -16,7 +16,22 @@
 
 import stevedore
 
+from caso import exception
+
 EXTRACTOR_NAMESPACE = "caso.extractors"
+MESSENGER_NAMESPACE = "caso.messenger"
+
+
+def _get_names(what):
+    mgr = stevedore.ExtensionManager(namespace=what)
+    return frozenset(mgr.names())
+
+
+def _get(what):
+    mgr = stevedore.ExtensionManager(namespace=what,
+                                     propagate_map_exceptions=True)
+
+    return dict(mgr.map(lambda ext: (ext.entry_point.name, ext.plugin)))
 
 
 def get_available_extractor_names():
@@ -25,8 +40,7 @@ def get_available_extractor_names():
     :returns: A list of names.
     :rtype: frozenset
     """
-    mgr = stevedore.ExtensionManager(namespace=EXTRACTOR_NAMESPACE)
-    return frozenset(mgr.names())
+    return _get_names(EXTRACTOR_NAMESPACE)
 
 
 def get_available_extractors():
@@ -36,7 +50,41 @@ def get_available_extractors():
               as the value.
     :rtype: dict
     """
-    mgr = stevedore.ExtensionManager(namespace=EXTRACTOR_NAMESPACE,
-                                     propagate_map_exceptions=True)
+    return _get(EXTRACTOR_NAMESPACE)
 
-    return dict(mgr.map(lambda ext: (ext.entry_point.name, ext.plugin)))
+
+def get_available_messenger_names():
+    """Get the names of all the messengers that are available on the system.
+
+    :returns: A list of names.
+    :rtype: frozenset
+    """
+    return _get_names(MESSENGER_NAMESPACE)
+
+
+def get_available_messengers():
+    """Retrieve all the messengers available on the system.
+
+    :returns: A dict with the entrypoint name as the key and the messenger
+              as the value.
+    :rtype: dict
+    """
+    return _get(MESSENGER_NAMESPACE)
+
+
+def get_enabled_messengers(names):
+    """Retrieve all the enabled messengers on the system.
+
+    :returns: An extension manager.
+    """
+
+    def cb(names):
+        raise exception.MessengerNotFound(names=",".join(list(names)))
+
+    mgr = stevedore.NamedExtensionManager(namespace=MESSENGER_NAMESPACE,
+                                          names=names,
+                                          name_order=True,
+                                          on_missing_entrypoints_callback=cb,
+                                          invoke_on_load=True,
+                                          propagate_map_exceptions=True)
+    return mgr

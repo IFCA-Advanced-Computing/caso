@@ -21,7 +21,7 @@ from oslo_log import log
 import six
 
 from caso import exception
-from caso import loadables
+from caso import loading
 
 CONF = cfg.CONF
 
@@ -35,31 +35,22 @@ class BaseMessenger(object):
         """Push the records."""
 
 
-class Manager(loadables.BaseLoader):
+class Manager(object):
     def __init__(self):
-        super(Manager, self).__init__(BaseMessenger)
-        self.messengers = None
-
-    def _load_messengers(self):
-        self.messengers = [i()
-                           for i in self.get_matching_classes(CONF.messengers)]
+        try:
+            self.mgr = loading.get_enabled_messengers(CONF.messengers)
+        except Exception as e:
+            # Capture exception so that we can continue working
+            LOG.error(e)
+            raise e
 
     def push_to_all(self, records):
-        if self.messengers is None:
-            self._load_messengers()
-
-        for m in self.messengers:
-            try:
-                m.push(records)
-            except exception.RecordVersionNotFound:
-                # Oops, a messenger is using a weird version, stop working
-                LOG.error("Messenger '%s' is using an unknown "
-                          "record version" % m.__class__.__name__)
-                raise
-            except Exception as e:
-                # Capture exception so that we can continue working
-                LOG.error(e)
-
-
-def all_managers():
-    return Manager().get_all_classes()
+        try:
+            self.mgr.map_method("push", records)
+        except exception.RecordVersionNotFound as e:
+            # Oops, a messenger is using a weird version, stop working
+            LOG.error("Messenger is using an unknown record version")
+            raise e
+        except Exception as e:
+            # Capture exception so that we can continue working
+            LOG.error(e)

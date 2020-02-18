@@ -4,12 +4,9 @@
 # From caso
 #
 
-# List of messenger that will dispatch records. valid values are
-# ['caso.messenger.noop.NoopMessenger',
-# 'caso.messenger.logstash.LogstashMessenger',
-# 'caso.messenger.ssm.SSMMessengerV02', 'caso.messenger.ssm.SSMMessengerV04',
-# 'caso.messenger.ssm.SsmMessager'] (list value)
-#messengers = caso.messenger.noop.NoopMessenger
+# List of messengers that will dispatch records. valid values are
+# ssm,logstash,noop. You can specify more than one messenger. (list value)
+#messengers = noop
 
 # Spool directory. (string value)
 #spooldir = /var/spool/caso

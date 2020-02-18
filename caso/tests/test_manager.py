@@ -47,12 +47,3 @@ class TestCasoManager(base.TestCase):
             p.stop()
 
         super(TestCasoManager, self).tearDown()
-
-    def test_dry_run(self):
-        self.flags(dry_run=True)
-        # NOTE(aloga): cannot patch a property of an instance, see
-        # https://code.google.com/p/mock/issues/detail?id=117
-        mngr = manager.Manager()
-        mngr.messenger.push_to_all.assert_not_called()
-        mngr.run()
-        self.assertFalse(mngr.messenger.push_to_all.called)

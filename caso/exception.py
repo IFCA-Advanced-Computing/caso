@@ -47,8 +47,8 @@ class RecordVersionNotFound(CasoException):
     msg_fmt = "Version %(version)s of accounting record could not be found."
 
 
-class ClassNotFound(CasoException):
-    msg_fmt = "Class %(class_name)s could not be found: %(exception)s."
+class MessengerNotFound(CasoException):
+    msg_fmt = "Messengers %(names)s could not be found."
 
 
 class LogstashConnectionError(CasoException):
