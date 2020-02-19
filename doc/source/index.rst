@@ -33,4 +33,5 @@ Contents:
 
    installation
    configuration
+   configuration-file
    usage

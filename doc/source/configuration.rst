@@ -19,8 +19,49 @@ Configuration
 OpenStack Configuration
 =======================
 
-Publishing benchmark information
---------------------------------
+Apart from configuring cASO, several actions need to be performed in your
+OpenStack installation in order to be able to extract accounting records.
+
+User credentials (required)
+---------------------------
+
+In the next section you will configure an OpenStack Keystone credentials in
+order to extract the records. The cASO user has to be a member of each of the
+projects (another option is to convert that user in an administrator, but the
+former option is a safer approach) for which it is extracting the accounting.
+Otherwise, ``cASO`` will not be able to get the usages and will fail.
+
+In order to do so, we are going to setup a new role ``accounting`` a new user
+``accounting``, adding it to each of the projects with that role::
+
+    openstack role create accounting
+    openstack user create --password <password> accounting
+    # For each of the projects, add the user with the accounting role
+    openstack role add --user accounting --project <project> accounting
+
+Moreover, this user needs access to Keystone so as to extract the users
+information. In this case, we can can grant the user just the rights for
+listing the users adding the appropriate rules in your
+``/etc/keystone/policy.json`` as follows. Replace the line::
+
+      "identity:list_users": "rule:admin_required",
+
+with::
+
+      "identity:list_users": "rule:admin_required or role:accounting",
+
+Recent Keystone versions leverage a ``/etc/keystone/policy-yaml`` file, if this
+is your case, substitute the line::
+
+   "identity:list_users": "rule:admin_required"
+
+with::
+
+   "identity:list_users": "rule:admin_required or role:accounting"
+
+
+Publishing benchmark information for OpenStack flavors (optional)
+-----------------------------------------------------------------
 
 Starting with the V0.4 of the accounting record it is possible to publish
 benchmark information. In order to do so, you need to add this information to
@@ -30,13 +71,13 @@ are two different values that need to be added to the flavor:
 * The benchmark name, indicated with the ``accounting:benchmark_name`` flavor property.
 * The benchmark value, indicated with the ``accounting:benchmark_value`` flavor property.
 
-So, if you are using HEPSPEC06 and the benchmark value is ``99`` for the flavor
-``m1.foo`` you should set this as follows::
+For example, if you are using HEPSPEC06 and the benchmark value is ``99`` for
+the flavor ``m1.foo``, the benchmark information is configured as follows::
 
-    openstack flavor set --property benchmark_name="HEPSPEC06" --property accounting:benchmark_value=99 m1.foo
+    openstack flavor set --property accounting:benchmark_name="HEPSPEC06" --property accounting:benchmark_value=99 m1.foo
 
-Using different keys
-~~~~~~~~~~~~~~~~~~~~
+Using different keys to specify bechmark information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you do not want to use cASO's default flavor properties ``accounting:benchmark_name`` and
 ``accounting:benchmark_value`` (for example because you are using different benchmark types
@@ -52,48 +93,12 @@ the ``benchmark_name_key`` ``benchkark_value_key`` in the configuration file.
     properties in cASO's configuration file, please include the complete name
     (i.e. ``scope:property``).
 
-
-User credentials
-----------------
-
-The user configured in the previous section has to be a member of each of the
-project (another option is to convert that user in an administrator, but the
-former option is a safer approach) for which it is extracting the accounting.
-Otherwise, ``cASO`` will not be able to get the usages and will fail::
-
-    openstack role create accounting
-    openstack user create --password <password> accounting
-    # For each of the projects, add the user with the accounting role
-    openstack role add --user accounting --project <project> accounting
-
-Also, this user needs access to Keystone so as to extract the users
-information.
-
-* If you are using the V2 identity API, you have to give admin rights to the
-  ``accounting`` user, editing the ``/etc/keystone/policy.json`` file and
-  replacing the line::
-
-      "admin_required": "role:admin or is_admin:1 or",
-
-  with::
-
-      "admin_required": "role:admin or is_admin:1 or role:accounting",
-
-* If you are using the V3 identity API you can grant the user just the rights
-  for listing the users adding the appropriate rules in the
-  ``/etc/keystone/policy.json`` as follows. Replace the line::
-
-      "identity:list_users": "rule:admin_required",
-
-  with::
-
-      "identity:list_users": "rule:admin_required or role:accounting",
-
 cASO configuration
 ==================
 
 ``cASO`` uses a config file (default at ``/etc/caso/caso.conf``) with several
-sections. A sample file is available at ``etc/caso/caso.conf.sample``.
+sections. A sample file is available at
+:download:`etc/caso/caso.conf.sample <static/caso.conf.sample>`.
 
 ``[DEFAULT]`` section
 ---------------------
@@ -114,19 +119,23 @@ of every option. You should check at least the following options:
 * ``messengers`` (list, default: ``noop``). List of the messengers to publish
   data to. Records will be pushed to all these messengers, in order. Valid
   messengers shipped with cASO are:
-    * ``ssm`` for publishing APEL V0.4 records.
-    * ``logstash`` for publishing to Logstash.
-    * ``noop`` do nothing at all.
+
+      * ``ssm`` for publishing APEL V0.4 records.
+      * ``logstash`` for publishing to Logstash.
+      * ``noop`` do nothing at all.
+
   Note that there might be other messengers available in the system if they are
   registered into the ``caso.messenger`` entry point namespace.
 * ``mapping_file`` (default: ``/etc/caso/voms.json``). File containing the
   mapping from VOs to local projects as configured in Keystone-VOMS, in the
   form::
+
     {
         "VO": {
             "projects": ["foo", "bar"],
         }
     }
+
 * ``benchmark_name_key`` and ``benchmark_value_key``. These two configuration
   options are used by ``cASO`` to retrieve the benchmark information form the
   OpenStack flavors.
@@ -140,7 +149,6 @@ connect to the OpenStack APIs. cASO leverages the `OpenStack keystoneauth
 authentication, so that it is possible to use any authentication plugin that is
 available there (so starting on version 1.0 of cASO it is possible to use the
 Keystone V3 API).
-
 
 .. important::
    You need to specify the ``auth_type`` that you want to use (normally
@@ -168,3 +176,16 @@ messenger. Available options:
 
 * ``host`` (default: ``localhost``), host of Logstash server.
 * ``port`` (default: ``5000``), Logstash server port.
+
+Other cASO configuration options
+--------------------------------
+
+For an exhaustive list of the defined options, please check the following page:
+
+.. toctree::
+   :maxdepth: 1
+   :titlesonly:
+
+   configuration-file
+
+
