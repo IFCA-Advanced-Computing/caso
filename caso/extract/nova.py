@@ -20,7 +20,6 @@ import dateutil.parser
 import glanceclient.client
 import novaclient.client
 import novaclient.exceptions
-#import neutronclient.v2_0.client
 
 from oslo_config import cfg
 from oslo_log import log
@@ -80,9 +79,6 @@ class OpenStackExtractor(base.BaseExtractor):
             bench_name = bench_value = None
             memory = cpu_count = disk = None
 
-        for name, value in server.addresses.items():
-             public_ips = [i for i in value if i["OS-EXT-IPS:type"] == "floating"]
-         
         if not all([bench_name, bench_value]):
             if any([bench_name, bench_value]):
                 LOG.warning("Benchmark for flavor %s not properly set" %
