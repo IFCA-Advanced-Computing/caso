@@ -36,6 +36,7 @@ CONF.import_opt("benchmark_value_key", "caso.extract.base")
 LOG = log.getLogger(__name__)
 
 
+
 class OpenStackExtractor(base.BaseExtractor):
     def __init__(self):
         super(OpenStackExtractor, self).__init__()
