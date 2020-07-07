@@ -76,7 +76,8 @@ class OpenStackExtractor(base.BaseExtractor):
             memory = cpu_count = disk = None
 
         for name, value in server.addresses.items():
-             public_ips = [i for i in value if i["OS-EXT-IPS:type"] == "floating"]
+             public_ips = [i for i in value
+                                 if i["OS-EXT-IPS:type"] == "floating"]
 
         if not all([bench_name, bench_value]):
             if any([bench_name, bench_value]):
