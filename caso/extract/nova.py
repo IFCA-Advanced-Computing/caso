@@ -107,11 +107,7 @@ class OpenStackExtractor(base.BaseExtractor):
                                memory=memory,
                                cpu_count=cpu_count,
                                disk=disk,
-<<<<<<< HEAD
                                public_ip_count=len(public_ips))
-=======
-                               public_ip_count = len(public_ips))
->>>>>>> 665867db9366785a0b986b700e118889d4c39a9e
 
         return r
 
