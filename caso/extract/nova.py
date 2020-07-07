@@ -106,8 +106,7 @@ class OpenStackExtractor(base.BaseExtractor):
                                benchmark_value=bench_value,
                                memory=memory,
                                cpu_count=cpu_count,
-                               disk=disk,
-                               public_ip_count=len(public_ips))
+                               disk=disk)
 
         return r
 
