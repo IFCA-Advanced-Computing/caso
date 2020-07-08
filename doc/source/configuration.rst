@@ -115,7 +115,10 @@ of every option. You should check at least the following options:
 * ``service_name`` (default value: ``$site_name``). Name of the service within
   a site. This is used if you have several endpoints within your site.
 * ``projects`` (list value, default empty). List of the projects to extract
-  records from.
+  records from. You can use either the project ID or the project name. We
+  recommend that you use the project ID, especially if you are using
+  domain-based authentication, as otherwise gathering the information might
+  fail.
 * ``messengers`` (list, default: ``noop``). List of the messengers to publish
   data to. Records will be pushed to all these messengers, in order. Valid
   messengers shipped with cASO are:
@@ -128,13 +131,16 @@ of every option. You should check at least the following options:
   registered into the ``caso.messenger`` entry point namespace.
 * ``mapping_file`` (default: ``/etc/caso/voms.json``). File containing the
   mapping from VOs to local projects as configured in Keystone-VOMS, in the
-  form::
+  following form::
 
     {
         "VO": {
             "projects": ["foo", "bar"],
         }
     }
+
+  Note that you have to use either the project ID or project name for the
+  mapping, as configured in the ``projects`` configuration variable.
 
 * ``benchmark_name_key`` and ``benchmark_value_key``. These two configuration
   options are used by ``cASO`` to retrieve the benchmark information form the

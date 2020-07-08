@@ -48,7 +48,7 @@ class OpenStackExtractor(base.BaseExtractor):
         session = keystone_client.get_session(CONF, project)
         return glanceclient.client.Client(2, session=session)
 
-    def build_record(self, server, vo, images, flavors, users):
+    def build_record(self, server, vo, images, flavors, user):
         server_start = self._get_server_start(server)
         server_end = self._get_server_end(server)
 
@@ -95,7 +95,7 @@ class OpenStackExtractor(base.BaseExtractor):
                                compute_service=CONF.service_name,
                                status=status,
                                image_id=image_id,
-                               user_dn=users.get(server.user_id, None),
+                               user_dn=user,
                                benchmark_type=bench_name,
                                benchmark_value=bench_value,
                                memory=memory,
@@ -149,7 +149,10 @@ class OpenStackExtractor(base.BaseExtractor):
         nova = self._get_nova_client(project)
         glance = self._get_glance_client(project)
         ks_client = self._get_keystone_client(project)
-        users = self._get_keystone_users(ks_client)
+
+        # Membership in keystone can be direct (a user belongs to a project) or
+        # via group membership.
+        users = {}
         project_id = nova.client.session.get_project_id()
 
         flavors = {}
@@ -220,8 +223,13 @@ class OpenStackExtractor(base.BaseExtractor):
                     (server_end and server_end < extract_from)):
                 continue
 
+            user = users.get(server.user_id, None)
+            if not user:
+                user = self._get_keystone_user(ks_client, server.user_id)
+                users[server.user_id] = user
+
             records[server.id] = self.build_record(server, vo, images,
-                                                   flavors, users)
+                                                   flavors, user)
 
             # Wall and CPU durations are absolute values, not deltas for the
             # reporting period. The nova API only gives use the usages for the
@@ -268,8 +276,14 @@ class OpenStackExtractor(base.BaseExtractor):
                 server_start = self._get_server_start(server)
                 if server_start > extract_to:
                     continue
+
+                user = users.get(server.user_id, None)
+                if not user:
+                    user = self._get_keystone_user(ks_client, server.user_id)
+                    users[server.user_id] = user
+
                 record = self.build_record(server, vo, images,
-                                           flavors, users)
+                                           flavors, user)
 
                 server_start = record.start_time
 

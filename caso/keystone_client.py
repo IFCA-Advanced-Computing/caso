@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from keystoneauth1 import exceptions
 from keystoneauth1 import loading
 from keystoneclient.v3 import client as ks_client_v3
 from oslo_config import cfg
@@ -32,10 +33,20 @@ opts = (loading.get_auth_common_conf_options() +
 
 def get_session(conf, project):
     """Get an auth session."""
+    # First try using project_id
     auth_plugin = loading.load_auth_from_conf_options(conf, CFG_GROUP,
-                                                      project_name=project)
-    return loading.load_session_from_conf_options(conf, CFG_GROUP,
+                                                      project_id=project)
+    sess = loading.load_session_from_conf_options(conf, CFG_GROUP,
                                                   auth=auth_plugin)
+    try:
+        sess.get_token()
+    except exceptions.Unauthorized:
+        auth_plugin = loading.load_auth_from_conf_options(conf, CFG_GROUP,
+                                                          project_name=project)
+        # Failure, now try project_name
+        sess = loading.load_session_from_conf_options(conf, CFG_GROUP,
+                                                      auth=auth_plugin)
+    return sess
 
 
 def get_client(conf, project):

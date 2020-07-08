@@ -109,10 +109,12 @@ class BaseExtractor(object):
         client = keystone_client.get_client(CONF, project)
         return client
 
-    def _get_keystone_users(self, ks_client):
-        project_id = ks_client.project_id
-        users = ks_client.users.list(project_id=project_id)
-        return {u.id: u.name for u in users}
+    def _get_keystone_user(self, ks_client, uuid):
+        try:
+            user = ks_client.users.get(user=uuid)
+            return user.name
+        except Exception:
+            return None
 
     def vm_status(self, status):
         """Return the status corresponding to the OpenStack status.
