@@ -35,3 +35,4 @@ Contents:
    configuration
    configuration-file
    usage
+   troubleshooting
