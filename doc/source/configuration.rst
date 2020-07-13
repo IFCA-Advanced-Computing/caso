@@ -123,7 +123,9 @@ of every option. You should check at least the following options:
   data to. Records will be pushed to all these messengers, in order. Valid
   messengers shipped with cASO are:
 
-      * ``ssm`` for publishing APEL V0.4 records.
+      * ``ssm`` for publishing APEL V0.2 records (deprecated).
+      * ``ssmv2`` for publishing APEL V0.2 records (deprecated).
+      * ``ssmv4`` for publishing APEL V0.3 records (current).
       * ``logstash`` for publishing to Logstash.
       * ``noop`` do nothing at all.
 
