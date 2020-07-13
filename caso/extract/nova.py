@@ -164,6 +164,9 @@ class OpenStackExtractor(base.BaseExtractor):
         records = {}
 
         vo = self.voms_map.get(project)
+        if vo is None:
+            LOG.warning("No mapping could be found for project '%s', "
+                        "please check mapping file!", project_id)
 
         # We cannot use just 'changes-since' in the servers.list() API query,
         # as it will only include servers that have changed its status after
