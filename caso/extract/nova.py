@@ -264,11 +264,11 @@ class OpenStackExtractor(base.BaseExtractor):
                 try:
                     server = nova.servers.get(usage["instance_id"])
                 except novaclient.exceptions.ClientException as e:
-                    LOG.error("Cannot get server '%s' from the Nova API, "
-                              "probably because it is an old VM that whose "
-                              "metadata is wrong in the DB. There will be no "
-                              "record generated for this VM. " %
-                              usage["instance_id"])
+                    LOG.warning("Cannot get server '%s' from the Nova API, "
+                                "probably because it is an old VM that whose "
+                                "metadata is wrong in the DB. There will be "
+                                "no record generated for this VM. " %
+                                usage["instance_id"])
                     LOG.exception(e)
 
                     continue
