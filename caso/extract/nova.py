@@ -14,10 +14,12 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import ipaddress
 import operator
 
 import dateutil.parser
 import glanceclient.client
+import neutronclient.v2_0.client
 import novaclient.client
 import novaclient.exceptions
 from oslo_config import cfg
@@ -26,6 +28,7 @@ from oslo_log import log
 from caso.extract import base
 from caso import keystone_client
 from caso import record
+from datetime import datetime
 
 CONF = cfg.CONF
 
@@ -47,6 +50,10 @@ class OpenStackExtractor(base.BaseExtractor):
     def _get_glance_client(self, project):
         session = keystone_client.get_session(CONF, project)
         return glanceclient.client.Client(2, session=session)
+
+    def _get_neutron_client(self, project):
+        session = keystone_client.get_session(CONF, project)
+        return neutronclient.v2_0.client.Client(session=session)
 
     def build_record(self, server, vo, images, flavors, user):
         server_start = self._get_server_start(server)
@@ -103,6 +110,22 @@ class OpenStackExtractor(base.BaseExtractor):
                                disk=disk)
         return r
 
+    def build_ip_record(self, tenant_id, vo, user,
+                        ip_count, version, user_id=None):
+        measure_time = self._get_measure_time()
+
+        r = record.IPRecord(measure_time,
+                            CONF.site_name,
+                            user_id,
+                            tenant_id,
+                            user,
+                            vo,
+                            version,
+                            ip_count,
+                            compute_service=CONF.service_name)
+
+        return r
+
     @staticmethod
     def _get_server_start(server):
         # We use created, as the start_time may change upon certain actions!
@@ -128,6 +151,11 @@ class OpenStackExtractor(base.BaseExtractor):
             server_end = server_end.replace(tzinfo=None)
         return server_end
 
+    @staticmethod
+    def _get_measure_time():
+        measure_time = datetime.now()
+        return measure_time
+
     def extract_for_project(self, project, extract_from, extract_to):
         """Extract records for a project from given date querying nova.
 
@@ -148,6 +176,7 @@ class OpenStackExtractor(base.BaseExtractor):
         # Try and except here
         nova = self._get_nova_client(project)
         glance = self._get_glance_client(project)
+        neutron = self._get_neutron_client(project)
         ks_client = self._get_keystone_client(project)
 
         # Membership in keystone can be direct (a user belongs to a project) or
@@ -162,6 +191,9 @@ class OpenStackExtractor(base.BaseExtractor):
 
         images = {image.id: image for image in glance.images.list()}
         records = {}
+        ip_records = {}
+        ip_counts = {}
+        floatings = []
 
         vo = self.voms_map.get(project)
         if vo is None:
@@ -197,6 +229,7 @@ class OpenStackExtractor(base.BaseExtractor):
         servers = []
         limit = 200
         marker = None
+        ip = None
         # Use a marker and iter over results until we do not have more to get
         while True:
             aux = nova.servers.list(
@@ -230,9 +263,17 @@ class OpenStackExtractor(base.BaseExtractor):
             if not user:
                 user = self._get_keystone_user(ks_client, server.user_id)
                 users[server.user_id] = user
+                ip_counts[user] = 0
 
             records[server.id] = self.build_record(server, vo, images,
                                                    flavors, user)
+
+            for name, value in server.addresses.items():
+                for i in value:
+                    if i["OS-EXT-IPS:type"] == "floating":
+                        ip = i
+                        floatings.append(ip['addr'])
+                        ip_counts[user] += 1
 
             # Wall and CPU durations are absolute values, not deltas for the
             # reporting period. The nova API only gives use the usages for the
@@ -255,10 +296,32 @@ class OpenStackExtractor(base.BaseExtractor):
                 if records[server.id].status == "completed":
                     records[server.id].status = self.vm_status("active")
 
+        # list out keys and values separately
+        list_user_id = list(users.keys())
+        list_user_name = list(users.values())
+
+        ip_version = '4'
+        if ip is not None:
+            ip_version = ipaddress.ip_address(ip['addr']).version
+
+        for user, count in ip_counts.items():
+            user_id = list_user_id[list_user_name.index(user)]
+            if count == 0:
+                continue
+
+            ip_records[user] = self.build_ip_record(project_id,
+                                                    vo,
+                                                    user,
+                                                    count,
+                                                    ip_version,
+                                                    user_id=user_id)
+
         # 3.- Get all the usages for the period
         start = extract_from
         aux = nova.usage.get(project_id, start, extract_to)
         usages = getattr(aux, "server_usages", [])
+
+        floating_ips = neutron.list_floatingips(project_id)
 
         # 4.- Iter over the results and
         for usage in usages:
@@ -332,4 +395,22 @@ class OpenStackExtractor(base.BaseExtractor):
             record.cpu_count = usage["vcpus"]
             record.disk = usage["local_gb"]
 
-        return records
+        user = None
+        ip_counts[user] = 0
+        for floating_ip in floating_ips["floatingips"]:
+            ip = floating_ip["floating_ip_address"]
+            status = floating_ip["status"]
+            if ip not in floatings and status == "DOWN":
+                ip_start = datetime.strptime(floating_ip["created_at"],
+                                             '%Y-%m-%dT%H:%M:%SZ')
+                if ip_start > extract_to:
+                    continue
+                else:
+                    ip_counts[user] += 1
+
+        ip_records[user] = self.build_ip_record(project_id, vo,
+                                                user,
+                                                ip_counts[user],
+                                                ip_version)
+
+        return records, ip_records
