@@ -218,15 +218,15 @@ class CloudRecord(object):
 
 
 class IPRecord(object):
-    """The CloudRecord class holds information for each of the records.
+    """The IPRecord class holds information for each of the records.
 
-    This class is versioned, following the Cloud Accounting Record versions.
+    This class is versioned, following the Public IP Usage Record versions
+
     """
 
-    # Version 0.4: Add 0.4 fields
-    version = "0.4"
+    version = "0.2"
 
-    _V04_fields = [
+    _V02_fields = [
         "MeasurementTime",
         "SiteName",
         "CloudComputeService",
@@ -240,7 +240,7 @@ class IPRecord(object):
     ]
 
     _version_field_map = {
-        "0.4": _V04_fields
+        "0.2": _V02_fields,
     }
 
     def __init__(self, measure_time, site,
@@ -264,7 +264,7 @@ class IPRecord(object):
         return pprint.pformat(self.as_dict())
 
     def as_dict(self, version=None):
-        """Return CloudRecord as a dictionary.
+        """Return IPRecord as a dictionary.
 
         :param str version: optional, if passed it will format the record
                             acording to that account record version

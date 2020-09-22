@@ -296,7 +296,7 @@ class OpenStackExtractor(base.BaseExtractor):
                 if records[server.id].status == "completed":
                     records[server.id].status = self.vm_status("active")
 
-        # list out keys and values separately
+        # Build IP records for each of the users
         list_user_id = list(users.keys())
         list_user_name = list(users.values())
 
@@ -395,12 +395,14 @@ class OpenStackExtractor(base.BaseExtractor):
             record.cpu_count = usage["vcpus"]
             record.disk = usage["local_gb"]
 
+        # Build records for IPs not assigned to any server,
+        # but allocated to project
         user = None
         ip_counts[user] = 0
         for floating_ip in floating_ips["floatingips"]:
             ip = floating_ip["floating_ip_address"]
             status = floating_ip["status"]
-            if ip not in floatings and status == "DOWN":
+            if (ip not in floatings) and (status == "DOWN"):
                 ip_start = datetime.strptime(floating_ip["created_at"],
                                              '%Y-%m-%dT%H:%M:%SZ')
                 if ip_start > extract_to:
