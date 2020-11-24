@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Add multi-region support in order to extract information from several 
+    regions through different configuration files.

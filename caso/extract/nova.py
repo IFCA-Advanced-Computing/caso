@@ -32,6 +32,17 @@ from datetime import datetime
 
 CONF = cfg.CONF
 
+opts = [
+    cfg.StrOpt('region_name',
+               default=None,
+               help='OpenStack Region to use. This option will force cASO to '
+                    'extract records from a specific OpenStack Region, in '
+                    'there are several defined in the OpenStack site. '
+                    'Defaults to None.')
+]
+
+CONF.register_opts(opts)
+
 CONF.import_opt("site_name", "caso.extract.base")
 CONF.import_opt("benchmark_name_key", "caso.extract.base")
 CONF.import_opt("benchmark_value_key", "caso.extract.base")
@@ -44,8 +55,10 @@ class OpenStackExtractor(base.BaseExtractor):
         super(OpenStackExtractor, self).__init__()
 
     def _get_nova_client(self, project):
+        region_name = CONF.region_name
         session = keystone_client.get_session(CONF, project)
-        return novaclient.client.Client(2, session=session)
+        return novaclient.client.Client(2, session=session,
+                                        region_name=region_name)
 
     def _get_glance_client(self, project):
         session = keystone_client.get_session(CONF, project)
