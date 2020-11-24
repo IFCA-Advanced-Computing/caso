@@ -29,9 +29,15 @@ from caso import record
 
 CONF = cfg.CONF
 
+opts = [
+    cfg.StrOpt('region_name',
+               help='REGION to be claimed'),
+]
+
 CONF.import_opt("site_name", "caso.extract.base")
 CONF.import_opt("benchmark_name_key", "caso.extract.base")
 CONF.import_opt("benchmark_value_key", "caso.extract.base")
+CONF.import_opt("region_name", "caso.extract.base")
 
 LOG = log.getLogger(__name__)
 
@@ -41,8 +47,9 @@ class OpenStackExtractor(base.BaseExtractor):
         super(OpenStackExtractor, self).__init__()
 
     def _get_nova_client(self, project):
+        region_name = CONF.region_name
         session = keystone_client.get_session(CONF, project)
-        return novaclient.client.Client(2, session=session)
+        return novaclient.client.Client(2, session=session, region_name=region_name)
 
     def _get_glance_client(self, project):
         session = keystone_client.get_session(CONF, project)
