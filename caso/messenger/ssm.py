@@ -23,6 +23,7 @@ from oslo_log import log
 import six
 
 import caso.messenger
+import caso.record
 from caso import utils
 
 LOG = log.getLogger(__name__)
@@ -58,26 +59,40 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
         if not records:
             return
 
-        entries = []
+        entries_cloud = []
+        entries_ip = []
         for _, record in six.iteritems(records):
-            aux = ""
-            for k, v in six.iteritems(record.as_dict(version=self.version)):
-                if v is not None:
-                    aux += "%s: %s\n" % (k, v)
-            entries.append(aux)
+            if isinstance(record, caso.record.CloudRecord):
+                aux = ""
+                for k, v in six.iteritems(record.as_dict(
+                                          version=self.version)):
+                    if v is not None:
+                        aux += "%s: %s\n" % (k, v)
+                entries_cloud.append(aux)
+            else:
+                entries_ip.append(record.as_json(version=self.version))
 
-        # FIXME(aloga): try except here
-        queue = dirq.QueueSimple.QueueSimple(CONF.ssm.output_path)
+            # FIXME(aloga): try except here
+            queue = dirq.QueueSimple.QueueSimple(CONF.ssm.output_path)
 
-        # Divide message into smaller chunks as per GGUS #143436
-        # https://ggus.eu/index.php?mode=ticket_info&ticket_id=143436
-        for i in range(0, len(entries), CONF.ssm.max_size):
-            message = "%s\n" % self.header
+            # Divide message into smaller chunks as per GGUS #143436
+            # https://ggus.eu/index.php?mode=ticket_info&ticket_id=143436
+            for i in range(0, len(entries_cloud), CONF.ssm.max_size):
+                message = "%s\n" % self.header
 
-            sep = "%s\n" % self.separator
-            message += "%s" % sep.join(entries[i:i + CONF.ssm.max_size])
+                sep = "%s\n" % self.separator
+                message += "%s" % sep.join(entries_cloud[i:i +
+                                                         CONF.ssm.max_size])
 
-            queue.add(message)
+                queue.add(message)
+
+            # Send entries for IP record
+            for i in range(0, len(entries_ip), CONF.ssm.max_size):
+                message = "IP message v%s\n" % self.version
+
+                message += "%s\n" % entries_ip[i:i + CONF.ssm.max_size]
+
+                queue.add(message)
 
 
 class SSMMessengerV02(_SSMBaseMessenger):

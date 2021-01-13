@@ -224,7 +224,7 @@ class IPRecord(object):
 
     """
 
-    version = "0.2"
+    version = "0.4"
 
     _V02_fields = [
         "MeasurementTime",
@@ -240,7 +240,7 @@ class IPRecord(object):
     ]
 
     _version_field_map = {
-        "0.2": _V02_fields,
+        "0.4": _V02_fields,
     }
 
     def __init__(self, measure_time, site,
