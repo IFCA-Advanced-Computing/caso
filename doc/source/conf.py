@@ -26,6 +26,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'oslo_config.sphinxconfiggen',
     'oslo_config.sphinxext',
+    'reno.sphinxext',
 ]
 
 config_generator_config_file = '../../etc/caso/caso-config-generator.conf'

@@ -1,0 +1,20 @@
+---
+prelude: >
+    Starting with this version cASO release notes are published within the
+    documentation. This version is a major release that implements IP
+    accounting record, as well as several bugfixes. There are no upgrade notes
+    to take into account.
+features:
+  - |
+    New IP accounting record is implemented. Now cASO is able to extract IP
+    accounting and publish it using its JSON rendering. No new configuration
+    needs to be done, but the cASO user needs to have access to the Neutron
+    endpoints.
+  - |
+    cASO now allows to specity the projects to extract records from as project
+    IDs, rather than names. When dealing with different identity domains this
+    is troublesome, therefore we need to allow users to specify project IDs 
+    rather than names.
+fixes:
+  - Define the correct entrypoints for the V2 and V4 messengers.
+  - Generate LOG warnings when mappings cannot be found.

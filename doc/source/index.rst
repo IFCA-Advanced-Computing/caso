@@ -31,6 +31,7 @@ Contents:
 .. toctree::
    :maxdepth: 1
 
+   release-notes
    installation
    configuration
    configuration-file
