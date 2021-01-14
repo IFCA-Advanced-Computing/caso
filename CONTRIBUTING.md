@@ -135,7 +135,7 @@ Before you submit a pull request, check that it meets these guidelines:
    contain a set of commits with the functionality implemented and a set of
    other small fixes.
 4. The pull request should work for Python 3.6 onwards on Travis CI.
-5. Check https://travis-ci.org/IFCA/caso/pull_requests to ensure the tests pass
+5. Check https://travis-ci.com/github/IFCA/caso/pull_requests to ensure the tests pass
    for all supported Python versions and platforms.
 
 ### Coding Standards

@@ -2,7 +2,7 @@
 
 <img src="https://github.com/IFCA/caso/raw/master/doc/source/static/caso.png" width="300">
 
-[![Travis](https://img.shields.io/travis/IFCA/caso.svg)](https://travis-ci.org/IFCA/caso)
+[![Travis](https://img.shields.io/travis/IFCA/caso.svg)](https://travis-ci.com/github/IFCA/caso)
 [![Coveralls](https://img.shields.io/coveralls/IFCA/caso.svg)](https://coveralls.io/github/IFCA/caso)
 [![PyPI](https://img.shields.io/pypi/v/caso.svg)](https://pypi.python.org/pypi/caso)
 [![Python versions](https://img.shields.io/pypi/pyversions/caso.svg)](https://pypi.python.org/pypi/caso)
