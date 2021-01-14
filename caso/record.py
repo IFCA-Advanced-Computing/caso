@@ -215,3 +215,97 @@ class CloudRecord(object):
 
     def as_json(self, version=None):
         return json.dumps(self.as_dict(version=version))
+
+
+class IPRecord(object):
+    """The IPRecord class holds information for each of the records.
+
+    This class is versioned, following the Public IP Usage Record versions
+
+    """
+
+    version = "0.4"
+
+    _V02_fields = [
+        "MeasurementTime",
+        "SiteName",
+        "CloudComputeService",
+        "CloudType",
+        "LocalUser",
+        "LocalGroup",
+        "GlobalUserName",
+        "FQAN",
+        "IPVersion",
+        "IPCount",
+    ]
+
+    _version_field_map = {
+        "0.4": _V02_fields,
+    }
+
+    def __init__(self, measure_time, site,
+                 user_id, group_id, user_dn, fqan,
+                 ip_version, public_ip_count,
+                 cloud_type=caso.user_agent,
+                 compute_service=None):
+
+        self.measure_time = measure_time
+        self.site = site
+        self.cloud_type = cloud_type
+        self.user_id = user_id
+        self.group_id = group_id
+        self.user_dn = user_dn
+        self.fqan = fqan
+        self.compute_service = compute_service
+        self.ip_version = ip_version
+        self.public_ip_count = public_ip_count
+
+    def __repr__(self):
+        return pprint.pformat(self.as_dict())
+
+    def as_dict(self, version=None):
+        """Return IPRecord as a dictionary.
+
+        :param str version: optional, if passed it will format the record
+                            acording to that account record version
+
+        :returns: A dict containing the record.
+        """
+        if version is None:
+            version = self.version
+
+        if version not in self._version_field_map:
+            raise exception.RecordVersionNotFound(version=version)
+
+        return {k: v for k, v in self.map.items()
+                if k in self._version_field_map[version]}
+
+    @property
+    def measure_time(self):
+        return self._measure_time
+
+    @measure_time.setter
+    def measure_time(self, value):
+        if value and not isinstance(value, datetime.datetime):
+            raise ValueError("Dates must be datetime.datetime objects")
+        self._measure_time = value
+
+    @property
+    def map(self):
+        d = {'MeasurementTime': self.measure_time and int(
+             self.measure_time.strftime("%s")
+             ),
+             'SiteName': self.site,
+             'CloudType': self.cloud_type,
+             'LocalUserId': self.user_id,
+             'LocalGroupId': self.group_id,
+             'FQAN': self.fqan,
+             'GlobalUserName': self.user_dn,
+             'IPVersion': self.ip_version,
+             'IPCount': self.public_ip_count,
+             'CloudComputeService': self.compute_service,
+             }
+        return d
+
+    def as_json(self, version=None):
+        return json.dumps(self.as_dict(version=version))

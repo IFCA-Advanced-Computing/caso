@@ -112,7 +112,9 @@ class Manager(object):
         if extract_to.tzinfo is None:
             extract_to.replace(tzinfo=tz.tzutc())
 
-        all_records = {}
+        cloud_records = {}
+        ip_records_total = {}
+        extr = self.extractor
         for project in CONF.projects:
             LOG.info("Extracting records for project '%s'" % project)
 
@@ -125,9 +127,9 @@ class Manager(object):
             LOG.debug("Extracting records from '%s'" % extract_from)
             LOG.debug("Extracting records to '%s'" % extract_to)
             try:
-                records = self.extractor.extract_for_project(project,
-                                                             extract_from,
-                                                             extract_to)
+                records, ip_records = extr.extract_for_project(project,
+                                                               extract_from,
+                                                               extract_to)
             except Exception:
                 LOG.exception("Cannot extract records for '%s', got "
                               "the following exception: " % project)
@@ -135,6 +137,8 @@ class Manager(object):
                 LOG.info("Extracted %d records for project '%s' from "
                          "%s to %s" % (len(records), project, extract_from,
                                        extract_to))
-                all_records.update(records)
+
+                cloud_records.update(records)
+                ip_records_total.update(ip_records)
                 self.write_lastrun(project)
-        return all_records
+        return cloud_records, ip_records_total
