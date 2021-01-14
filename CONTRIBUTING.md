@@ -44,8 +44,7 @@ docs, in docstrings, or even on the web in blog posts, articles, and such.
 
 If you want to review your changes on the documentation locally, you can do::
 
-    pip install -r docs/requirements.txt
-    make servedocs
+    tox -edocs
 
 This will compile the documentation, open it in your browser and start
 watching the files for changes, recompiling as you save.
@@ -99,17 +98,27 @@ command::
 
     $ tox -e pep8
 
-6. Commit your changes and push your branch to GitHub::
+6. Include a release note describing your funcionality, using `reno`. In order
+   to do this issue the following command::
+
+    $ tox -e venv -- reno new <slug-for-release-notes>
+
+This command will create a YAML file under `releasenotes/` that you must edit
+accordingly. Please remove any section not relevant your change and do not
+forget to include this file in your commit. This will ease the generation of
+release notes automatically whenever a new release is created.
+
+7. Commit your changes and push your branch to GitHub::
 
     $ git add .
     $ git commit -m "Your detailed description of your changes."
     $ git push origin name-of-your-bugfix-or-feature
 
-7. Check that the test coverage hasn't dropped::
+8. Check that the test coverage hasn't dropped::
 
     $ tox -e cover
 
-8. Submit a pull request through the GitHub website.
+9. Submit a pull request through the GitHub website.
 
 
 ## Contributor Guidelines
@@ -120,10 +129,13 @@ Before you submit a pull request, check that it meets these guidelines:
 
 1. The pull request should include tests.
 2. If the pull request adds functionality, the docs should be updated. Put
-   your new functionality into a function with a docstring, and add the
-   feature to the list in README.rst.
-3. The pull request should work for Python 2.7, 3.4, 3.6 on Travis CI.
-4. Check https://travis-ci.org/IFCA/caso/pull_requests to ensure the tests pass
+   your new functionality into a function with a docstring.
+3. The feature should be self contained in a single commit, if possible. This
+   is not a hard requirement, but we try to avoid to merge pull requests that
+   contain a set of commits with the functionality implemented and a set of
+   other small fixes.
+4. The pull request should work for Python 3.6 onwards on Travis CI.
+5. Check https://travis-ci.org/IFCA/caso/pull_requests to ensure the tests pass
    for all supported Python versions and platforms.
 
 ### Coding Standards
