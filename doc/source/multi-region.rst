@@ -1,6 +1,6 @@
-============
+=========================
 cASO multi-region support
-============
+=========================
 
 * In case the monitored projects rely on a specific region, define the
   following variable in the /etc/caso/caso.conf

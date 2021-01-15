@@ -35,5 +35,6 @@ Contents:
    installation
    configuration
    configuration-file
+   multi-region
    usage
    troubleshooting
