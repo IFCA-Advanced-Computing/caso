@@ -15,6 +15,7 @@
 # under the License.
 
 import abc
+import json
 import warnings
 
 import dirq.QueueSimple
@@ -47,13 +48,26 @@ __all__ = ["SsmMessenger", "SSMMessengerV02", "SSMMessengerV04"]
 
 @six.add_metaclass(abc.ABCMeta)
 class _SSMBaseMessenger(caso.messenger.BaseMessenger):
-    version = None
-    separator = "%%"
+    compute_version = None
+    ip_version = None
 
     def __init__(self):
         # FIXME(aloga): try except here
         utils.makedirs(CONF.ssm.output_path)
-        self.header = "APEL-cloud-message: v%s" % self.version
+
+    def push_compute_message(self, queue, entries):
+        message = f"APEL-cloud-message: v{self.compute_version}\n"
+        aux = "%%\n".join(entries)
+        message += f"{aux}\n"
+        queue.add(message)
+
+    def push_ip_message(self, queue, entries):
+        message = {
+            "Type": "APEL Public IP message",
+            "Version": self.ip_version,
+            "UsageRecords": entries,
+        }
+        queue.add(json.dumps(message))
 
     def push(self, records):
         if not records:
@@ -65,42 +79,34 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
             if isinstance(record, caso.record.CloudRecord):
                 aux = ""
                 for k, v in six.iteritems(record.as_dict(
-                                          version=self.version)):
+                                          version=self.compute_version)):
                     if v is not None:
                         aux += "%s: %s\n" % (k, v)
                 entries_cloud.append(aux)
             else:
-                entries_ip.append(record.as_json(version=self.version))
+                entries_ip.append(record.as_dict(version=self.ip_version))
 
-            # FIXME(aloga): try except here
-            queue = dirq.QueueSimple.QueueSimple(CONF.ssm.output_path)
+        # FIXME(aloga): try except here
+        queue = dirq.QueueSimple.QueueSimple(CONF.ssm.output_path)
 
-            # Divide message into smaller chunks as per GGUS #143436
-            # https://ggus.eu/index.php?mode=ticket_info&ticket_id=143436
-            for i in range(0, len(entries_cloud), CONF.ssm.max_size):
-                message = "%s\n" % self.header
+        # Divide message into smaller chunks as per GGUS #143436
+        # https://ggus.eu/index.php?mode=ticket_info&ticket_id=143436
+        for i in range(0, len(entries_cloud), CONF.ssm.max_size):
+            entries = entries_cloud[i:i + CONF.ssm.max_size]
+            self.push_compute_message(queue, entries)
 
-                sep = "%s\n" % self.separator
-                message += "%s" % sep.join(entries_cloud[i:i +
-                                                         CONF.ssm.max_size])
-
-                queue.add(message)
-
-            # Send entries for IP record
-            for i in range(0, len(entries_ip), CONF.ssm.max_size):
-                message = "IP message v%s\n" % self.version
-
-                message += "%s\n" % entries_ip[i:i + CONF.ssm.max_size]
-
-                queue.add(message)
+        for i in range(0, len(entries_ip), CONF.ssm.max_size):
+            entries = entries_ip[i:i + CONF.ssm.max_size]
+            self.push_ip_message(queue, entries)
 
 
 class SSMMessengerV02(_SSMBaseMessenger):
-    version = "0.2"
+    compute_version = "0.2"
 
 
 class SSMMessengerV04(_SSMBaseMessenger):
-    version = "0.4"
+    compute_version = "0.4"
+    ip_version = "0.2"
 
 
 class SsmMessenger(SSMMessengerV02):

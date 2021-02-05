@@ -240,7 +240,7 @@ class IPRecord(object):
 
     """
 
-    version = "0.4"
+    version = "0.2"
 
     _V02_fields = [
         "MeasurementTime",
@@ -256,7 +256,7 @@ class IPRecord(object):
     ]
 
     _version_field_map = {
-        "0.4": _V02_fields,
+        "0.2": _V02_fields,
     }
 
     def __init__(
@@ -316,8 +316,8 @@ class IPRecord(object):
             ),
             'SiteName': self.site,
             'CloudType': self.cloud_type,
-            'LocalUserId': self.user_id,
-            'LocalGroupId': self.group_id,
+            'LocalUser': self.user_id,
+            'LocalGroup': self.group_id,
             'FQAN': self.fqan,
             'GlobalUserName': self.user_dn,
             'IPVersion': self.ip_version,
@@ -327,4 +327,5 @@ class IPRecord(object):
         return d
 
     def as_json(self, version=None):
+        print(self.map)
         return json.dumps(self.as_dict(version=version))
