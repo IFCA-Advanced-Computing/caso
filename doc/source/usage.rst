@@ -88,7 +88,7 @@ extract accountig records:
 .. option:: --extractor EXTRACTOR
 
    Which extractor to use for getting the data. If you do not specify anything,
-   nova will be used. Allowed values: nova, ceilometer
+   nova will be used. Allowed values: nova
 
 .. option:: --projects PROJECTS, --tenants PROJECTS
 

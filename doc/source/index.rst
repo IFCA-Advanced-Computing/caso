@@ -19,8 +19,8 @@ cASO, an OpenStack Accounting extractor
 
 ``cASO`` is an accounting reporter (currently supports `Cloud Accounting Usage Records
 <https://wiki.egi.eu/wiki/Fedcloud-tf:WorkGroups:Scenario4#Cloud_Accounting_Usage_Record>`_)
-for OpenStack deployments. ``cASO`` gets usage information from nova or
-ceilometer public APIs (no access to DB is required) and can generate valid
+for OpenStack deployments. ``cASO`` gets usage information from OpenStack
+public APIs (no access to DB is required) and can generate valid
 output for `Apel SSM <https://wiki.egi.eu/wiki/APEL>`_ or `logstash <http://logstash.net/>`_.
 
 .. image:: /static/caso-diagram.png
