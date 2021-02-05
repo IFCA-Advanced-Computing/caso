@@ -22,6 +22,7 @@ from oslo_config import cfg
 from oslo_log import log
 import six
 
+from caso.extract import base
 from caso import loading
 
 cli_opts = [
@@ -65,7 +66,7 @@ LOG = log.getLogger(__name__)
 class Manager(object):
     def __init__(self):
         extractor = loading.get_available_extractors()[CONF.extractor]
-        self.extractor = extractor()
+        self.extractor = extractor
         self.last_run_base = os.path.join(CONF.spooldir, "lastrun")
 
     def get_lastrun(self, project):
@@ -114,7 +115,6 @@ class Manager(object):
 
         cloud_records = {}
         ip_records_total = {}
-        extr = self.extractor
         for project in CONF.projects:
             LOG.info("Extracting records for project '%s'" % project)
 
@@ -127,9 +127,19 @@ class Manager(object):
             LOG.debug("Extracting records from '%s'" % extract_from)
             LOG.debug("Extracting records to '%s'" % extract_to)
             try:
-                records, ip_records = extr.extract_for_project(project,
-                                                               extract_from,
-                                                               extract_to)
+                if issubclass(self.extractor, base.BaseProjectExtractor):
+                    extractor = self.extractor(project)
+                    records, ip_records = extractor.extract(
+                        extract_from,
+                        extract_to
+                    )
+                else:
+                    extractor = self.extractor
+                    records, ip_records = extractor.extract_for_project(
+                        project,
+                        extract_from,
+                        extract_to
+                    )
             except Exception:
                 LOG.exception("Cannot extract records for '%s', got "
                               "the following exception: " % project)
