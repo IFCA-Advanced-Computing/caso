@@ -1,0 +1,7 @@
+---
+prelude: >
+  This version includes a refactoring of the base extractors, dropping support
+  for the ceilometer extractor that was unmaintained for a long period of time.
+upgrade:
+  - |
+    Ceilometer extractor is no longer supported.
