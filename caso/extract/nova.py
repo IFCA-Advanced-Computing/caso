@@ -173,6 +173,44 @@ class OpenStackExtractor(base.BaseExtractor):
         measure_time = datetime.now()
         return measure_time
 
+    def _get_servers(self, nova, extract_from):
+        servers = []
+        limit = 200
+        marker = None
+        # Use a marker and iter over results until we do not have more to get
+        while True:
+            aux = nova.servers.list(
+                search_opts={"changes-since": extract_from},
+                limit=limit,
+                marker=marker
+            )
+            servers.extend(aux)
+
+            if len(aux) < limit:
+                break
+            marker = aux[-1].id
+
+        servers = sorted(servers, key=operator.attrgetter("created"))
+        return servers
+
+    def _get_images(self, glance):
+        images = {image.id: image for image in glance.images.list()}
+        return images
+
+    def _get_flavors(self, nova):
+        flavors = {}
+        for flavor in nova.flavors.list():
+            flavors[flavor.id] = flavor.to_dict()
+            flavors[flavor.id]["extra"] = flavor.get_keys()
+        return flavors
+
+    def _get_vo(self, project):
+        vo = self.voms_map.get(project)
+        if vo is None:
+            LOG.warning("No mapping could be found for project '%s', "
+                        "please check mapping file!", project)
+        return vo
+
     def extract_for_project(self, project, extract_from, extract_to):
         """Extract records for a project from given date querying nova.
 
@@ -197,25 +235,20 @@ class OpenStackExtractor(base.BaseExtractor):
         ks_client = self._get_keystone_client(project)
 
         # Membership in keystone can be direct (a user belongs to a project) or
-        # via group membership.
+        # via group membership, therefore we cannot get a list directly. We
+        # will build this aftewards
         users = {}
+
         project_id = nova.client.session.get_project_id()
+        vo = self._get_vo(project)
 
-        flavors = {}
-        for flavor in nova.flavors.list():
-            flavors[flavor.id] = flavor.to_dict()
-            flavors[flavor.id]["extra"] = flavor.get_keys()
+        flavors = self._get_flavors(nova)
+        images = self._get_images(glance)
 
-        images = {image.id: image for image in glance.images.list()}
         records = {}
         ip_records = {}
         ip_counts = {}
         floatings = []
-
-        vo = self.voms_map.get(project)
-        if vo is None:
-            LOG.warning("No mapping could be found for project '%s', "
-                        "please check mapping file!", project_id)
 
         # We cannot use just 'changes-since' in the servers.list() API query,
         # as it will only include servers that have changed its status after
@@ -242,26 +275,9 @@ class OpenStackExtractor(base.BaseExtractor):
 
         # Lets start
 
-        # 1.- List all the deleted servers from that period.
-        servers = []
-        limit = 200
-        marker = None
         ip = None
-        # Use a marker and iter over results until we do not have more to get
-        while True:
-            aux = nova.servers.list(
-                search_opts={"changes-since": extract_from},
-                limit=limit,
-                marker=marker
-            )
-            servers.extend(aux)
-
-            if len(aux) < limit:
-                break
-            marker = aux[-1].id
-
-        servers = sorted(servers, key=operator.attrgetter("created"))
-
+        # 1.- List all the deleted servers from that period.
+        servers = self._get_servers(nova, extract_from)
         # 2.- Build the records for the period. Drop servers outside the period
         # (we do this manually as we cannot limit the query to a period, only
         # changes after start date).
