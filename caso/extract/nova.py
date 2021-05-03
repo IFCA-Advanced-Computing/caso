@@ -382,6 +382,9 @@ class OpenStackExtractor(base.BaseProjectExtractor):
                 if self.records[server.id].status == "completed":
                     self.records[server.id].status = self.vm_status("active")
 
+                cput = wall * self.records[server.id].cpu_count
+                self.records[server.id].cpu_duration = cput
+
     def _process_usages_for_period(self, usages, extract_from, extract_to):
         for usage in usages:
             # 4.1 and 4.2 Get the server if it is not yet there

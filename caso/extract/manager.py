@@ -15,6 +15,7 @@
 # under the License.
 import datetime
 import os.path
+import sys
 
 import dateutil.parser
 from dateutil import tz
@@ -106,11 +107,20 @@ class Manager(object):
         lastrun parameter. If CONF.extract_to is present, it will be used
         instead of the extract_to parameter
         """
-        extract_to = CONF.extract_to or datetime.datetime.utcnow()
+        now = datetime.datetime.utcnow()
+        extract_to = CONF.extract_to or now
+
         if isinstance(extract_to, six.string_types):
             extract_to = dateutil.parser.parse(extract_to)
         if extract_to.tzinfo is None:
             extract_to.replace(tzinfo=tz.tzutc())
+
+        if extract_to > now:
+            LOG.warning("The extract-to parameter is in the future, after "
+                        "current date and time, cASO will limit the record "
+                        "generation to the current date and time. "
+                        "(extract-to: %s)", extract_to)
+            extract_to = now
 
         all_records = {}
         for project in CONF.projects:
@@ -121,6 +131,13 @@ class Manager(object):
                 extract_from = dateutil.parser.parse(extract_from)
             if extract_from.tzinfo is None:
                 extract_from.replace(tzinfo=tz.tzutc())
+
+            if extract_from >= now:
+                LOG.error("Cannot extract records from the future, please "
+                          "check the extract-from parameter or the last run "
+                          "file for the project %s! (extract-from: %s)",
+                          project, extract_from)
+                sys.exit(1)
 
             LOG.debug("Extracting records from '%s'" % extract_from)
             LOG.debug("Extracting records to '%s'" % extract_to)
