@@ -36,6 +36,22 @@
 # (string value)
 #benchmark_value_key = accounting:benchmark_value
 
+# Metadata key used to retrieve the accelerator type from the flavor
+# properties. (string value)
+#accelerator_type_key = Accelerator:Type
+
+# Metadata key used to retrieve the accelerator model from the flavor
+# properties. (string value)
+#accelerator_model_key = Accelerator:Model
+
+# Metadata key used to retrieve the accelerator number from the flavor
+# properties. (string value)
+#accelerator_number_key = Accelerator:Number
+
+# Metadata key used to retrieve the accelerator vendor from the flavor
+# properties. (string value)
+#accelerator_vendor_key = Accelerator:Vendor
+
 # List of projects to extract accounting records from. (list value)
 # Deprecated group/name - [DEFAULT]/tenants
 #projects =

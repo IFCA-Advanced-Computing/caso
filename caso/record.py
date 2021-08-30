@@ -327,5 +327,118 @@ class IPRecord(object):
         return d
 
     def as_json(self, version=None):
-        print(self.map)
+        return json.dumps(self.as_dict(version=version))
+
+
+class AcceleratorRecord(object):
+    """The AcceleratorRecord class holds information for each of the records.
+
+    This class is versioned, following the Accelerator Usage Record versions
+
+    """
+
+    version = "0.1"
+
+    _V01_fields = [
+        "MeasurementMonth",
+        "MeasurementYear",
+        "AssociatedRecordType",
+        "AssociatedRecord",
+        "GlobalUserName",
+        "FQAN",
+        "SiteName",
+        "Count",
+        "Cores",
+        "ActiveDuration",
+        "AvailableDuration",
+        "BenchmarkType",
+        "Benchmark",
+        "Type",
+        "Model",
+    ]
+
+    _version_field_map = {
+        "0.1": _V01_fields,
+    }
+
+    def __init__(
+        self, uuid, fqan, site, count, available_duration, accelerator_type,
+        measurement_month, measurement_year,
+        associated_record_type="cloud",
+        user_dn=None,
+        cores=None,
+        active_duration=None,
+        benchmark_type=None,
+        benchmark=None,
+        model=None
+    ):
+        self.measurement_month = measurement_month
+        self.measurement_year = measurement_year
+        self.associated_record_type = associated_record_type
+        self.uuid = uuid
+        self.fqan = fqan
+        self.site = site
+        self.count = count
+        self.available_duration = available_duration
+        self.accelerator_type = accelerator_type
+        self.user_dn = user_dn
+        self.cores = cores
+        self._active_duration = active_duration
+        self.benchmark_type = benchmark_type
+        self.benchmark = benchmark
+        self.accelerator_type = self.accelerator_type
+        self.model = model
+
+    def __repr__(self):
+        return pprint.pformat(self.as_dict())
+
+    @property
+    def active_duration(self):
+        if self._active_duration is not None:
+            return self._active_duration
+        return self.available_duration
+
+    @active_duration.setter
+    def active_duration(self, value):
+        self._active_duration = value
+
+    def as_dict(self, version=None):
+        """Return AccountingRecord as a dictionary.
+
+        :param str version: optional, if passed it will format the record
+                            acording to that account record version
+
+        :returns: A dict containing the record.
+        """
+        if version is None:
+            version = self.version
+
+        if version not in self._version_field_map:
+            raise exception.RecordVersionNotFound(version=version)
+
+        return {k: v for k, v in self.map.items()
+                if k in self._version_field_map[version]}
+
+    @property
+    def map(self):
+        d = {
+            "MeasurementMonth": self.measurement_month,
+            "MeasurementYear": self.measurement_year,
+            "AssociatedRecordType": self.associated_record_type,
+            "AssociatedRecord": self.uuid,
+            "GlobalUserName": self.user_dn,
+            "FQAN": self.fqan,
+            "SiteName": self.site,
+            "Count": self.count,
+            "Cores": self.cores,
+            "ActiveDuration": self.active_duration,
+            "AvailableDuration": self.available_duration,
+            "BenchmarkType": self.benchmark_type,
+            "Benchmark": self.benchmark,
+            "Type": self.accelerator_type,
+            "Model": self.model,
+        }
+        return d
+
+    def as_json(self, version=None):
         return json.dumps(self.as_dict(version=version))

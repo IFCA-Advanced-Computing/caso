@@ -38,6 +38,22 @@ opts = [
                default='accounting:benchmark_value',
                help='Metadata key used to retrieve the benchmark value '
                     'from the flavor properties.'),
+    cfg.StrOpt('accelerator_type_key',
+               default='Accelerator:Type',
+               help='Metadata key used to retrieve the accelerator type '
+                    'from the flavor properties.'),
+    cfg.StrOpt('accelerator_model_key',
+               default='Accelerator:Model',
+               help='Metadata key used to retrieve the accelerator model '
+                    'from the flavor properties.'),
+    cfg.StrOpt('accelerator_number_key',
+               default='Accelerator:Number',
+               help='Metadata key used to retrieve the accelerator number '
+                    'from the flavor properties.'),
+    cfg.StrOpt('accelerator_vendor_key',
+               default='Accelerator:Vendor',
+               help='Metadata key used to retrieve the accelerator vendor '
+                    'from the flavor properties.'),
     cfg.ListOpt('projects',
                 default=[],
                 deprecated_name='tenants',

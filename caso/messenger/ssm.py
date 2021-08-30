@@ -23,6 +23,7 @@ from oslo_config import cfg
 from oslo_log import log
 import six
 
+import caso.exception
 import caso.messenger
 import caso.record
 from caso import utils
@@ -50,6 +51,7 @@ __all__ = ["SsmMessenger", "SSMMessengerV02", "SSMMessengerV04"]
 class _SSMBaseMessenger(caso.messenger.BaseMessenger):
     compute_version = None
     ip_version = None
+    acc_version = None
 
     def __init__(self):
         # FIXME(aloga): try except here
@@ -61,13 +63,21 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
         message += "%s\n" % aux
         queue.add(message)
 
-    def push_ip_message(self, queue, entries):
+    def push_json_message(self, queue, entries, msg_type, version):
         message = {
-            "Type": "APEL Public IP message",
-            "Version": self.ip_version,
+            "Type": msg_type,
+            "Version": version,
             "UsageRecords": entries,
         }
         queue.add(json.dumps(message))
+
+    def push_ip_message(self, queue, entries):
+        self.push_json_message(queue, entries, "APEL Public IP message",
+                               self.ip_version)
+
+    def push_acc_message(self, queue, entries):
+        self.push_json_message(queue, entries, "APEL GPU message",
+                               self.acc_version)
 
     def push(self, records):
         if not records:
@@ -75,6 +85,7 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
 
         entries_cloud = []
         entries_ip = []
+        entries_acc = []
         for _, record in six.iteritems(records):
             if isinstance(record, caso.record.CloudRecord):
                 aux = ""
@@ -83,8 +94,12 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
                     if v is not None:
                         aux += "%s: %s\n" % (k, v)
                 entries_cloud.append(aux)
-            else:
+            elif isinstance(record, caso.record.IPRecord):
                 entries_ip.append(record.as_dict(version=self.ip_version))
+            elif isinstance(record, caso.record.AcceleratorRecord):
+                entries_acc.append(record.as_dict(version=self.acc_version))
+            else:
+                raise caso.exception.CasoException("Unexpected record format!")
 
         # FIXME(aloga): try except here
         queue = dirq.QueueSimple.QueueSimple(CONF.ssm.output_path)
@@ -99,6 +114,10 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
             entries = entries_ip[i:i + CONF.ssm.max_size]
             self.push_ip_message(queue, entries)
 
+        for i in range(0, len(entries_acc), CONF.ssm.max_size):
+            entries = entries_acc[i:i + CONF.ssm.max_size]
+            self.push_acc_message(queue, entries)
+
 
 class SSMMessengerV02(_SSMBaseMessenger):
     compute_version = "0.2"
@@ -107,6 +126,7 @@ class SSMMessengerV02(_SSMBaseMessenger):
 class SSMMessengerV04(_SSMBaseMessenger):
     compute_version = "0.4"
     ip_version = "0.2"
+    acc_version = "0.1"
 
 
 class SsmMessenger(SSMMessengerV02):

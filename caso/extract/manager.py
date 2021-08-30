@@ -22,7 +22,6 @@ from oslo_config import cfg
 from oslo_log import log
 import six
 
-from caso.extract import base
 from caso import loading
 
 cli_opts = [
@@ -113,8 +112,7 @@ class Manager(object):
         if extract_to.tzinfo is None:
             extract_to.replace(tzinfo=tz.tzutc())
 
-        cloud_records = {}
-        ip_records_total = {}
+        all_records = {}
         for project in CONF.projects:
             LOG.info("Extracting records for project '%s'" % project)
 
@@ -127,28 +125,31 @@ class Manager(object):
             LOG.debug("Extracting records from '%s'" % extract_from)
             LOG.debug("Extracting records to '%s'" % extract_to)
             try:
-                if issubclass(self.extractor, base.BaseProjectExtractor):
-                    extractor = self.extractor(project)
-                    records, ip_records = extractor.extract(
-                        extract_from,
-                        extract_to
-                    )
-                else:
+                # duck typing here instead of guessing by subclass
+                if getattr(self.extractor, "extract_for_project", None):
                     extractor = self.extractor
-                    records, ip_records = extractor.extract_for_project(
+                    extracted_records = extractor.extract_for_project(
                         project,
                         extract_from,
                         extract_to
                     )
+                else:
+                    extractor = self.extractor(project)
+                    extracted_records = extractor.extract(
+                        extract_from,
+                        extract_to
+                    )
+                record_count = 0
+                for record_type, records in six.iteritems(extracted_records):
+                    current_records = all_records.get(record_type, dict())
+                    current_records.update(records)
+                    record_count += len(records)
+                    all_records[record_type] = current_records
             except Exception:
                 LOG.exception("Cannot extract records for '%s', got "
                               "the following exception: " % project)
             else:
                 LOG.info("Extracted %d records for project '%s' from "
-                         "%s to %s" % (len(records), project, extract_from,
+                         "%s to %s" % (record_count, project, extract_from,
                                        extract_to))
-
-                cloud_records.update(records)
-                ip_records_total.update(ip_records)
-                self.write_lastrun(project)
-        return cloud_records, ip_records_total
+        return all_records

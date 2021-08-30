@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Add support for GPU accounting, using the GPU 0.1 record agreed with APEL.
+

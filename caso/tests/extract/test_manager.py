@@ -47,46 +47,34 @@ class TestCasoManager(base.TestCase):
 
         with mock.patch.object(self.manager.extractor,
                                "extract_for_project") as m:
-            ret1, ret2 = self.manager.get_records()
+            ret = self.manager.get_records()
             self.assertFalse(m.called)
-        self.assertEqual({}, ret1)
-        self.assertEqual({}, ret2)
+        self.assertEqual(ret, {})
 
     def test_extract(self):
         records = {uuid.uuid4().hex: None}
         ip_records = {uuid.uuid4().hex: None}
+        acc_records = {}
         self.flags(projects=["bazonk"])
         extract_from = "1999-12-19"
         extract_to = "2015-12-19"
         self.flags(extract_from=extract_from)
         self.flags(extract_to=extract_to)
 
-        if six.PY3:
-            builtins_open = 'builtins.open'
-        else:
-            builtins_open = '__builtin__.open'
-
-        with mock.patch(builtins_open) as fopen, \
-                mock.patch.object(self.manager.extractor,
-                                  "extract_for_project") as m:
-
-            aux = six.StringIO()
-            fopen.return_value.__enter__ = lambda x: aux
-            fopen.return_value.__exit__ = mock.Mock()
-
-            m.return_value = [records, ip_records]
-            ret1, ret2 = self.manager.get_records()
+        with mock.patch.object(self.manager.extractor,
+                               "extract_for_project") as m:
+            m.return_value = {"cloud": records,
+                              "ip": ip_records,
+                              "acc": acc_records}
+            ret = self.manager.get_records()
             m.assert_called_once_with(
                 "bazonk",
                 dateutil.parser.parse(extract_from),
                 dateutil.parser.parse(extract_to)
             )
-            fopen.assert_called_once_with(
-                '/var/spool/caso/lastrun.bazonk',
-                'w'
-            )
-        self.assertEqual(records, ret1)
-        self.assertEqual(ip_records, ret2)
+        self.assertEqual(records, ret["cloud"])
+        self.assertEqual(ip_records, ret["ip"])
+        self.assertEqual(acc_records, ret["acc"])
 
     def test_get_records_wrong_extract_from(self):
         self.flags(projects=["foo"])
@@ -102,6 +90,7 @@ class TestCasoManager(base.TestCase):
     def test_get_records_with_lastrun(self):
         records = {uuid.uuid4().hex: None}
         ip_records = {uuid.uuid4().hex: None}
+        acc_records = {}
         self.flags(dry_run=True)
         self.flags(projects=["bazonk"])
         lastrun = "1999-12-11"
@@ -113,9 +102,11 @@ class TestCasoManager(base.TestCase):
                 mock.patch.object(self.manager, "get_lastrun") as m_lr:
 
             m_lr.return_value = lastrun
-            m.return_value = [records, ip_records]
+            m.return_value = {"cloud": records,
+                              "ip": ip_records,
+                              "acc": acc_records}
 
-            ret1, ret2 = self.manager.get_records()
+            ret = self.manager.get_records()
 
             m_lr.assert_called_once_with("bazonk")
             m.assert_called_once_with(
@@ -123,8 +114,9 @@ class TestCasoManager(base.TestCase):
                 dateutil.parser.parse(lastrun),
                 dateutil.parser.parse(extract_to)
             )
-        self.assertEqual(records, ret1)
-        self.assertEqual(ip_records, ret2)
+        self.assertEqual(records, ret["cloud"])
+        self.assertEqual(ip_records, ret["ip"])
+        self.assertEqual(acc_records, ret["acc"])
 
     def test_lastrun_exists(self):
         expected = datetime.datetime(2014, 12, 10, 13, 10, 26, 664598)

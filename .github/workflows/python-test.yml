@@ -1,0 +1,36 @@
+name: Python testing
+
+on: [push, pull_request]
+
+jobs:
+  pytest:
+    name: test python code
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Tox
+      run: pip install tox
+    - name: Run Tox
+      run: |
+        # Run tox using the version of Python in `PATH`
+        TOXENV=py$(echo ${{ matrix.python-version }} | sed 's/\.//') tox
+
+  pep8:
+    name: pep
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    - name: Install Tox
+      run: pip install tox
+    - name: Run Tox
+      run: |
+        TOXENV=pep8 tox

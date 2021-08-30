@@ -84,9 +84,9 @@ class Manager(object):
         @lockutils.synchronized("caso_should_not_run_in_parallel",
                                 lock_path=self.lock_path, external=True)
         def synchronized():
-            records, ip_records = self.extractor_manager.get_records()
+            all_records = self.extractor_manager.get_records()
             if not CONF.dry_run:
-                self.messenger.push_to_all(records)
-                self.messenger.push_to_all(ip_records)
+                for records in all_records.values():
+                    self.messenger.push_to_all(records)
 
         return synchronized()

@@ -19,6 +19,9 @@ import ipaddress
 import operator
 
 import dateutil.parser
+from dateutil.relativedelta import relativedelta
+from dateutil.rrule import MONTHLY
+from dateutil.rrule import rrule
 import glanceclient.client
 import neutronclient.v2_0.client
 import novaclient.client
@@ -47,6 +50,10 @@ CONF.register_opts(opts)
 CONF.import_opt("site_name", "caso.extract.base")
 CONF.import_opt("benchmark_name_key", "caso.extract.base")
 CONF.import_opt("benchmark_value_key", "caso.extract.base")
+CONF.import_opt("accelerator_model_key", "caso.extract.base")
+CONF.import_opt("accelerator_number_key", "caso.extract.base")
+CONF.import_opt("accelerator_type_key", "caso.extract.base")
+CONF.import_opt("accelerator_vendor_key", "caso.extract.base")
 
 LOG = log.getLogger(__name__)
 
@@ -117,6 +124,57 @@ class OpenStackExtractor(base.BaseProjectExtractor):
             return user.name
         except Exception:
             return None
+
+    def build_acc_records(self, server, server_record, extract_from,
+                          extract_to):
+        records = {}
+        flavor = self.flavors.get(server.flavor["id"])
+        if not flavor:
+            return records
+
+        acc_type = flavor["extra"].get(CONF.accelerator_type_key)
+        acc_model = flavor["extra"].get(CONF.accelerator_model_key)
+        acc_vendor = flavor["extra"].get(CONF.accelerator_vendor_key)
+        acc_count = flavor["extra"].get(CONF.accelerator_number_key)
+        if all([acc_type, acc_model, acc_count, acc_vendor]):
+            acc_model = " ".join([acc_vendor, acc_model])
+        else:
+            return records
+
+        # loop over the reported period and create one monthly record
+        # not just take extract_from/to but consider server start/end
+        start_date = max(server_record.start_time, extract_from)
+        from_month = datetime(start_date.year, start_date.month, 1)
+        if server_record.end_time:
+            end_date = min(server_record.end_time, extract_to)
+        else:
+            end_date = extract_to
+        to_month = datetime(end_date.year, end_date.month, 1)
+        for month in rrule(MONTHLY, dtstart=from_month, until=to_month):
+            record_start = max(month, server_record.start_time)
+            record_end = min(month + relativedelta(months=+1), extract_to)
+            if server_record.end_time:
+                record_end = min(record_end, server_record.end_time)
+            duration = (record_end - record_start).total_seconds()
+            if duration < 0:
+                # something weird happened, but don't send negative records
+                continue
+            month_record = record.AcceleratorRecord(
+                measurement_month=month.month,
+                measurement_year=month.year,
+                uuid=server_record.uuid,
+                fqan=server_record.fqan,
+                site=server_record.site,
+                count=acc_count,
+                available_duration=int(duration),
+                accelerator_type=acc_type,
+                user_dn=server_record.user_dn,
+                model=acc_model,
+            )
+            record_id = "%s-%s-%s" % (server_record.uuid,
+                                      month.month, month.year)
+            records[record_id] = month_record
+        return records
 
     def build_record(self, server):
         user = self.users[server.user_id]
@@ -298,6 +356,10 @@ class OpenStackExtractor(base.BaseProjectExtractor):
 
             self.records[server.id] = self.build_record(server)
             self._count_ips_on_server(server)
+            self.acc_records.update(
+                self.build_acc_records(server, self.records[server.id],
+                                       extract_from, extract_to)
+            )
 
             # Wall and CPU durations are absolute values, not deltas for the
             # reporting period. The nova API only gives use the usages for the
@@ -345,6 +407,10 @@ class OpenStackExtractor(base.BaseProjectExtractor):
                     continue
 
                 record = self.build_record(server)
+                acc_records = self.build_acc_records(server, record,
+                                                     extract_from, extract_to)
+                self.acc_records.update(acc_records)
+
                 self._count_ips_on_server(server)
 
                 server_start = record.start_time
@@ -448,6 +514,7 @@ class OpenStackExtractor(base.BaseProjectExtractor):
         # Our records
         self.records = {}
         self.ip_records = {}
+        self.acc_records = {}
 
         # We cannot use just 'changes-since' in the servers.list() API query,
         # as it will only include servers that have changed its status after
@@ -487,6 +554,8 @@ class OpenStackExtractor(base.BaseProjectExtractor):
         # 3.- Get all the usages for the period
         usages = self._get_usages(extract_from, extract_to)
         # 4.- Iter over the results and
+        # This one will also generate accelerator records if GPU flavors
+        # are found.
         self._process_usages_for_period(usages, extract_from, extract_to)
 
         # Now we have finished processing server and usages (i.e. we have all
@@ -495,4 +564,6 @@ class OpenStackExtractor(base.BaseProjectExtractor):
         self._process_ip_counts(self.ip_counts_v4, self.ip_counts_v6,
                                 extract_from, extract_to)
 
-        return self.records, self.ip_records
+        return {"cloud": self.records,
+                "ip": self.ip_records,
+                "acc": self.acc_records}
