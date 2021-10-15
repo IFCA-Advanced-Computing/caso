@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    Keystone versions from Ussuri onwards (>= 17.0.0) implement a new policy.
+    Please check the documentation so as to ensure that you are applying the
+    correct changes.

@@ -39,26 +39,31 @@ In order to do so, we are going to setup a new role ``accounting`` a new user
     # For each of the projects, add the user with the accounting role
     openstack role add --user accounting --project <project> accounting
 
-Moreover, this user needs access to Keystone so as to extract the users
+Policy modifications
+--------------------
+The accounting user needs access to Keystone so as to extract the users
 information. In this case, we can can grant the user just the rights for
-listing the users adding the appropriate rules in your
-``/etc/keystone/policy.json`` as follows. Replace the line::
+listing the users adding the appropriate rules in your policy configuration.
+The modifications in the policy depend on the Keystone version, please ensure
+that you are applying the correct changes.
 
-      "identity:list_users": "rule:admin_required",
+Keystone Versions from Ussuri onwards (version >= 17.0.0)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-with::
+You need to modify the ``identity:list_users`` policy in either your
+``/etc/keystone/policy.json`` or ``/etc/keystone/policy-yaml``, contaning the
+following policy rules::
 
-      "identity:list_users": "rule:admin_required or role:accounting",
+    "identity:list_users": "(role:admin) or (role:reader and domain_id:%(target.domain_id)s) or (role:accounting)"
 
-Recent Keystone versions leverage a ``/etc/keystone/policy-yaml`` file, if this
-is your case, substitute the line::
+Keystone Versions from until Train (version < 17.0.0)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   "identity:list_users": "rule:admin_required"
+You need to modify the ``identity:list_users`` policy in either your
+``/etc/keystone/policy.json`` or ``/etc/keystone/policy-yaml``, contaning the
+following policy rules::
 
-with::
-
-   "identity:list_users": "rule:admin_required or role:accounting"
-
+      "identity:list_users": "rule:admin_required or role:accounting"
 
 Publishing benchmark information for OpenStack flavors (optional)
 -----------------------------------------------------------------

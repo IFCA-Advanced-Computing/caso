@@ -61,6 +61,7 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
         message = "APEL-cloud-message: v%s\n" % self.compute_version
         aux = "%%\n".join(entries)
         message += "%s\n" % aux
+        message = message.encode("utf-8")
         queue.add(message)
 
     def push_json_message(self, queue, entries, msg_type, version):
