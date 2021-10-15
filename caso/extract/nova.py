@@ -23,6 +23,7 @@ from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY
 from dateutil.rrule import rrule
 import glanceclient.client
+import keystoneauth1.exceptions.http
 import neutronclient.v2_0.client
 import novaclient.client
 import novaclient.exceptions
@@ -122,7 +123,13 @@ class OpenStackExtractor(base.BaseProjectExtractor):
         try:
             user = self.keystone.users.get(user=uuid)
             return user.name
-        except Exception:
+        except keystoneauth1.exceptions.http.Forbidden as e:
+            LOG.error("Unauthorized to get user")
+            LOG.exception(e)
+            return None
+        except Exception as e:
+            LOG.debug("Exception while getting user")
+            LOG.exception(e)
             return None
 
     def build_acc_records(self, server, server_record, extract_from,

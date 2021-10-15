@@ -1,6 +1,16 @@
 ---
+fixes:
+  - | 
+    Fix an issue when getting the usernames, that caused configuration errors
+    to be unnoticed.
 other:
   - |
     Keystone versions from Ussuri onwards (>= 17.0.0) implement a new policy.
     Please check the documentation so as to ensure that you are applying the
     correct changes.
+upgrade:
+  - | 
+    Please ensure that you have the correct configuration in the policy files, 
+    as a new policy rule must be modified. The accounting user does not need to
+    have access to the "identity:list_users" action, but to the "identity:get_user"
+    action instead.

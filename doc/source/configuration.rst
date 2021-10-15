@@ -44,26 +44,27 @@ Policy modifications
 The accounting user needs access to Keystone so as to extract the users
 information. In this case, we can can grant the user just the rights for
 listing the users adding the appropriate rules in your policy configuration.
+Depending on your configuration, you need to modify the JSON policy file
+(``/etc/keystone/policy.json``) or the YAML policy file (``/etc/keystone/policy-yaml``).
 The modifications in the policy depend on the Keystone version, please ensure
-that you are applying the correct changes.
+that you are applying the correct changes as listed in the following table.
 
-Keystone Versions from Ussuri onwards (version >= 17.0.0)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You need to modify the ``identity:list_users`` policy in either your
-``/etc/keystone/policy.json`` or ``/etc/keystone/policy-yaml``, contaning the
-following policy rules::
-
-    "identity:list_users": "(role:admin) or (role:reader and domain_id:%(target.domain_id)s) or (role:accounting)"
-
-Keystone Versions from until Train (version < 17.0.0)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You need to modify the ``identity:list_users`` policy in either your
-``/etc/keystone/policy.json`` or ``/etc/keystone/policy-yaml``, contaning the
-following policy rules::
-
-      "identity:list_users": "rule:admin_required or role:accounting"
++-------------+------------------------------------------------------------------------------+
+|  OpenStack  |                                Policy contents                               |
+|   Version   |                                                                              |
++=============+==========+===================================================================+
+| From Stein  | Original | ``“identity:get_user”: “(role:reader and system_scope:all) or     |
+| (>= 15.0.0) |          | (role:reader and token.domain.id:%(target.user.domain_id)s) or    |
+|             |          | user_id:%(target.user.id)s”``                                     |
+|             +----------+-------------------------------------------------------------------+
+|             | Modified | ``“identity:get_user”: “(role:reader and system_scope:all) or     |
+|             |          | (role:reader and token.domain.id:%(target.user.domain_id)s) or    |
+|             |          | user_id:%(target.user.id)s or role:accounting”``                  |
++-------------+----------+-------------------------------------------------------------------+
+| Up to Rocky | Original | ``“identity:get_user”: “rule:admin_or_owner”``                    |
+| (<= 14.0.0) +----------+-------------------------------------------------------------------+
+|             | Modified | ``“identity:get_user”: “rule:admin_or_owner or role:accounting”`` |
++-------------+----------+-------------------------------------------------------------------+
 
 Publishing benchmark information for OpenStack flavors (optional)
 -----------------------------------------------------------------
