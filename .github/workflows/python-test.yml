@@ -1,36 +1,25 @@
 name: Python testing
 
-on: [push, pull_request]
+on:
+  - push
+  - pull_request
 
 jobs:
-  pytest:
-    name: test python code
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v1
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Tox
-      run: pip install tox
-    - name: Run Tox
+    - name: Install dependencies
       run: |
-        # Run tox using the version of Python in `PATH`
-        TOXENV=py$(echo ${{ matrix.python-version }} | sed 's/\.//') tox
-
-  pep8:
-    name: pep
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - name: Install Tox
-      run: pip install tox
-    - name: Run Tox
-      run: |
-        TOXENV=pep8 tox
+        python -m pip install --upgrade pip
+        pip install tox tox-gh-actions
+    - name: Test with tox
+      run: tox
