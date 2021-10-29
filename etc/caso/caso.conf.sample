@@ -5,7 +5,7 @@
 #
 
 # List of messengers that will dispatch records. valid values are
-# logstash,ssm,ssmv2,ssmv4,noop. You can specify more than one messenger. (list
+# logstash,ssmv4,noop,ssmv2,ssm. You can specify more than one messenger. (list
 # value)
 #messengers = noop
 
