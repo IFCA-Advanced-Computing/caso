@@ -123,6 +123,12 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
 class SSMMessengerV02(_SSMBaseMessenger):
     compute_version = "0.2"
 
+    def __init__(self):
+        msg = ("Using deprecated caso.messenger.ssm.SSMMessengerV02, "
+               "please use caso.messenger.ssm.SSMMessengerV04 instead.")
+        warnings.warn(msg, DeprecationWarning)
+        super(SSMMessengerV02, self).__init__()
+
 
 class SSMMessengerV04(_SSMBaseMessenger):
     compute_version = "0.4"
