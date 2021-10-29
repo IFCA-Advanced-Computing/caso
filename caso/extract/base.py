@@ -140,7 +140,7 @@ class BaseExtractor(object):
                 tenants.append(tenant)
                 projects = vomap.get("projects", tenants)
                 if not projects:
-                    LOG.warning("No project mapping found for VO %s" % vo)
+                    LOG.warning(f"No project mapping found for VO {vo}")
                 for project in projects:
                     self.voms_map[project] = vo
 
@@ -200,7 +200,7 @@ class BaseProjectExtractor(object):
                 tenants.append(tenant)
                 projects = vomap.get("projects", tenants)
                 if not projects:
-                    LOG.warning("No project mapping found for VO %s" % vo)
+                    LOG.warning(f"No project mapping found for VO {vo}")
                 for project in projects:
                     self.voms_map[project] = vo
 

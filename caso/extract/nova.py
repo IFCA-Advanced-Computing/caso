@@ -174,8 +174,7 @@ class OpenStackExtractor(base.BaseProjectExtractor):
                 user_dn=server_record.user_dn,
                 model=acc_model,
             )
-            record_id = "%s-%s-%s" % (server_record.uuid,
-                                      month.month, month.year)
+            record_id = f"{server_record.uuid}-{month.month}-{month.year}"
             records[record_id] = month_record
         return records
 
@@ -208,14 +207,12 @@ class OpenStackExtractor(base.BaseProjectExtractor):
 
         if not all([bench_name, bench_value]):
             if any([bench_name, bench_value]):
-                LOG.warning("Benchmark for flavor %s not properly set" %
-                            flavor)
+                LOG.warning(f"Benchmark for flavor {flavor} not properly set")
             else:
-                LOG.debug("Benchmark information for flavor %s not set,"
-                          "plase indicate the corret name_key and value_key "
+                LOG.debug(f"Benchmark information for flavor {flavor} not set,"
+                          " please indicate the corret name_key and value_key "
                           "in the [benchmark] section of the configuration "
-                          "file or set the correct properties in the "
-                          "flavor." % flavor)
+                          "file or set the correct properties in the flavor.")
 
         r = record.CloudRecord(
             server.id,
@@ -330,8 +327,8 @@ class OpenStackExtractor(base.BaseProjectExtractor):
     def _get_vo(self):
         vo = self.voms_map.get(self.project)
         if vo is None:
-            LOG.warning("No mapping could be found for project '%s', "
-                        "please check mapping file!", self.project)
+            LOG.warning("No mapping could be found for project "
+                        f"'{self.project}', please check mapping file!")
         return vo
 
     def _count_ips_on_server(self, server):
@@ -396,12 +393,12 @@ class OpenStackExtractor(base.BaseProjectExtractor):
                     server = self.nova.servers.get(usage["instance_id"])
                 except novaclient.exceptions.ClientException as e:
                     LOG.warning(
-                        "Cannot get server '%s' from the Nova API, probably "
+                        "Cannot get server '{}' from the Nova API, probably "
                         "because it is an error in the DB. Please refer to "
                         "the following page for more details: "
                         "https://caso.readthedocs.io/en/stable/"
-                        "troubleshooting.html#cannot-find-vm-in-api"
-                        % usage["instance_id"]
+                        "troubleshooting.html#cannot-find-vm-in-api".format(
+                            usage["instance_id"])
                     )
                     if CONF.debug:
                         LOG.exception(e)

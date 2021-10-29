@@ -60,7 +60,8 @@ class LogstashMessenger(caso.messenger.BaseMessenger):
                                                     port=self.port,
                                                     exception=e)
         else:
-            LOG.info("Sent %d records to logstash %s:%s" %
-                     (len(records), self.host, self.port))
+            LOG.info("Sent {} records to logstash {}:{}".format(len(records),
+                                                                self.host,
+                                                                self.port))
         finally:
             self.sock.close()

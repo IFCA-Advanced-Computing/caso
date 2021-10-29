@@ -70,7 +70,7 @@ class Manager(object):
         self.last_run_base = os.path.join(CONF.spooldir, "lastrun")
 
     def get_lastrun(self, project):
-        lfile = "%s.%s" % (self.last_run_base, project)
+        lfile = f"{self.last_run_base}.{project}"
         if not os.path.exists(lfile):
             LOG.warning("WARNING: Old global lastrun file detected and no "
                         "project specific file found, using it for this run")
@@ -82,21 +82,20 @@ class Manager(object):
             with open(lfile, "r") as fd:
                 date = fd.read()
         else:
-            LOG.info("No lastrun file found, using '%s'" % date)
+            LOG.info(f"No lastrun file found, using '{date}'")
         try:
             date = dateutil.parser.parse(date)
         except Exception:
-            LOG.error("ERROR: Could not read date from lastrun file '%s'" %
-                      lfile)
+            LOG.error(f"ERROR: Cannot read date from lastrun file '{lfile}'")
             raise
         else:
-            LOG.debug("Got '%s' from lastrun file '%s'" % (date, lfile))
+            LOG.debug(f"Got '{date}' from lastrun file '{lfile}'")
         return date
 
     def write_lastrun(self, project):
         if CONF.dry_run:
             return
-        lfile = "%s.%s" % (self.last_run_base, project)
+        lfile = f"{self.last_run_base}.{project}"
         with open(lfile, "w") as fd:
             fd.write(str(datetime.datetime.now(tz.tzutc())))
 
@@ -119,12 +118,12 @@ class Manager(object):
             LOG.warning("The extract-to parameter is in the future, after "
                         "current date and time, cASO will limit the record "
                         "generation to the current date and time. "
-                        "(extract-to: %s)", extract_to)
+                        f"(extract-to: {extract_to}")
             extract_to = now
 
         all_records = {}
         for project in CONF.projects:
-            LOG.info("Extracting records for project '%s'" % project)
+            LOG.info(f"Extracting records for project '{project}'")
 
             extract_from = CONF.extract_from or self.get_lastrun(project)
             if isinstance(extract_from, six.string_types):
@@ -135,12 +134,12 @@ class Manager(object):
             if extract_from >= now:
                 LOG.error("Cannot extract records from the future, please "
                           "check the extract-from parameter or the last run "
-                          "file for the project %s! (extract-from: %s)",
-                          project, extract_from)
+                          f"file for the project {project}!"
+                          f"(extract-from: {extract_from})")
                 sys.exit(1)
 
-            LOG.debug("Extracting records from '%s'" % extract_from)
-            LOG.debug("Extracting records to '%s'" % extract_to)
+            LOG.debug(f"Extracting records from '{extract_from}'")
+            LOG.debug(f"Extracting records to '{extract_to}'")
             try:
                 # duck typing here instead of guessing by subclass
                 if getattr(self.extractor, "extract_for_project", None):
@@ -163,10 +162,9 @@ class Manager(object):
                     record_count += len(records)
                     all_records[record_type] = current_records
             except Exception:
-                LOG.exception("Cannot extract records for '%s', got "
-                              "the following exception: " % project)
+                LOG.exception(f"Cannot extract records for '{project}', got "
+                              "the following exception: ")
             else:
-                LOG.info("Extracted %d records for project '%s' from "
-                         "%s to %s" % (record_count, project, extract_from,
-                                       extract_to))
+                LOG.info(f"Extracted {record_count} records for project "
+                         f"'{project}' from {extract_from} to {extract_to}")
         return all_records

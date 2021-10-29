@@ -30,27 +30,27 @@ class CasoException(Exception):
 
         if not message:
             try:
-                message = self.msg_fmt % kwargs
+                message = self.msg_fmt.format(**kwargs)
             except Exception:
                 exc_info = sys.exc_info()
                 # kwargs doesn't match a variable in the message
                 # log the issue and the kwargs
                 LOG.exception('Exception in string format operation')
                 for name, value in six.iteritems(kwargs):
-                    LOG.error("%s: %s" % (name, value))
+                    LOG.error("{name}: {value}")
                 six.reraise(exc_info[0], exc_info[1], exc_info[2])
 
         super(CasoException, self).__init__(message)
 
 
 class RecordVersionNotFound(CasoException):
-    msg_fmt = "Version %(version)s of accounting record could not be found."
+    msg_fmt = "Version {version} of accounting record could not be found."
 
 
 class MessengerNotFound(CasoException):
-    msg_fmt = "Messengers %(names)s could not be found."
+    msg_fmt = "Messengers {names} could not be found."
 
 
 class LogstashConnectionError(CasoException):
-    msg_fmt = ("Cannot send data to logstash %(host)s:%(port)s, "
-               "reason: %(exception)s")
+    msg_fmt = ("Cannot send data to logstash {host}:{port}, "
+               "reason: {exception}")

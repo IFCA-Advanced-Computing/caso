@@ -58,9 +58,9 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
         utils.makedirs(CONF.ssm.output_path)
 
     def push_compute_message(self, queue, entries):
-        message = "APEL-cloud-message: v%s\n" % self.compute_version
+        message = f"APEL-cloud-message: v{self.compute_version}\n"
         aux = "%%\n".join(entries)
-        message += "%s\n" % aux
+        message += f"{aux}\n"
         message = message.encode("utf-8")
         queue.add(message)
 
@@ -93,7 +93,7 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
                 for k, v in six.iteritems(record.as_dict(
                                           version=self.compute_version)):
                     if v is not None:
-                        aux += "%s: %s\n" % (k, v)
+                        aux += f"{k}: {v}\n"
                 entries_cloud.append(aux)
             elif isinstance(record, caso.record.IPRecord):
                 entries_ip.append(record.as_dict(version=self.ip_version))

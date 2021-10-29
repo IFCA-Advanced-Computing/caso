@@ -27,4 +27,4 @@ class NoopMessenger(caso.messenger.BaseMessenger):
     def push(self, records):
         """Push records to nowhere."""
         for uuid, _ in six.iteritems(records):
-            LOG.info("nooping %s" % uuid)
+            LOG.info(f"nooping {uuid}")
