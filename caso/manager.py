@@ -32,7 +32,7 @@ opts = [
         help='List of messengers that will dispatch records. '
              'valid values are {}. You can specify more than '
              'one messenger.'.format(
-                 ",".join(loading.get_available_messenger_names())
+                 ",".join(sorted(loading.get_available_messenger_names()))
         )
     ),
     cfg.StrOpt(
