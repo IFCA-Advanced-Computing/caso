@@ -5,7 +5,7 @@
 #
 
 # List of messengers that will dispatch records. valid values are
-# ssmv4,ssm,noop,logstash,ssmv2. You can specify more than one messenger. (list
+# logstash,ssm,ssmv2,ssmv4,noop. You can specify more than one messenger. (list
 # value)
 #messengers = noop
 
@@ -27,30 +27,6 @@
 
 # Service name within the site (string value)
 #service_name = $site_name
-
-# Metadata key used to retrieve the benchmark type from the flavor properties.
-# (string value)
-#benchmark_name_key = accounting:benchmark_type
-
-# Metadata key used to retrieve the benchmark value from the flavor properties.
-# (string value)
-#benchmark_value_key = accounting:benchmark_value
-
-# Metadata key used to retrieve the accelerator type from the flavor
-# properties. (string value)
-#accelerator_type_key = Accelerator:Type
-
-# Metadata key used to retrieve the accelerator model from the flavor
-# properties. (string value)
-#accelerator_model_key = Accelerator:Model
-
-# Metadata key used to retrieve the accelerator number from the flavor
-# properties. (string value)
-#accelerator_number_key = Accelerator:Number
-
-# Metadata key used to retrieve the accelerator vendor from the flavor
-# properties. (string value)
-#accelerator_vendor_key = Accelerator:Vendor
 
 # List of projects to extract accounting records from. (list value)
 # Deprecated group/name - [DEFAULT]/tenants
@@ -171,7 +147,7 @@
 #use_eventlog = false
 
 # The amount of time before the log files are rotated. This option is ignored
-# unless log_rotation_type is setto "interval". (integer value)
+# unless log_rotation_type is set to "interval". (integer value)
 #log_rotate_interval = 1
 
 # Rotation interval type. The time of the last file change (or the time when
@@ -250,6 +226,50 @@
 
 # Enables or disables fatal status of deprecations. (boolean value)
 #fatal_deprecations = false
+
+
+[accelerator]
+
+#
+# From caso
+#
+
+# Metadata key used to retrieve the accelerator type from the flavor
+# properties. (string value)
+# Deprecated group/name - [DEFAULT]/accelerator_type_key
+#type_key = Accelerator:Type
+
+# Metadata key used to retrieve the accelerator vendor from the flavor
+# properties. (string value)
+# Deprecated group/name - [DEFAULT]/accelerator_vendor_key
+#vendor_key = Accelerator:Vendor
+
+# Metadata key used to retrieve the accelerator model from the flavor
+# properties. (string value)
+# Deprecated group/name - [DEFAULT]/accelerator_model_key
+#model_key = Accelerator:Model
+
+# Metadata key used to retrieve the accelerator number from the flavor
+# properties. (string value)
+# Deprecated group/name - [DEFAULT]/accelerator_number_key
+#number_key = Accelerator:Number
+
+
+[benchmark]
+
+#
+# From caso
+#
+
+# Metadata key used to retrieve the benchmark type from the flavor properties.
+# (string value)
+# Deprecated group/name - [DEFAULT]/benchmark_name_key
+#name_key = accounting:benchmark_type
+
+# Metadata key used to retrieve the benchmark value from the flavor properties.
+# (string value)
+# Deprecated group/name - [DEFAULT]/benchmark_value_key
+#value_key = accounting:benchmark_value
 
 
 [keystone_auth]

@@ -49,12 +49,8 @@ opts = [
 CONF.register_opts(opts)
 
 CONF.import_opt("site_name", "caso.extract.base")
-CONF.import_opt("benchmark_name_key", "caso.extract.base")
-CONF.import_opt("benchmark_value_key", "caso.extract.base")
-CONF.import_opt("accelerator_model_key", "caso.extract.base")
-CONF.import_opt("accelerator_number_key", "caso.extract.base")
-CONF.import_opt("accelerator_type_key", "caso.extract.base")
-CONF.import_opt("accelerator_vendor_key", "caso.extract.base")
+CONF.import_group("benchmark", "caso.extract.base")
+CONF.import_group("accelerator", "caso.extract.base")
 
 LOG = log.getLogger(__name__)
 
@@ -139,10 +135,10 @@ class OpenStackExtractor(base.BaseProjectExtractor):
         if not flavor:
             return records
 
-        acc_type = flavor["extra"].get(CONF.accelerator_type_key)
-        acc_model = flavor["extra"].get(CONF.accelerator_model_key)
-        acc_vendor = flavor["extra"].get(CONF.accelerator_vendor_key)
-        acc_count = flavor["extra"].get(CONF.accelerator_number_key)
+        acc_type = flavor["extra"].get(CONF.accelerator.type_key)
+        acc_model = flavor["extra"].get(CONF.accelerator.model_key)
+        acc_vendor = flavor["extra"].get(CONF.accelerator.vendor_key)
+        acc_count = flavor["extra"].get(CONF.accelerator.number_key)
         if all([acc_type, acc_model, acc_count, acc_vendor]):
             acc_model = " ".join([acc_vendor, acc_model])
         else:
@@ -201,8 +197,8 @@ class OpenStackExtractor(base.BaseProjectExtractor):
 
         flavor = self.flavors.get(server.flavor["id"])
         if flavor:
-            bench_name = flavor["extra"].get(CONF.benchmark_name_key)
-            bench_value = flavor["extra"].get(CONF.benchmark_value_key)
+            bench_name = flavor["extra"].get(CONF.benchmark.name_key)
+            bench_value = flavor["extra"].get(CONF.benchmark.value_key)
             memory = flavor["ram"]
             cpu_count = flavor["vcpus"]
             disk = flavor["disk"] + flavor["OS-FLV-EXT-DATA:ephemeral"]
@@ -216,8 +212,8 @@ class OpenStackExtractor(base.BaseProjectExtractor):
                             flavor)
             else:
                 LOG.debug("Benchmark information for flavor %s not set,"
-                          "plase indicate the corret benchmark_name_key "
-                          "and benchmark_value_key in the configuration "
+                          "plase indicate the corret name_key and value_key "
+                          "in the [benchmark] section of the configuration "
                           "file or set the correct properties in the "
                           "flavor." % flavor)
 

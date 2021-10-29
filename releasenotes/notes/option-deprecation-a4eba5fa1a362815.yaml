@@ -1,0 +1,9 @@
+---
+deprecations:
+  - |
+    All the `benchmark_*` and `accelerator_` option definitions in the
+    `[DEFAULT]` section of the configuration file have been marked as
+    deprecated, and are now included in the individual `[benchmark]` and
+    `[acelerator]` sections, with the corresponding prefix (i.e. `benchmark_`
+    and `accelerator_`) removed. Check the sample configuration file for more
+    details.

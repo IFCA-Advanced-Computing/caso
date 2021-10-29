@@ -66,39 +66,6 @@ that you are applying the correct changes as listed in the following table.
 |             | Modified | ``“identity:get_user”: “rule:admin_or_owner or role:accounting”`` |
 +-------------+----------+-------------------------------------------------------------------+
 
-Publishing benchmark information for OpenStack flavors (optional)
------------------------------------------------------------------
-
-Starting with the V0.4 of the accounting record it is possible to publish
-benchmark information. In order to do so, you need to add this information to
-the flavor properties and configure caso to retrieve this information. There
-are two different values that need to be added to the flavor:
-
-* The benchmark name, indicated with the ``accounting:benchmark_name`` flavor property.
-* The benchmark value, indicated with the ``accounting:benchmark_value`` flavor property.
-
-For example, if you are using HEPSPEC06 and the benchmark value is ``99`` for
-the flavor ``m1.foo``, the benchmark information is configured as follows::
-
-    openstack flavor set --property accounting:benchmark_name="HEPSPEC06" --property accounting:benchmark_value=99 m1.foo
-
-Using different keys to specify bechmark information
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you do not want to use cASO's default flavor properties ``accounting:benchmark_name`` and
-``accounting:benchmark_value`` (for example because you are using different benchmark types
-and values) you can specify which properties ``cASO`` should look for by using
-the ``benchmark_name_key`` ``benchkark_value_key`` in the configuration file.
-
-.. important::
-
-    Please note that there is an OpenStack scheduler filter that removes hosts
-    based on flavor properties. In order to not interfere with the behaviour of
-    this filter you must prefix the property with a ``scope:`` so that cASO's
-    properties are not taken into account for this filtering. When adding these
-    properties in cASO's configuration file, please include the complete name
-    (i.e. ``scope:property``).
-
 cASO configuration
 ==================
 
@@ -202,4 +169,104 @@ For an exhaustive list of the defined options, please check the following page:
 
    configuration-file
 
+Additional (optional) configurations
+====================================
 
+Publishing benchmark information for OpenStack flavors (optional)
+-----------------------------------------------------------------
+
+cASO is able to publish benchmark information included in the accounting
+recors, in order to do CPU normalization at the accounting level.
+
+In order to do so, you need to add this information to the flavor properties
+and configure caso to retrieve this information. There are two different values
+that need to be added to the flavor
+
+.. list-table:: Default flavor properties used by cASO to publish benchmark
+   information
+   :header-rows: 1
+
+   * - Property
+     - Value
+
+   * - ``accounting:benchmark_name``
+     - Benchmark name (e.g. HEPSPEC06)
+
+   * - ``accounting:benchmark_value``
+     - Benchmark value (e.g. 99)
+
+For example, if you are using HEPSPEC06 and the benchmark value is ``99`` for
+the flavor ``m1.foo``, the benchmark information is configured as follows::
+
+    openstack flavor set --property accounting:benchmark_name="HEPSPEC06" --property accounting:benchmark_value=99 m1.foo
+
+Using different keys to specify bechmark information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you do not want to use cASO's default flavor properties
+``accounting:benchmark_name`` and ``accounting:benchmark_value`` (for example
+because you are using different benchmark types and values) you can specify
+which properties ``cASO`` should look for by using the ``name_key`` and
+``value_key`` in the ``[benchkmark]`` section of the configuration file.
+
+.. important::
+
+    Please note that there is an OpenStack scheduler filter that removes hosts
+    based on flavor properties. In order to not interfere with the behaviour of
+    this filter you must prefix the property with a ``scope:`` so that cASO's
+    properties are not taken into account for this filtering. When adding these
+    properties in cASO's configuration file, please include the complete name
+    (i.e. ``scope:property``).
+
+.. important:: Option deprecation
+
+    Please bear in mind that the old options ``benchmark_name_key`` and
+    ``benchmark_value_key`` in the ``[DEFAULT]`` configuration option are
+    marked as deprecated. Please update your configuration file as soon as
+    possible to avoid warnings.
+
+Publishing accelerator information for OpenStack accelerators (optional)
+------------------------------------------------------------------------
+
+Starting with cASO >= 3.0.0 it is possible to publish accelerator information
+using a new accounting record.
+
+In order to do so, you need to add this information to the flavor properties
+and configure caso to retrieve this information. There are different values
+that need to be added to the flavor:
+
+.. list-table:: Default flavor properties used by cASO to publish accelerator
+   information
+   :header-rows: 1
+
+   * - Flavor Property
+     - Value
+
+   * - Accelerator:Type
+     - The accelerator type (e.g. GPU))
+
+   * - Accelerator:Vendor
+     - Name of the accelerator vendor (e.g. NVIDIA)
+
+   * - Accelerator:Model
+     - Accelerator model (e.g. V100)
+
+   * - Accelerator:Number
+     - Hoy many accelerators are available for that flavor (e.g. 2)
+
+Using different keys to specify bechmark information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you do not want to use cASO's default flavor properties to publish the
+existing accelerators, you can specify which properties ``cASO`` should look
+for by using the ``type_key``, ``vendor_key``, ``model_key`` and ``number_key``
+in the ``[acelerator]`` section of the configuration file.
+
+.. important::
+
+    Please note that there is an OpenStack scheduler filter that removes hosts
+    based on flavor properties. In order to not interfere with the behaviour of
+    this filter you must prefix the property with a ``scope:`` so that cASO's
+    properties are not taken into account for this filtering. When adding these
+    properties in cASO's configuration file, please include the complete name
+    (i.e. ``scope:property``).

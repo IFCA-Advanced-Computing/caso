@@ -31,6 +31,8 @@ def list_opts():
                                     caso.extract.base.opts,
                                     caso.extract.manager.cli_opts)
          ),
+        ('accelerator', caso.extract.base.accelerator_opts),
+        ('benchmark', caso.extract.base.benchmark_opts),
         ('keystone_auth', caso.keystone_client.opts),
         ('logstash', caso.messenger.logstash.opts),
         ('ssm', caso.messenger.ssm.opts),
