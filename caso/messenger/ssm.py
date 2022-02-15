@@ -77,7 +77,7 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
                                self.ip_version)
 
     def push_acc_message(self, queue, entries):
-        self.push_json_message(queue, entries, "APEL GPU message",
+        self.push_json_message(queue, entries, "APEL-accelerator-message",
                                self.acc_version)
 
     def push(self, records):
