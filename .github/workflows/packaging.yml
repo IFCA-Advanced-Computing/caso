@@ -1,6 +1,9 @@
 name: Create RPM and DEB packages on release                                                        
                                                                                    
 on:
+  push:
+    tags:
+        - '*'
   release:                                                                         
     types: [created]       
 
@@ -46,6 +49,7 @@ jobs:
           os_distribution: stable
 
       - name: Update DEB artifacts to release
+        if: github.event_name == 'release'
         uses: AButler/upload-release-assets@v2.0
         with:
           files: 'output/*deb'
@@ -73,6 +77,7 @@ jobs:
           spec_file: "packaging/redhat/caso.spec"
 
       - name: Update RPM artifacts to release
+        if: github.event_name == 'release'
         uses: AButler/upload-release-assets@v2.0
         with:
           files: '${{ steps.rpm.outputs.rpm_dir_path }}/*/*rpm'
