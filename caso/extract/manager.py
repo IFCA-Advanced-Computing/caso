@@ -47,12 +47,12 @@ cli_opts = [
                     'If it is set to None and last run file is not present, '
                     'it will extract records from the beginning of time. '
                     'If no time zone is specified, UTC will be used.'),
-    cfg.StrOpt('extractor',
-               choices=loading.get_available_extractor_names(),
-               default='nova',
-               help='Which extractor to use for getting the data. '
-                    'If you do not specify anything, nova will be '
-                    'used.'),
+    cfg.ListOpt('extractor',
+                default=['nova'],
+                help='Which extractor to use for getting the data. '
+                     'If you do not specify anything, nova will be '
+                     'used. Available choices are {}'.format(
+                         loading.get_available_extractor_names())),
 ]
 
 CONF = cfg.CONF
@@ -65,8 +65,11 @@ LOG = log.getLogger(__name__)
 
 class Manager(object):
     def __init__(self):
-        extractor = loading.get_available_extractors()[CONF.extractor]
-        self.extractor = extractor
+        extractors = [
+            (i, loading.get_available_extractors()[i])
+            for i in CONF.extractor
+        ]
+        self.extractors = extractors
         self.last_run_base = os.path.join(CONF.spooldir, "lastrun")
 
     def get_lastrun(self, project):
@@ -138,24 +141,33 @@ class Manager(object):
                           f"(extract-from: {extract_from})")
                 sys.exit(1)
 
-            LOG.debug(f"Extracting records from '{extract_from}'")
-            LOG.debug(f"Extracting records to '{extract_to}'")
             try:
-                extractor = self.extractor(project)
-                extracted_records = extractor.extract(
-                    extract_from,
-                    extract_to
-                )
                 record_count = 0
-                for record_type, records in six.iteritems(extracted_records):
-                    current_records = all_records.get(record_type, dict())
-                    current_records.update(records)
-                    record_count += len(records)
-                    all_records[record_type] = current_records
+                for extractor_name, extractor_cls in self.extractors:
+                    LOG.debug(f"Extractor {extractor_name}: extracting records"
+                              f"for project {project} "
+                              f"({extract_from} to {extract_to})")
+                    extractor = extractor_cls(project)
+                    ext_records = extractor.extract(
+                        extract_from,
+                        extract_to
+                    )
+                    for record_type, records in six.iteritems(ext_records):
+                        current_records = all_records.get(record_type, dict())
+                        current_records.update(records)
+                        current_count = len(records)
+                        record_count += current_count
+                        all_records[record_type] = current_records
+                    LOG.debug(f"Extractor {extractor_name}: extracted "
+                              f"{current_count} records for project "
+                              f"'{project}' "
+                              f"({extract_from} to {extract_to})")
             except Exception:
-                LOG.exception(f"Cannot extract records for '{project}', got "
+                LOG.exception(f"Extractor {extractor_name}: cannot extract "
+                              f"records for '{project}', got "
                               "the following exception: ")
             else:
-                LOG.info(f"Extracted {record_count} records for project "
-                         f"'{project}' from {extract_from} to {extract_to}")
+                LOG.info(f"Extracted {record_count} records in total for "
+                         f"project '{project}' "
+                         f"({extract_from} to {extract_to})")
         return all_records

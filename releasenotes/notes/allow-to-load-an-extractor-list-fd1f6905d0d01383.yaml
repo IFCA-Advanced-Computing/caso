@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Allow to load more than one extractor in the configuration, making possible
+    to get more than one type of record.
