@@ -22,8 +22,6 @@ from oslo_config import cfg
 from oslo_log import log
 import six
 
-from caso import keystone_client
-
 opts = [
     cfg.StrOpt('site_name',
                help='Site name as in GOCDB.'),
@@ -113,66 +111,6 @@ openstack_vm_statuses = {
     'saving': 'started',
     'unknown': 'unknown',
 }
-
-
-@six.add_metaclass(abc.ABCMeta)
-class BaseExtractor(object):
-    def __init__(self):
-        # FIXME(aloga): add deprecated warning here
-        LOG.warning("Using DEPRECATED extractor!! Please update as soon as "
-                    "possible!!")
-        try:
-            mapping = json.loads(open(CONF.mapping_file).read())
-        except ValueError:
-            # FIXME(aloga): raise a proper exception here
-            raise
-        else:
-            self.voms_map = {}
-            for vo, vomap in six.iteritems(mapping):
-                tenant = vomap.get("tenant", None)
-                tenants = vomap.get("tenants", [])
-                if tenant is not None:
-                    warnings.warn("Using deprecated 'tenant' mapping, please "
-                                  "use 'projects' instead", DeprecationWarning)
-                if tenants:
-                    warnings.warn("Using deprecated 'tenants' mapping, please "
-                                  "use 'projects' instead", DeprecationWarning)
-                tenants.append(tenant)
-                projects = vomap.get("projects", tenants)
-                if not projects:
-                    LOG.warning(f"No project mapping found for VO {vo}")
-                for project in projects:
-                    self.voms_map[project] = vo
-
-    def _get_keystone_client(self, project):
-        client = keystone_client.get_client(CONF, project)
-        return client
-
-    def _get_keystone_user(self, ks_client, uuid):
-        try:
-            user = ks_client.users.get(user=uuid)
-            return user.name
-        except Exception:
-            return None
-
-    def vm_status(self, status):
-        """Return the status corresponding to the OpenStack status.
-
-        :param status: OpenStack status.
-        """
-        return openstack_vm_statuses.get(status.lower(), 'unknown')
-
-    @abc.abstractmethod
-    def extract_for_project(self, project, extract_from):
-        """Extract records for a project from given date.
-
-        :param project: Project to extract records for.
-        :param extract_from: datetime.datetime object indicating the date to
-                             extract records from
-        :returns: A dictionary of {"server_id": caso.record.Record"}
-
-        This method should be overriden in a subclass.
-        """
 
 
 @six.add_metaclass(abc.ABCMeta)
