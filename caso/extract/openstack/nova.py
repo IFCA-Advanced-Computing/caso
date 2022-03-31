@@ -49,8 +49,6 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
         self.glance = self._get_glance_client()
         self.neutron = self._get_neutron_client()
 
-        self.project_id = self.nova.client.session.get_project_id()
-
         self.flavors = self._get_flavors()
         self.images = self._get_images()
 

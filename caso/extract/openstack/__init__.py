@@ -46,6 +46,7 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
         self.vo = self._get_vo()
 
         self.keystone = self._get_keystone_client()
+        self.project_id = self._get_project_id()
 
         class Users:
             def __init__(self, parent):
@@ -80,6 +81,9 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
     def _get_keystone_client(self):
         client = keystone_client.get_client(CONF, self.project)
         return client
+
+    def _get_project_id(self):
+        return self.keystone.projects.get(self.project).id
 
     def _get_keystone_user(self, uuid):
         try:

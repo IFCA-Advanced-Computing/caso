@@ -18,8 +18,6 @@ import collections
 import ipaddress
 
 import neutronclient.v2_0.client
-import novaclient.client
-import novaclient.exceptions
 from oslo_config import cfg
 from oslo_log import log
 
@@ -42,17 +40,6 @@ class NeutronExtractor(openstack.BaseOpenStackExtractor):
         super(NeutronExtractor, self).__init__(project)
 
         self.neutron = self._get_neutron_client()
-
-        # FIXME(!)
-        self.nova = self._get_nova_client()
-        self.project_id = self.nova.client.session.get_project_id()
-
-    # FIXME(!)
-    def _get_nova_client(self):
-        region_name = CONF.region_name
-        session = self._get_keystone_session()
-        return novaclient.client.Client(2, session=session,
-                                        region_name=region_name)
 
     def _get_neutron_client(self):
         session = self._get_keystone_session()
