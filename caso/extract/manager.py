@@ -141,20 +141,11 @@ class Manager(object):
             LOG.debug(f"Extracting records from '{extract_from}'")
             LOG.debug(f"Extracting records to '{extract_to}'")
             try:
-                # duck typing here instead of guessing by subclass
-                if getattr(self.extractor, "extract_for_project", None):
-                    extractor = self.extractor
-                    extracted_records = extractor.extract_for_project(
-                        project,
-                        extract_from,
-                        extract_to
-                    )
-                else:
-                    extractor = self.extractor(project)
-                    extracted_records = extractor.extract(
-                        extract_from,
-                        extract_to
-                    )
+                extractor = self.extractor(project)
+                extracted_records = extractor.extract(
+                    extract_from,
+                    extract_to
+                )
                 record_count = 0
                 for record_type, records in six.iteritems(extracted_records):
                     current_records = all_records.get(record_type, dict())

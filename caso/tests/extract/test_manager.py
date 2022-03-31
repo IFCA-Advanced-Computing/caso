@@ -46,7 +46,7 @@ class TestCasoManager(base.TestCase):
         self.flags(projects=[])
 
         with mock.patch.object(self.manager.extractor,
-                               "extract_for_project") as m:
+                               "extract") as m:
             ret = self.manager.get_records()
             self.assertFalse(m.called)
         self.assertEqual(ret, {})
@@ -62,7 +62,7 @@ class TestCasoManager(base.TestCase):
         self.flags(extract_to=extract_to)
 
         with mock.patch.object(self.manager.extractor,
-                               "extract_for_project") as m:
+                               "extract") as m:
             m.return_value = {"cloud": records,
                               "ip": ip_records,
                               "acc": acc_records}
@@ -98,7 +98,7 @@ class TestCasoManager(base.TestCase):
         self.flags(extract_to=extract_to)
 
         with mock.patch.object(self.manager.extractor,
-                               "extract_for_project") as m, \
+                               "extract") as m, \
                 mock.patch.object(self.manager, "get_lastrun") as m_lr:
 
             m_lr.return_value = lastrun
