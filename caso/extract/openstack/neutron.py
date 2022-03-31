@@ -68,35 +68,6 @@ class NeutronExtractor(openstack.BaseOpenStackExtractor):
         ips = self.neutron.list_floatingips(self.project_id)
         return ips
 
-    def _process_ip_counts(self, ip_counts_v4, ip_counts_v6,
-                           extract_from, extract_to):
-
-        floating_ips = self._get_floating_ips()
-
-        user = None
-        for floating_ip in floating_ips["floatingips"]:
-            ip = floating_ip["floating_ip_address"]
-            ip_version = ipaddress.ip_address(ip).version
-            ip_start = datetime.strptime(floating_ip["created_at"],
-                                         '%Y-%m-%dT%H:%M:%SZ')
-            if ip_start > extract_to:
-                continue
-            else:
-                if ip_version == 4:
-                    self.ip_counts_v4[user] += 1
-                elif ip_version == 6:
-                    self.ip_counts_v6[user] += 1
-
-        for (ip_version, ip_counts) in [(4, self.ip_counts_v4),
-                                        (6, self.ip_counts_v6)]:
-            for user_id, count in ip_counts.items():
-                if count == 0:
-                    continue
-
-                self.ip_records[user_id] = self.build_ip_record(user_id,
-                                                                count,
-                                                                ip_version)
-
     def extract(self, extract_from, extract_to):
         """Extract records for a project from given date querying nova.
 
@@ -114,16 +85,36 @@ class NeutronExtractor(openstack.BaseOpenStackExtractor):
         # in UTC TZ.
         extract_from = extract_from.replace(tzinfo=None)
 
-        # Auxiliary variables to count ips
-        self.ip_counts_v4 = collections.defaultdict(lambda: 0)
-        self.ip_counts_v6 = collections.defaultdict(lambda: 0)
-
         self.ip_records = {}
 
-        # Now we have finished processing server and usages (i.e. we have all
-        # the server records), but we do not have any IP record
-        # So, lets build IP records for each of the users.
-        self._process_ip_counts(self.ip_counts_v4, self.ip_counts_v6,
-                                extract_from, extract_to)
+        floating_ips = self._get_floating_ips()
+
+        # Auxiliary variables to count ips
+        ip_counts_v4 = collections.defaultdict(lambda: 0)
+        ip_counts_v6 = collections.defaultdict(lambda: 0)
+
+        user = None
+        for floating_ip in floating_ips["floatingips"]:
+            ip = floating_ip["floating_ip_address"]
+            ip_version = ipaddress.ip_address(ip).version
+            ip_start = datetime.strptime(floating_ip["created_at"],
+                                         '%Y-%m-%dT%H:%M:%SZ')
+            if ip_start > extract_to:
+                continue
+            else:
+                if ip_version == 4:
+                    ip_counts_v4[user] += 1
+                elif ip_version == 6:
+                    ip_counts_v6[user] += 1
+
+        for (ip_version, ip_counts) in [(4, ip_counts_v4),
+                                        (6, ip_counts_v6)]:
+            for user_id, count in ip_counts.items():
+                if count == 0:
+                    continue
+
+                self.ip_records[user_id] = self.build_ip_record(user_id,
+                                                                count,
+                                                                ip_version)
 
         return {"ip": self.ip_records}
