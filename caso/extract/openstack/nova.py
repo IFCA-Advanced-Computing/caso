@@ -14,8 +14,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import collections
-import ipaddress
 import operator
 
 import dateutil.parser
@@ -23,31 +21,19 @@ from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY
 from dateutil.rrule import rrule
 import glanceclient.client
-import keystoneauth1.exceptions.http
 import neutronclient.v2_0.client
 import novaclient.client
 import novaclient.exceptions
 from oslo_config import cfg
 from oslo_log import log
 
-from caso.extract import base
-from caso import keystone_client
+from caso.extract import openstack
 from caso import record
 from datetime import datetime
 
 CONF = cfg.CONF
 
-opts = [
-    cfg.StrOpt('region_name',
-               default=None,
-               help='OpenStack Region to use. This option will force cASO to '
-                    'extract records from a specific OpenStack Region, in '
-                    'there are several defined in the OpenStack site. '
-                    'Defaults to None.')
-]
-
-CONF.register_opts(opts)
-
+CONF.import_opt("region_name", "caso.extract.openstack")
 CONF.import_opt("site_name", "caso.extract.base")
 CONF.import_group("benchmark", "caso.extract.base")
 CONF.import_group("accelerator", "caso.extract.base")
@@ -55,78 +41,32 @@ CONF.import_group("accelerator", "caso.extract.base")
 LOG = log.getLogger(__name__)
 
 
-class OpenStackExtractor(base.BaseProjectExtractor):
+class NovaExtractor(openstack.BaseOpenStackExtractor):
     def __init__(self, project):
-        super(OpenStackExtractor, self).__init__(project)
+        super(NovaExtractor, self).__init__(project)
 
         self.nova = self._get_nova_client()
         self.glance = self._get_glance_client()
         self.neutron = self._get_neutron_client()
-        self.keystone = self._get_keystone_client()
-
-        class Users:
-            def __init__(self, parent):
-                self._users = {}
-                self.parent = parent
-
-            def get(self, key, default):
-                return self[key]
-
-            def keys(self):
-                return self._users.keys()
-
-            def values(self):
-                return self._users.values()
-
-            def __getitem__(self, key):
-                user = self._users.get(key, None)
-                if user is None:
-                    user = self.parent._get_keystone_user(key)
-                    self._users[key] = user
-                return user
-
-        # Membership in keystone can be direct (a user belongs to a project) or
-        # via group membership, therefore we cannot get a list directly. We
-        # will build this aftewards
-        self.users = Users(self)
 
         self.project_id = self.nova.client.session.get_project_id()
-
-        self.vo = self._get_vo()
 
         self.flavors = self._get_flavors()
         self.images = self._get_images()
 
-    def _get_keystone_client(self):
-        client = keystone_client.get_client(CONF, self.project)
-        return client
-
     def _get_nova_client(self):
         region_name = CONF.region_name
-        session = keystone_client.get_session(CONF, self.project)
+        session = self._get_keystone_session()
         return novaclient.client.Client(2, session=session,
                                         region_name=region_name)
 
     def _get_glance_client(self):
-        session = keystone_client.get_session(CONF, self.project)
+        session = self._get_keystone_session()
         return glanceclient.client.Client(2, session=session)
 
     def _get_neutron_client(self):
-        session = keystone_client.get_session(CONF, self.project)
+        session = self._get_keystone_session()
         return neutronclient.v2_0.client.Client(session=session)
-
-    def _get_keystone_user(self, uuid):
-        try:
-            user = self.keystone.users.get(user=uuid)
-            return user.name
-        except keystoneauth1.exceptions.http.Forbidden as e:
-            LOG.error("Unauthorized to get user")
-            LOG.exception(e)
-            return None
-        except Exception as e:
-            LOG.debug("Exception while getting user")
-            LOG.exception(e)
-            return None
 
     def build_acc_records(self, server, server_record, extract_from,
                           extract_to):
@@ -235,25 +175,6 @@ class OpenStackExtractor(base.BaseProjectExtractor):
         )
         return r
 
-    def build_ip_record(self, user_id, ip_count, version):
-        user = self.users[user_id]
-
-        measure_time = self._get_measure_time()
-
-        r = record.IPRecord(
-            measure_time,
-            CONF.site_name,
-            user_id,
-            self.project_id,
-            user,
-            self.vo,
-            version,
-            ip_count,
-            compute_service=CONF.service_name
-        )
-
-        return r
-
     @staticmethod
     def _get_server_start(server):
         # We use created, as the start_time may change upon certain actions!
@@ -278,11 +199,6 @@ class OpenStackExtractor(base.BaseProjectExtractor):
             server_end = dateutil.parser.parse(server_end)
             server_end = server_end.replace(tzinfo=None)
         return server_end
-
-    @staticmethod
-    def _get_measure_time():
-        measure_time = datetime.now()
-        return measure_time
 
     def _get_servers(self, extract_from):
         servers = []
@@ -320,29 +236,6 @@ class OpenStackExtractor(base.BaseProjectExtractor):
         usages = getattr(aux, "server_usages", [])
         return usages
 
-    def _get_floating_ips(self):
-        ips = self.neutron.list_floatingips(self.project_id)
-        return ips
-
-    def _get_vo(self):
-        vo = self.voms_map.get(self.project)
-        if vo is None:
-            LOG.warning("No mapping could be found for project "
-                        f"'{self.project}', please check mapping file!")
-        return vo
-
-    def _count_ips_on_server(self, server):
-        user_id = server.user_id
-
-        for name, value in server.addresses.items():
-            for ip in value:
-                if ip["OS-EXT-IPS:type"] == "floating":
-                    self.floatings.append(ip['addr'])
-                    if ip["version"] == 4:
-                        self.ip_counts_v4[user_id] += 1
-                    elif ip["version"] == 6:
-                        self.ip_counts_v6[user_id] += 1
-
     def _process_servers_for_period(self, servers, extract_from, extract_to):
         for server in servers:
             server_start = self._get_server_start(server)
@@ -355,7 +248,6 @@ class OpenStackExtractor(base.BaseProjectExtractor):
                 continue
 
             self.records[server.id] = self.build_record(server)
-            self._count_ips_on_server(server)
             self.acc_records.update(
                 self.build_acc_records(server, self.records[server.id],
                                        extract_from, extract_to)
@@ -414,8 +306,6 @@ class OpenStackExtractor(base.BaseProjectExtractor):
                                                      extract_from, extract_to)
                 self.acc_records.update(acc_records)
 
-                self._count_ips_on_server(server)
-
                 server_start = record.start_time
 
                 # End time must ben the time when the machine was ended, but it
@@ -456,42 +346,6 @@ class OpenStackExtractor(base.BaseProjectExtractor):
             record.cpu_count = usage["vcpus"]
             record.disk = usage["local_gb"]
 
-    def _process_ip_counts(self, ip_counts_v4, ip_counts_v6,
-                           extract_from, extract_to):
-
-        # We already have ip counts from servers (as a side effect of creating
-        # server records, therefore here we only need to add IPs not assinged
-        # to a server
-
-        # Get all floating IPs, and count those not assinged to a server
-        floating_ips = self._get_floating_ips()
-
-        user = None
-        for floating_ip in floating_ips["floatingips"]:
-            ip = floating_ip["floating_ip_address"]
-            ip_version = ipaddress.ip_address(ip).version
-            status = floating_ip["status"]
-            if (ip not in self.floatings) and (status == "DOWN"):
-                ip_start = datetime.strptime(floating_ip["created_at"],
-                                             '%Y-%m-%dT%H:%M:%SZ')
-                if ip_start > extract_to:
-                    continue
-                else:
-                    if ip_version == 4:
-                        self.ip_counts_v4[user] += 1
-                    elif ip_version == 6:
-                        self.ip_counts_v6[user] += 1
-
-        for (ip_version, ip_counts) in [(4, self.ip_counts_v4),
-                                        (6, self.ip_counts_v6)]:
-            for user_id, count in ip_counts.items():
-                if count == 0:
-                    continue
-
-                self.ip_records[user_id] = self.build_ip_record(user_id,
-                                                                count,
-                                                                ip_version)
-
     def extract(self, extract_from, extract_to):
         """Extract records for a project from given date querying nova.
 
@@ -508,11 +362,6 @@ class OpenStackExtractor(base.BaseProjectExtractor):
         # from the dates. We assume that all dates coming from upstream are
         # in UTC TZ.
         extract_from = extract_from.replace(tzinfo=None)
-
-        # Auxiliary variables to count ips
-        self.ip_counts_v4 = collections.defaultdict(lambda: 0)
-        self.ip_counts_v6 = collections.defaultdict(lambda: 0)
-        self.floatings = []
 
         # Our records
         self.records = {}
@@ -544,9 +393,6 @@ class OpenStackExtractor(base.BaseProjectExtractor):
 
         # Lets start
 
-#        # FIXME(aloga): why is this here?
-#        ip = None
-
         # 1.- List all the deleted servers from that period.
         servers = self._get_servers(extract_from)
         # 2.- Build the records for the period. Drop servers outside the period
@@ -561,12 +407,5 @@ class OpenStackExtractor(base.BaseProjectExtractor):
         # are found.
         self._process_usages_for_period(usages, extract_from, extract_to)
 
-        # Now we have finished processing server and usages (i.e. we have all
-        # the server records), but we do not have any IP record
-        # So, lets build IP records for each of the users.
-        self._process_ip_counts(self.ip_counts_v4, self.ip_counts_v6,
-                                extract_from, extract_to)
-
         return {"cloud": self.records,
-                "ip": self.ip_records,
                 "acc": self.acc_records}
