@@ -1,4 +1,5 @@
 ---
 features:
   - |
-    Add support for the EMI STaR records for storage.
+    Add support for the EMI STaR records for storage, and support extracting
+    records from OpenStack Cinder.
