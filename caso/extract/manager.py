@@ -124,7 +124,7 @@ class Manager(object):
                         f"(extract-to: {extract_to}")
             extract_to = now
 
-        all_records = {}
+        all_records = []
         for project in CONF.projects:
             LOG.info(f"Extracting records for project '{project}'")
 
@@ -147,17 +147,14 @@ class Manager(object):
                     LOG.debug(f"Extractor {extractor_name}: extracting records"
                               f"for project {project} "
                               f"({extract_from} to {extract_to})")
+
                     extractor = extractor_cls(project)
-                    ext_records = extractor.extract(
-                        extract_from,
-                        extract_to
-                    )
-                    for record_type, records in six.iteritems(ext_records):
-                        current_records = all_records.get(record_type, dict())
-                        current_records.update(records)
-                        current_count = len(records)
-                        record_count += current_count
-                        all_records[record_type] = current_records
+
+                    records = extractor.extract(extract_from, extract_to)
+                    current_count = len(records)
+                    record_count += current_count
+                    all_records.extend(records)
+
                     LOG.debug(f"Extractor {extractor_name}: extracted "
                               f"{current_count} records for project "
                               f"'{project}' "

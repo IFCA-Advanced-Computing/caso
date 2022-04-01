@@ -405,5 +405,4 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
         # are found.
         self._process_usages_for_period(usages, extract_from, extract_to)
 
-        return {"cloud": self.records,
-                "acc": self.acc_records}
+        return list(self.records.values()) + list(self.acc_records.values())

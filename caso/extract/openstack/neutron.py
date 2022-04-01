@@ -117,4 +117,4 @@ class NeutronExtractor(openstack.BaseOpenStackExtractor):
                                                                 count,
                                                                 ip_version)
 
-        return {"ip": self.ip_records}
+        return list(self.ip_records.values())

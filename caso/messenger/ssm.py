@@ -87,7 +87,7 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
         entries_cloud = []
         entries_ip = []
         entries_acc = []
-        for _, record in six.iteritems(records):
+        for record in records:
             if isinstance(record, caso.record.CloudRecord):
                 aux = ""
                 for k, v in six.iteritems(record.as_dict(

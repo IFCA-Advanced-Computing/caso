@@ -108,5 +108,5 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
     # FIXME(aloga): this has to go inside a record
     @staticmethod
     def _get_measure_time():
-        measure_time = datetime.now()
+        measure_time = datetime.datetime.now()
         return measure_time
