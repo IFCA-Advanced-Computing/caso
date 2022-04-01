@@ -78,7 +78,7 @@ class NeutronExtractor(openstack.BaseOpenStackExtractor):
                              extract records from
         :param extract_to: datetime.datetime object indicating the date to
                            extract records to
-        :returns: A dictionary of {"server_id": caso.record.Record"} # FIXME
+        :returns: A list of records.
         """
         # Some API calls do not expect a TZ, so we have to remove the timezone
         # from the dates. We assume that all dates coming from upstream are

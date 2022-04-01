@@ -155,7 +155,7 @@ class BaseProjectExtractor(object):
 
         :param extract_from: datetime.datetime object indicating the date to
                              extract records from
-        :returns: A dictionary of {"server_id": caso.record.Record"}
+        :returns: A list of accounting records
 
         This method should be overriden in a subclass.
         """

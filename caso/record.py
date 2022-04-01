@@ -14,15 +14,53 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import abc
 import datetime
 import json
 import pprint
+
+import six
 
 import caso
 from caso import exception
 
 
-class CloudRecord(object):
+@six.add_metaclass(abc.ABCMeta)
+class BaseRecord(object):
+    """This is the base cASO record object."""
+
+    version = None
+    _version_field_map = {}
+
+    def __str__(self):
+        return pprint.pformat(self.as_dict())
+
+    def as_dict(self, version=None):
+        """Return record as a dictionary.
+
+        :param str version: optional, if passed it will format the record
+                            acording to that account record version
+
+        :returns: A dict containing the record.
+        """
+        if version is None:
+            version = self.version
+
+        if version not in self._version_field_map:
+            raise exception.RecordVersionNotFound(version=version)
+
+        return {k: v for k, v in self.map.items()
+                if k in self._version_field_map[version]}
+
+    def as_json(self, version=None):
+        return json.dumps(self.as_dict(version=version))
+
+    @abc.abstractproperty
+    def map(self):
+        return {}
+
+
+class CloudRecord(BaseRecord):
     """The CloudRecord class holds information for each of the records.
 
     This class is versioned, following the Cloud Accounting Record versions.
@@ -123,26 +161,6 @@ class CloudRecord(object):
         self.benchmark_type = benchmark_type
         self.public_ip_count = public_ip_count
 
-    def __repr__(self):
-        return pprint.pformat(self.as_dict())
-
-    def as_dict(self, version=None):
-        """Return CloudRecord as a dictionary.
-
-        :param str version: optional, if passed it will format the record
-                            acording to that account record version
-
-        :returns: A dict containing the record.
-        """
-        if version is None:
-            version = self.version
-
-        if version not in self._version_field_map:
-            raise exception.RecordVersionNotFound(version=version)
-
-        return {k: v for k, v in self.map.items()
-                if k in self._version_field_map[version]}
-
     @property
     def wall_duration(self):
         duration = None
@@ -229,11 +247,8 @@ class CloudRecord(object):
         }
         return d
 
-    def as_json(self, version=None):
-        return json.dumps(self.as_dict(version=version))
 
-
-class IPRecord(object):
+class IPRecord(BaseRecord):
     """The IPRecord class holds information for each of the records.
 
     This class is versioned, following the Public IP Usage Record versions
@@ -278,26 +293,6 @@ class IPRecord(object):
         self.ip_version = ip_version
         self.public_ip_count = public_ip_count
 
-    def __repr__(self):
-        return pprint.pformat(self.as_dict())
-
-    def as_dict(self, version=None):
-        """Return IPRecord as a dictionary.
-
-        :param str version: optional, if passed it will format the record
-                            acording to that account record version
-
-        :returns: A dict containing the record.
-        """
-        if version is None:
-            version = self.version
-
-        if version not in self._version_field_map:
-            raise exception.RecordVersionNotFound(version=version)
-
-        return {k: v for k, v in self.map.items()
-                if k in self._version_field_map[version]}
-
     @property
     def measure_time(self):
         return self._measure_time
@@ -326,11 +321,8 @@ class IPRecord(object):
         }
         return d
 
-    def as_json(self, version=None):
-        return json.dumps(self.as_dict(version=version))
 
-
-class AcceleratorRecord(object):
+class AcceleratorRecord(BaseRecord):
     """The AcceleratorRecord class holds information for each of the records.
 
     This class is versioned, following the Accelerator Usage Record versions
@@ -389,9 +381,6 @@ class AcceleratorRecord(object):
         self.accelerator_type = self.accelerator_type
         self.model = model
 
-    def __repr__(self):
-        return pprint.pformat(self.as_dict())
-
     @property
     def active_duration(self):
         if self._active_duration is not None:
@@ -401,23 +390,6 @@ class AcceleratorRecord(object):
     @active_duration.setter
     def active_duration(self, value):
         self._active_duration = value
-
-    def as_dict(self, version=None):
-        """Return AccountingRecord as a dictionary.
-
-        :param str version: optional, if passed it will format the record
-                            acording to that account record version
-
-        :returns: A dict containing the record.
-        """
-        if version is None:
-            version = self.version
-
-        if version not in self._version_field_map:
-            raise exception.RecordVersionNotFound(version=version)
-
-        return {k: v for k, v in self.map.items()
-                if k in self._version_field_map[version]}
 
     @property
     def map(self):
@@ -439,6 +411,3 @@ class AcceleratorRecord(object):
             "Model": self.model,
         }
         return d
-
-    def as_json(self, version=None):
-        return json.dumps(self.as_dict(version=version))
