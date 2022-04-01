@@ -116,6 +116,14 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
             records[record_id] = month_record
         return records
 
+    def _count_ips_on_server(self, server):
+        count = 0
+        for name, value in server.addresses.items():
+            for ip in value:
+                if ip["OS-EXT-IPS:type"] == "floating":
+                    count += 1
+        return count
+
     def build_record(self, server):
         user = self.users[server.user_id]
 
@@ -152,13 +160,15 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
                           "in the [benchmark] section of the configuration "
                           "file or set the correct properties in the flavor.")
 
+        floating_ips = self._count_ips_on_server(server)
+
         r = record.CloudRecord(
-            server.id,
-            CONF.site_name,
-            server.name,
-            server.user_id,
-            server.tenant_id,
-            self.vo,
+            uuid=server.id,
+            site_name=CONF.site_name,
+            name=server.name,
+            user_id=server.user_id,
+            group_id=server.tenant_id,
+            fqan=self.vo,
             start_time=server_start,
             end_time=server_end,
             compute_service=CONF.service_name,
@@ -169,7 +179,8 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
             benchmark_value=bench_value,
             memory=memory,
             cpu_count=cpu_count,
-            disk=disk
+            disk=disk,
+            public_ip_count=floating_ips
         )
         return r
 
@@ -263,7 +274,7 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
             if server_end is None or server_end > extract_to:
                 wall = extract_to - server_start
                 wall = int(wall.total_seconds())
-                self.records[server.id].wall_duration = wall
+                self.records[server.id].set_wall_duration(wall)
                 # If we are republishing, the machine reports status completed,
                 # but it is not True for this period, so we need to fake the
                 # status and remove the end time for the server
@@ -273,7 +284,7 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
                     self.records[server.id].status = self.vm_status("active")
 
                 cput = wall * self.records[server.id].cpu_count
-                self.records[server.id].cpu_duration = cput
+                self.records[server.id].set_cpu_duration(cput)
 
     def _process_usages_for_period(self, usages, extract_from, extract_to):
         for usage in usages:
@@ -326,7 +337,7 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
                 if server_end is None or server_end > extract_to:
                     wall = extract_to - server_start
                     wall = int(wall.total_seconds())
-                    record.wall_duration = wall
+                    record.set_wall_duration(wall)
                     # If we are republishing, the machine reports status
                     # completed, but it is not True for this period, so we need
                     # to fake the status
@@ -334,7 +345,7 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
                         record.status = self.vm_status("active")
 
                 cput = wall * usage["vcpus"]
-                record.cpu_duration = cput
+                record.set_cpu_duration(cput)
 
                 self.records[server.id] = record
 

@@ -49,6 +49,7 @@ __all__ = ["SSMMessengerV02", "SSMMessengerV04"]
 
 @six.add_metaclass(abc.ABCMeta)
 class _SSMBaseMessenger(caso.messenger.BaseMessenger):
+    # FIXME(aloga): versions are not anymore used
     compute_version = None
     ip_version = None
     acc_version = None
@@ -87,18 +88,22 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
         entries_cloud = []
         entries_ip = []
         entries_acc = []
+        opts = {
+            "by_alias": True,
+            "exclude_unset": True,
+            "exclude_none": True,
+        }
         for record in records:
             if isinstance(record, caso.record.CloudRecord):
                 aux = ""
-                for k, v in six.iteritems(record.as_dict(
-                                          version=self.compute_version)):
+                for k, v in six.iteritems(record.dict(**opts)):
                     if v is not None:
                         aux += f"{k}: {v}\n"
                 entries_cloud.append(aux)
             elif isinstance(record, caso.record.IPRecord):
-                entries_ip.append(record.as_dict(version=self.ip_version))
+                entries_ip.append(record.json(**opts))
             elif isinstance(record, caso.record.AcceleratorRecord):
-                entries_acc.append(record.as_dict(version=self.acc_version))
+                entries_acc.append(record.dict(**opts))
             else:
                 raise caso.exception.CasoException("Unexpected record format!")
 

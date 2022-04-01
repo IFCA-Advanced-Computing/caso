@@ -51,14 +51,14 @@ class NeutronExtractor(openstack.BaseOpenStackExtractor):
         measure_time = self._get_measure_time()
 
         r = record.IPRecord(
-            measure_time,
-            CONF.site_name,
-            user_id,
-            self.project_id,
-            user,
-            self.vo,
-            version,
-            ip_count,
+            measure_time=measure_time,
+            site_name=CONF.site_name,
+            user_id=user_id,
+            group_id=self.project_id,
+            user_dn=user,
+            fqan=self.vo,
+            ip_version=version,
+            public_ip_count=ip_count,
             compute_service=CONF.service_name
         )
 

@@ -16,48 +16,22 @@
 
 import abc
 import datetime
-import json
-import pprint
+import typing
+import uuid
 
-import six
+import pydantic
 
 import caso
-from caso import exception
 
 
-@six.add_metaclass(abc.ABCMeta)
-class BaseRecord(object):
+class BaseRecord(pydantic.BaseModel, abc.ABC):
     """This is the base cASO record object."""
 
-    version = None
-    _version_field_map = {}
+    version: str
 
-    def __str__(self):
-        return pprint.pformat(self.as_dict())
-
-    def as_dict(self, version=None):
-        """Return record as a dictionary.
-
-        :param str version: optional, if passed it will format the record
-                            acording to that account record version
-
-        :returns: A dict containing the record.
-        """
-        if version is None:
-            version = self.version
-
-        if version not in self._version_field_map:
-            raise exception.RecordVersionNotFound(version=version)
-
-        return {k: v for k, v in self.map.items()
-                if k in self._version_field_map[version]}
-
-    def as_json(self, version=None):
-        return json.dumps(self.as_dict(version=version))
-
-    @abc.abstractproperty
-    def map(self):
-        return {}
+    site_name: str
+    cloud_type = caso.user_agent
+    compute_service: str
 
 
 class CloudRecord(BaseRecord):
@@ -66,118 +40,50 @@ class CloudRecord(BaseRecord):
     This class is versioned, following the Cloud Accounting Record versions.
     """
 
-    # Version 0.2: initial version
-    # Version 0.4: Add 0.4 fields
-    version = "0.4"
+    version: str = "0.4"
 
-    _v02_fields = [
-        "VMUUID",
-        "SiteName",
-        "MachineName",
-        "LocalUserId",
-        "LocalGroupId",
-        "GlobalUserName",
-        "FQAN",
-        "Status",
-        "StartTime",
-        "EndTime",
-        "SuspendDuration",
-        "WallDuration",
-        "CpuDuration",
-        "CpuCount",
-        "NetworkType",
-        "NetworkInbound",
-        "NetworkOutbound",
-        "Memory",
-        "Disk",
-        "StorageRecordId",
-        "ImageId",
-        "CloudType",
-    ]
+    uuid: uuid.UUID
+    name: str
 
-    _v04_fields = _v02_fields + [
-        "CloudComputeService",
-        "BenchmarkType",
-        "Benchmark",
-        "PublicIPCount",
-    ]
+    user_id: uuid.UUID
+    user_dn: typing.Optional[str]
+    group_id: uuid.UUID
+    fqan: str
 
-    _version_field_map = {
-        "0.2": _v02_fields,
-        "0.4": _v04_fields,
-    }
+    status: str
 
-    def __init__(
-        self, uuid, site, name, user_id, group_id, fqan,
-        cloud_type=caso.user_agent,
-        compute_service=None,
-        status=None,
-        start_time=None,
-        end_time=None,
-        suspend_duration=None,
-        wall_duration=None,
-        cpu_duration=None,
-        network_type=None,
-        network_in=None,
-        network_out=None,
-        public_ip_count=None,
-        cpu_count=None,
-        memory=None,
-        disk=None,
-        image_id=None,
-        storage_record_id=None,
-        user_dn=None,
-        vo=None,
-        vo_group=None,
-        vo_role=None,
-        benchmark_value=None,
-        benchmark_type=None
-    ):
+    start_time: datetime.datetime
+    end_time: typing.Optional[datetime.datetime]
 
-        self.uuid = uuid
-        self.site = site
-        self.name = name
-        self.user_id = user_id
-        self.group_id = group_id
-        self.fqan = fqan
-        self.status = status
-        self.start_time = start_time
-        self.end_time = end_time
-        self.suspend_duration = suspend_duration
-        self.wall_duration = wall_duration
-        self.cpu_duration = cpu_duration
-        self.network_type = network_type
-        self.network_in = network_in
-        self.network_out = network_out
-        self.cpu_count = cpu_count
-        self.memory = memory
-        self.disk = disk
-        self.image_id = image_id
-        self.cloud_type = cloud_type
-        self.storage_record_id = storage_record_id
-        self.user_dn = user_dn
-        self.compute_service = compute_service
-        self.benchmark_value = benchmark_value
-        self.benchmark_type = benchmark_type
-        self.public_ip_count = public_ip_count
+    suspend_duration: typing.Optional[int]
+
+    _wall_duration: typing.Optional[int]
+    _cpu_duration: typing.Optional[int]
+
+    image_id: uuid.UUID
+
+    public_ip_count = 0
+    cpu_count: int
+    memory: int
+    disk: int
+
+    benchmark_value: typing.Optional[float]
+    benchmark_type: typing.Optional[str]
 
     @property
-    def wall_duration(self):
+    def wall_duration(self) -> int:
         duration = None
         if self._wall_duration is not None:
             duration = self._wall_duration
-        elif None not in (self._start_time, self._end_time):
+        elif self.end_time:
             duration = (self.end_time - self.start_time).total_seconds()
         return duration and int(duration)
 
-    @wall_duration.setter
-    def wall_duration(self, value):
-        if value and not isinstance(value, (int, float)):
-            raise ValueError("Duration must be a number")
+    def set_wall_duration(self, value: typing.Union[int, float]):
         self._wall_duration = value
 
     @property
-    def cpu_duration(self):
+    def cpu_duration(self) -> int:
         duration = None
         if self._cpu_duration is not None:
             duration = self._cpu_duration
@@ -185,144 +91,90 @@ class CloudRecord(BaseRecord):
             duration = self.wall_duration * self.cpu_count
         return duration and int(duration)
 
-    @cpu_duration.setter
-    def cpu_duration(self, value):
-        if value and not isinstance(value, (int, float)):
-            raise ValueError("Duration must be a number")
+    def set_cpu_duration(self, value: typing.Union[int, float]):
         self._cpu_duration = value
 
-    @property
-    def start_time(self):
-        return self._start_time
+    class Config:
+        @staticmethod
+        def map_fields(value: str) -> str:
+            d = {
+                'uuid': 'VMUUID',
+                'site_name': 'SiteName',
+                'name': 'MachineName',
+                'user_id': 'LocalUserId',
+                'group_id': 'LocalGroupId',
+                'fqan': 'FQAN',
+                'status': 'Status',
+                'start_time': 'StartTime',
+                'end_time': 'EndTime',
+                'suspend_duration': 'SuspendDuration',
+                'wall_duration': 'WallDuration',
+                'cpu_duration': 'CpuDuration',
+                'cpu_count': 'CpuCount',
+                'network_type': 'NetworkType',
+                'network_in': 'NetworkInbound',
+                'network_out': 'NetworkOutbound',
+                'memory': 'Memory',
+                'disk': 'Disk',
+                'storage_record_id': 'StorageRecordId',
+                'image_id': 'ImageId',
+                'cloud_type': 'CloudType',
+                'user_dn': 'GlobalUserName',
+                'public_ip_count': 'PublicIPCount',
+                'benchmark_value': 'Benchmark',
+                'benchmark_type': 'BenchmarkType',
+                'compute_service': 'CloudComputeService',
+            }
+            return d.get(value, value)
 
-    @start_time.setter
-    def start_time(self, value):
-        if value and not isinstance(value, datetime.datetime):
-            raise ValueError("Dates must be datetime.datetime objects")
-        self._start_time = value
-
-    @property
-    def end_time(self):
-        return self._end_time
-
-    @end_time.setter
-    def end_time(self, value):
-        if value and not isinstance(value, datetime.datetime):
-            raise ValueError("Dates must be datetime.datetime objects")
-        self._end_time = value
-
-    @property
-    def map(self):
-        d = {
-            'VMUUID': self.uuid,
-            'SiteName': self.site,
-            'MachineName': self.name,
-            'LocalUserId': self.user_id,
-            'LocalGroupId': self.group_id,
-            'FQAN': self.fqan,
-            'Status': self.status,
-            'StartTime': self.start_time and int(
-                self.start_time.strftime("%s")
-            ),
-            'EndTime': self.end_time and int(
-                self.end_time.strftime("%s")
-            ),
-            'SuspendDuration': self.suspend_duration,
-            'WallDuration': self.wall_duration,
-            'CpuDuration': self.cpu_duration,
-            'CpuCount': self.cpu_count,
-            'NetworkType': self.network_type,
-            'NetworkInbound': self.network_in,
-            'NetworkOutbound': self.network_out,
-            'Memory': self.memory,
-            'Disk': self.disk,
-            'StorageRecordId': self.storage_record_id,
-            'ImageId': self.image_id,
-            'CloudType': self.cloud_type,
-            'GlobalUserName': self.user_dn,
-            'PublicIPCount': self.public_ip_count,
-            'Benchmark': self.benchmark_value,
-            'BenchmarkType': self.benchmark_type,
-            'CloudComputeService': self.compute_service,
-        }
-        return d
+        alias_generator = map_fields
+        allow_population_by_field_name = True
+        underscore_attrs_are_private = True
+        extra = "forbid"
 
 
 class IPRecord(BaseRecord):
     """The IPRecord class holds information for each of the records.
 
-    This class is versioned, following the Public IP Usage Record versions
-
+    This class is versioned, following the Public IP Usage Record versions.
     """
 
     version = "0.2"
 
-    _V02_fields = [
-        "MeasurementTime",
-        "SiteName",
-        "CloudComputeService",
-        "CloudType",
-        "LocalUser",
-        "LocalGroup",
-        "GlobalUserName",
-        "FQAN",
-        "IPVersion",
-        "IPCount",
-    ]
+    user_id: typing.Optional[uuid.UUID]
+    user_dn: typing.Optional[str]
+    group_id: uuid.UUID
+    fqan: str
 
-    _version_field_map = {
-        "0.2": _V02_fields,
-    }
+    measure_time: datetime.datetime
 
-    def __init__(
-        self, measure_time, site,
-        user_id, group_id, user_dn, fqan,
-        ip_version, public_ip_count,
-        cloud_type=caso.user_agent,
-        compute_service=None
-    ):
+    ip_version: int
+    public_ip_count: int
 
-        self.measure_time = measure_time
-        self.site = site
-        self.cloud_type = cloud_type
-        self.user_id = user_id
-        self.group_id = group_id
-        self.user_dn = user_dn
-        self.fqan = fqan
-        self.compute_service = compute_service
-        self.ip_version = ip_version
-        self.public_ip_count = public_ip_count
+    class Config:
+        @staticmethod
+        def map_fields(field: str) -> str:
+            d = {
+                'measure_time': 'MeasurementTime',
+                'site_name': 'SiteName',
+                'cloud_type': 'CloudType',
+                'user_id': 'LocalUser',
+                'group_id': 'LocalGroup',
+                'fqan': 'FQAN',
+                'user_dn': 'GlobalUserName',
+                'ip_version': 'IPVersion',
+                'public_ip_count': 'IPCount',
+                'compute_service': 'CloudComputeService',
+            }
+            return d.get(field, field)
 
-    @property
-    def measure_time(self):
-        return self._measure_time
-
-    @measure_time.setter
-    def measure_time(self, value):
-        if value and not isinstance(value, datetime.datetime):
-            raise ValueError("Dates must be datetime.datetime objects")
-        self._measure_time = value
-
-    @property
-    def map(self):
-        d = {
-            'MeasurementTime': self.measure_time and int(
-                self.measure_time.strftime("%s")
-            ),
-            'SiteName': self.site,
-            'CloudType': self.cloud_type,
-            'LocalUser': self.user_id,
-            'LocalGroup': self.group_id,
-            'FQAN': self.fqan,
-            'GlobalUserName': self.user_dn,
-            'IPVersion': self.ip_version,
-            'IPCount': self.public_ip_count,
-            'CloudComputeService': self.compute_service,
-        }
-        return d
+        alias_generator = map_fields
+        allow_population_by_field_name = True
+        underscore_attrs_are_private = True
+        extra = "forbid"
 
 
-class AcceleratorRecord(BaseRecord):
+class AcceleratorRecord(object):
     """The AcceleratorRecord class holds information for each of the records.
 
     This class is versioned, following the Accelerator Usage Record versions
@@ -331,83 +183,59 @@ class AcceleratorRecord(BaseRecord):
 
     version = "0.1"
 
-    _V01_fields = [
-        "MeasurementMonth",
-        "MeasurementYear",
-        "AssociatedRecordType",
-        "AssociatedRecord",
-        "GlobalUserName",
-        "FQAN",
-        "SiteName",
-        "Count",
-        "Cores",
-        "ActiveDuration",
-        "AvailableDuration",
-        "BenchmarkType",
-        "Benchmark",
-        "Type",
-        "Model",
-    ]
+    uuid: uuid.UUID
 
-    _version_field_map = {
-        "0.1": _V01_fields,
-    }
+    user_dn: typing.Optional[str]
+    fqan: str
 
-    def __init__(
-        self, uuid, fqan, site, count, available_duration, accelerator_type,
-        measurement_month, measurement_year,
-        associated_record_type="cloud",
-        user_dn=None,
-        cores=None,
-        active_duration=None,
-        benchmark_type=None,
-        benchmark=None,
-        model=None
-    ):
-        self.measurement_month = measurement_month
-        self.measurement_year = measurement_year
-        self.associated_record_type = associated_record_type
-        self.uuid = uuid
-        self.fqan = fqan
-        self.site = site
-        self.count = count
-        self.available_duration = available_duration
-        self.accelerator_type = accelerator_type
-        self.user_dn = user_dn
-        self.cores = cores
-        self._active_duration = active_duration
-        self.benchmark_type = benchmark_type
-        self.benchmark = benchmark
-        self.accelerator_type = self.accelerator_type
-        self.model = model
+    count: int
+    available_duration: int
+    _active_duration: typing.Optional[int]
+
+    measurement_month: int
+    measurement_year: int
+
+    associated_record_type: str = "cloud"
+
+    accelerator_type: str
+    cores: int
+    model: str
+
+    benchmark_value: typing.Optional[float]
+    benchmark_type: typing.Optional[str]
 
     @property
-    def active_duration(self):
+    def active_duration(self) -> int:
         if self._active_duration is not None:
             return self._active_duration
         return self.available_duration
 
-    @active_duration.setter
-    def active_duration(self, value):
+    def set_active_duration(self, value: int):
         self._active_duration = value
 
-    @property
-    def map(self):
-        d = {
-            "MeasurementMonth": self.measurement_month,
-            "MeasurementYear": self.measurement_year,
-            "AssociatedRecordType": self.associated_record_type,
-            "AssociatedRecord": self.uuid,
-            "GlobalUserName": self.user_dn,
-            "FQAN": self.fqan,
-            "SiteName": self.site,
-            "Count": self.count,
-            "Cores": self.cores,
-            "ActiveDuration": self.active_duration,
-            "AvailableDuration": self.available_duration,
-            "BenchmarkType": self.benchmark_type,
-            "Benchmark": self.benchmark,
-            "Type": self.accelerator_type,
-            "Model": self.model,
-        }
-        return d
+    class Config:
+        @staticmethod
+        def map_fields(field: str) -> str:
+            d = {
+                "measurement_month": "MeasurementMonth",
+                "measurement_year": "MeasurementYear",
+                "associated_record_type": "AssociatedRecordType",
+                "uuid": "AccUUID",
+                "user_dn": "GlobalUserName",
+                "fqan": "FQAN",
+                "site": "SiteName",
+                "count": "Count",
+                "cores": "Cores",
+                "active_duration": "ActiveDuration",
+                "available_duration": "AvailableDuration",
+                "benchmark_type": "BenchmarkType",
+                "benchmark": "Benchmark",
+                "accelerator_type": "Type",
+                "model": "Model",
+            }
+            return d.get(field, field)
+
+        alias_generator = map_fields
+        allow_population_by_field_name = True
+        underscore_attrs_are_private = True
+        extra = "forbid"
