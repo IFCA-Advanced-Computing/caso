@@ -17,7 +17,7 @@
 import abc
 import datetime
 import typing
-import uuid
+import uuid as m_uuid
 
 import pydantic
 
@@ -45,12 +45,12 @@ class CloudRecord(BaseRecord):
 
     version: str = "0.4"
 
-    uuid: uuid.UUID
+    uuid: m_uuid.UUID
     name: str
 
-    user_id: uuid.UUID
+    user_id: m_uuid.UUID
     user_dn: typing.Optional[str]
-    group_id: uuid.UUID
+    group_id: m_uuid.UUID
     fqan: str
 
     status: str
@@ -63,7 +63,7 @@ class CloudRecord(BaseRecord):
     _wall_duration: typing.Optional[int]
     _cpu_duration: typing.Optional[int]
 
-    image_id: uuid.UUID
+    image_id: m_uuid.UUID
 
     public_ip_count = 0
     cpu_count: int
@@ -79,10 +79,10 @@ class CloudRecord(BaseRecord):
         if self._wall_duration is not None:
             duration = self._wall_duration
         elif self.end_time:
-            duration = (self.end_time - self.start_time).total_seconds()
-        return duration and int(duration)
+            duration = int((self.end_time - self.start_time).total_seconds())
+        return duration
 
-    def set_wall_duration(self, value: typing.Union[int, float]):
+    def set_wall_duration(self, value: int):
         self._wall_duration = value
 
     @property
@@ -94,7 +94,7 @@ class CloudRecord(BaseRecord):
             duration = self.wall_duration * self.cpu_count
         return duration and int(duration)
 
-    def set_cpu_duration(self, value: typing.Union[int, float]):
+    def set_cpu_duration(self, value: int):
         self._cpu_duration = value
 
     class Config:
@@ -144,9 +144,9 @@ class IPRecord(BaseRecord):
 
     version = "0.2"
 
-    user_id: typing.Optional[uuid.UUID]
+    user_id: typing.Optional[m_uuid.UUID]
     user_dn: typing.Optional[str]
-    group_id: uuid.UUID
+    group_id: m_uuid.UUID
     fqan: str
 
     measure_time: datetime.datetime
@@ -186,7 +186,7 @@ class AcceleratorRecord(object):
 
     version = "0.1"
 
-    uuid: uuid.UUID
+    uuid: m_uuid.UUID
 
     user_dn: typing.Optional[str]
     fqan: str
