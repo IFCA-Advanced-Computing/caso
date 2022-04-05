@@ -15,6 +15,7 @@
 # under the License.
 
 import json
+import typing
 import warnings
 
 # We are not parsing XML so this is safe
@@ -59,14 +60,19 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         # FIXME(aloga): try except here
         utils.makedirs(CONF.ssm.output_path)
 
-    def push_compute_message(self, queue, entries):
+    def push_compute_message(self,
+                             queue: dirq.QueueSimple.QueueSimple,
+                             entries: typing.List[str]):
         message = f"APEL-cloud-message: v{self.compute_version}\n"
         aux = "%%\n".join(entries)
         message += f"{aux}\n"
-        message = message.encode("utf-8")
-        queue.add(message)
+        queue.add(message.encode("utf-8"))
 
-    def push_json_message(self, queue, entries, msg_type, version):
+    def push_json_message(self,
+                          queue: dirq.QueueSimple.QueueSimple,
+                          entries: typing.List[str],
+                          msg_type: str,
+                          version: str):
         message = {
             "Type": msg_type,
             "Version": version,
@@ -74,11 +80,15 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         }
         queue.add(json.dumps(message))
 
-    def push_ip_message(self, queue, entries):
+    def push_ip_message(self,
+                        queue: dirq.QueueSimple.QueueSimple,
+                        entries: typing.List[str]):
         self.push_json_message(queue, entries, "APEL Public IP message",
                                self.ip_version)
 
-    def push_acc_message(self, queue, entries):
+    def push_acc_message(self,
+                         queue: dirq.QueueSimple.QueueSimple,
+                         entries: typing.List[str]):
         self.push_json_message(queue, entries, "APEL-accelerator-message",
                                self.acc_version)
 
