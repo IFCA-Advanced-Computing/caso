@@ -14,7 +14,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import abc
 import json
 import warnings
 
@@ -45,16 +44,14 @@ CONF = cfg.CONF
 CONF.register_opts(opts, group="ssm")
 
 
-__all__ = ["SSMMessengerV02", "SSMMessengerV04"]
+__all__ = ["SSMMessenger", "SSMMessengerV04"]
 
 
-@six.add_metaclass(abc.ABCMeta)
-class _SSMBaseMessenger(caso.messenger.BaseMessenger):
-    # FIXME(aloga): versions are not anymore used
-    compute_version = None
-    ip_version = None
-    acc_version = None
-    str_version = None
+class SSMMessenger(caso.messenger.BaseMessenger):
+    compute_version = "0.4"
+    ip_version = "0.2"
+    acc_version = "0.1"
+    str_version = None  # FIXME: this cannot have a none version
 
     def __init__(self):
         # FIXME(aloga): try except here
@@ -166,17 +163,10 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
             self.push_str_message(queue, entries)
 
 
-class SSMMessengerV02(_SSMBaseMessenger):
-    compute_version = "0.2"
-
+class SSMMessengerV04(SSMMessenger):
     def __init__(self):
-        msg = ("Using deprecated caso.messenger.ssm.SSMMessengerV02, "
-               "please use caso.messenger.ssm.SSMMessengerV04 instead.")
+        msg = ("Using an versioned SSM messenger is deprecated, please use "
+               "'ssm' as messenger instead in order to use the latest "
+               "version.")
         warnings.warn(msg, DeprecationWarning)
-        super(SSMMessengerV02, self).__init__()
-
-
-class SSMMessengerV04(_SSMBaseMessenger):
-    compute_version = "0.4"
-    ip_version = "0.2"
-    acc_version = "0.1"
+        super(SSMMessengerV04, self).__init__()
