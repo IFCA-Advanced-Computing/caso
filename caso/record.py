@@ -74,7 +74,7 @@ class CloudRecord(BaseRecord):
     benchmark_type: typing.Optional[str]
 
     @property
-    def wall_duration(self) -> int:
+    def wall_duration(self) -> typing.Optional[int]:
         duration = None
         if self._wall_duration is not None:
             duration = self._wall_duration
@@ -86,7 +86,7 @@ class CloudRecord(BaseRecord):
         self._wall_duration = value
 
     @property
-    def cpu_duration(self) -> int:
+    def cpu_duration(self) -> typing.Optional[int]:
         duration = None
         if self._cpu_duration is not None:
             duration = self._cpu_duration
