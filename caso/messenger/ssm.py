@@ -53,6 +53,7 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
     compute_version = None
     ip_version = None
     acc_version = None
+    str_version = None
 
     def __init__(self):
         # FIXME(aloga): try except here
@@ -81,6 +82,10 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
         self.push_json_message(queue, entries, "APEL-accelerator-message",
                                self.acc_version)
 
+    def push_str_message(self, queue, entries):
+        self.push_json_message(queue, entries, "APEL Block Storage message",
+                               self.str_version)
+
     def push(self, records):
         if not records:
             return
@@ -88,6 +93,7 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
         entries_cloud = []
         entries_ip = []
         entries_acc = []
+        entries_str = []
         opts = {
             "by_alias": True,
             "exclude_unset": True,
@@ -104,6 +110,8 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
                 entries_ip.append(record.json(**opts))
             elif isinstance(record, caso.record.AcceleratorRecord):
                 entries_acc.append(record.dict(**opts))
+            elif isinstance(record, caso.record.StorageRecord):
+                entries_str.append(record.json(**opts))
             else:
                 raise caso.exception.CasoException("Unexpected record format!")
 
@@ -123,6 +131,10 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
         for i in range(0, len(entries_acc), CONF.ssm.max_size):
             entries = entries_acc[i:i + CONF.ssm.max_size]
             self.push_acc_message(queue, entries)
+
+        for i in range(0, len(entries_str), CONF.ssm.max_size):
+            entries = entries_str[i:i + CONF.ssm.max_size]
+            self.push_str_message(queue, entries)
 
 
 class SSMMessengerV02(_SSMBaseMessenger):
