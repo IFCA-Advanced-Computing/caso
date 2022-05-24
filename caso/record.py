@@ -22,6 +22,9 @@ import uuid
 import pydantic
 
 import caso
+from oslo_log import log
+
+LOG = log.getLogger(__name__)
 
 
 class BaseRecord(pydantic.BaseModel, abc.ABC):
@@ -232,6 +235,68 @@ class AcceleratorRecord(object):
                 "benchmark": "Benchmark",
                 "accelerator_type": "Type",
                 "model": "Model",
+            }
+            return d.get(field, field)
+
+        alias_generator = map_fields
+        allow_population_by_field_name = True
+        underscore_attrs_are_private = True
+        extra = "forbid"
+
+
+class StorageRecord(BaseRecord):
+    """The StorageRecord class holds information for each of the records.
+
+    This class is versioned, following the Storage Accounting Definition on
+    EMI StAR
+    """
+
+    version: str = "0.1"
+
+    uuid: uuid.UUID
+    name: str
+
+    user_id: str
+    user_dn: typing.Optional[str]
+    group_id: str
+    fqan: str
+
+    active_duration: int
+    attached_duration: typing.Optional[float]
+    attached_to: typing.Optional[str]
+    measure_time: datetime.datetime
+
+    storage_type: typing.Optional[str] = "Block Storage (cinder)"
+
+    status: str
+    capacity: int
+
+    # (aidaph) Fix the return to something different to 0
+    @pydantic.validator("attached_duration", always=True)
+    def validate_attached_duration(cls, value):
+        if value is not None:
+            return value
+        return 0
+
+    class Config:
+        @staticmethod
+        def map_fields(field: str) -> str:
+            d = {
+                "measure_time": "MeasurementTime",
+                "uuid": "VolumeUUID",
+                "name": "RecordName",
+                'user_id': 'LocalUser',
+                "user_dn": "GlobalUserName",
+                'group_id': 'LocalGroup',
+                "fqan": "FQAN",
+                "site_name": "SiteName",
+                "capacity": "Capacity",
+                "active_duration": "ActiveDuration",
+                "storage_type": "Type",
+                "status": "Status",
+                "attached_to": "AttachedTo",
+                "attached_duration": "AttachedDuration",
+                'compute_service': 'CloudComputeService',
             }
             return d.get(field, field)
 
