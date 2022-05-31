@@ -55,14 +55,6 @@ class CloudRecord(BaseRecord):
 
     status: str
 
-    start_time: datetime.datetime
-    end_time: typing.Optional[datetime.datetime]
-
-    suspend_duration: typing.Optional[int]
-
-    _wall_duration: typing.Optional[int]
-    _cpu_duration: typing.Optional[int]
-
     image_id: m_uuid.UUID
 
     public_ip_count = 0
@@ -70,29 +62,42 @@ class CloudRecord(BaseRecord):
     memory: int
     disk: int
 
+    start_time: datetime.datetime
+    end_time: typing.Optional[datetime.datetime]
+
+    # NOTE(aloga): due to the validation that we are doing below until
+    # https://github.com/samuelcolvin/pydantic/issues/935
+    # and
+    # https://github.com/samuelcolvin/pydantic/pull/2625
+    # are closed, we need to define the durations here, so do not move them
+    # around, otherwise we cannot access the needed fields
+    suspend_duration: typing.Optional[int]
+
+    wall_duration: typing.Optional[int]
+    cpu_duration: typing.Optional[int]
+
     benchmark_value: typing.Optional[float]
     benchmark_type: typing.Optional[str]
 
-    @property
-    def wall_duration(self) -> typing.Optional[int]:
+    @pydantic.validator("wall_duration", always=True)
+    def validate_wall_duration(cls, value, values):
         duration = None
-        if self._wall_duration is not None:
-            duration = self._wall_duration
-        elif self.end_time:
-            duration = int((self.end_time - self.start_time).total_seconds())
+        if value is not None:
+            duration = value
+        elif values["end_time"]:
+            duration = values["end_time"] - values["self.start_time"]
+            duration = int(duration.total_seconds())
         return duration
 
-    def set_wall_duration(self, value: int):
-        self._wall_duration = value
-
-    @property
-    def cpu_duration(self) -> typing.Optional[int]:
+    @pydantic.validator("cpu_duration", always=True)
+    def validate_cpu_duration(cls, value, values):
         duration = None
-        if self._cpu_duration is not None:
-            duration = self._cpu_duration
-        elif self.wall_duration is not None and self.cpu_count:
-            duration = self.wall_duration * self.cpu_count
-        return duration and int(duration)
+        if value is not None:
+            duration = value
+        elif values["wall_duration"] is not None and values["cpu_count"]:
+            duration = values["wall_duration"] * values["cpu_count"]
+            duration = int(duration)
+        return duration
 
     def set_cpu_duration(self, value: int):
         self._cpu_duration = value
