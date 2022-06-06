@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from caso.extract import nova
+from caso.extract.openstack import nova
 from caso.tests import base
 
 
@@ -20,7 +20,7 @@ class TestCasoManager(base.TestCase):
     def setUp(self):
         super(TestCasoManager, self).setUp()
         self.flags(mapping_file="etc/caso/voms.json.sample")
-        self.extractor = nova.OpenStackExtractor()
+        self.extractor = nova.NovaExtractor()
 
     def tearDown(self):
         self.reset_flags()

@@ -16,14 +16,13 @@
 
 import operator
 
-import cinderclient.v3.client 
+import cinderclient.v3.client
 import dateutil.parser
 from oslo_config import cfg
 from oslo_log import log
 
 from caso.extract import openstack
 from caso import record
-from datetime import datetime
 
 CONF = cfg.CONF
 
@@ -37,11 +36,11 @@ class CinderExtractor(openstack.BaseOpenStackExtractor):
     def __init__(self, project):
         super(CinderExtractor, self).__init__(project)
 
-        self.cinder = self._get_cinder_client() 
+        self.cinder = self._get_cinder_client()
 
     def _get_cinder_client(self):
         session = self._get_keystone_session()
-        return cinderclient.v3.client.Client(session=session) 
+        return cinderclient.v3.client.Client(session=session)
 
     def build_record(self, volume, extract_from, extract_to):
         user = self.users[volume.user_id]
@@ -52,7 +51,7 @@ class CinderExtractor(openstack.BaseOpenStackExtractor):
         if (vol_created < extract_from):
             vol_created = extract_from
 
-        active_duration=(extract_to - vol_created).total_seconds()
+        active_duration = (extract_to - vol_created).total_seconds()
 
         r = record.StorageRecord(
             uuid=volume.id,
@@ -70,16 +69,15 @@ class CinderExtractor(openstack.BaseOpenStackExtractor):
         )
 
         if volume.status == "in-use":
-             attached_to = volume.attachments[0]["server_id"]
-             attached_at = volume.attachments[0]["attached_at"]
-             attached_at = dateutil.parser.parse(attached_at)
-             if (attached_at < extract_from):
+            attached_to = volume.attachments[0]["server_id"]
+            attached_at = volume.attachments[0]["attached_at"]
+            attached_at = dateutil.parser.parse(attached_at)
+            if (attached_at < extract_from):
                 attached_at = extract_from
-             attacht = (extract_to - attached_at).total_seconds()
-             r.set_attached_duration(attacht)
-             r.set_attached_to(attached_to)
-             LOG.error("Print attached Duration = %s "%(r.attached_to))
-        
+            attacht = (extract_to - attached_at).total_seconds()
+            r.attached_duration = attacht
+            r.attached_to = attached_to
+
         return r
 
     def _get_volumes(self, extract_from):
@@ -124,7 +122,8 @@ class CinderExtractor(openstack.BaseOpenStackExtractor):
         volumes = self._get_volumes(extract_from)
 
         for vol in volumes:
-            self.str_records[vol.id] = self.build_record(vol, extract_from, extract_to)
-            LOG.error(self.str_records[vol.id])
+            self.str_records[vol.id] = self.build_record(vol,
+                                                         extract_from,
+                                                         extract_to)
 
         return list(self.str_records.values())
