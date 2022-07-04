@@ -109,7 +109,7 @@ class Manager(object):
         lastrun parameter. If CONF.extract_to is present, it will be used
         instead of the extract_to parameter
         """
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(tz.tzutc())
         extract_to = CONF.extract_to or now
 
         if isinstance(extract_to, six.string_types):
@@ -159,6 +159,8 @@ class Manager(object):
                               f"{current_count} records for project "
                               f"'{project}' "
                               f"({extract_from} to {extract_to})")
+
+                self.write_lastrun(project)
             except Exception:
                 LOG.exception(f"Extractor {extractor_name}: cannot extract "
                               f"records for '{project}', got "
