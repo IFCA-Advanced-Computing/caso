@@ -84,6 +84,7 @@ class NeutronExtractor(openstack.BaseOpenStackExtractor):
         # from the dates. We assume that all dates coming from upstream are
         # in UTC TZ.
         extract_from = extract_from.replace(tzinfo=None)
+        extract_to = extract_to.replace(tzinfo=None)
 
         self.ip_records = {}
 

@@ -265,6 +265,7 @@ class StorageRecord(BaseRecord):
     attached_duration: typing.Optional[float]
     attached_to: typing.Optional[str]
     measure_time: datetime.datetime
+    start_time: datetime.datetime
 
     storage_type: typing.Optional[str] = "Block Storage (cinder)"
 
