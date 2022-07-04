@@ -17,6 +17,7 @@
 import abc
 import json
 import warnings
+import xml.etree.ElementTree as ET
 
 import dirq.QueueSimple
 from oslo_config import cfg
@@ -70,7 +71,7 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
         message = {
             "Type": msg_type,
             "Version": version,
-            "UsageRecords": entries,
+            "UsageRecords": [json.loads(r) for r in entries],
         }
         queue.add(json.dumps(message))
 
@@ -83,8 +84,36 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
                                self.acc_version)
 
     def push_str_message(self, queue, entries):
-        self.push_json_message(queue, entries, "APEL Block Storage message",
-                               self.str_version)
+        ns = {
+            "xmlns:sr": "http://eu-emi.eu/namespaces/2011/02/storagerecord"
+        }
+        root = ET.Element("sr:StorageUsageRecords", attrib=ns)
+        for record in entries:
+            sr = ET.SubElement(root, "sr:StorageUsageRecord")
+            ET.SubElement(
+                sr,
+                "sr:RecordIdentity",
+                attrib={
+                    "sr:createTime": record.measure_time.isoformat(),
+                    "sr:recordId": str(record.uuid),
+                },
+            )
+            ET.SubElement(sr, "sr:StorageSystem").text = record.compute_service
+            ET.SubElement(sr, "sr:Site").text = record.site_name
+            subject = ET.SubElement(sr, "sr:SubjectIdentity")
+            ET.SubElement(subject, "sr:LocalUser").text = record.user_id
+            ET.SubElement(subject, "sr:LocalGroup").text = record.group_id
+            if record.user_dn:
+                ET.SubElement(subject, "sr:UserIdentity").text = record.user_dn
+            if record.fqan:
+                ET.SubElement(subject, "sr:Group").text = record.fqan
+            ET.SubElement(sr,
+                          "sr:StartTime").text = record.start_time.isoformat()
+            ET.SubElement(sr,
+                          "sr:EndTime").text = record.measure_time.isoformat()
+            capacity = str(int(record.capacity * 1073741824))   # 1 GiB = 2^30
+            ET.SubElement(sr, "sr:ResourceCapacityUsed").text = capacity
+        queue.add(ET.tostring(root))
 
     def push(self, records):
         if not records:
@@ -109,9 +138,9 @@ class _SSMBaseMessenger(caso.messenger.BaseMessenger):
             elif isinstance(record, caso.record.IPRecord):
                 entries_ip.append(record.json(**opts))
             elif isinstance(record, caso.record.AcceleratorRecord):
-                entries_acc.append(record.dict(**opts))
+                entries_acc.append(record.json(**opts))
             elif isinstance(record, caso.record.StorageRecord):
-                entries_str.append(record.json(**opts))
+                entries_str.append(record)
             else:
                 raise caso.exception.CasoException("Unexpected record format!")
 
