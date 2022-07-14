@@ -115,7 +115,7 @@ class Manager(object):
         if isinstance(extract_to, six.string_types):
             extract_to = dateutil.parser.parse(extract_to)
         if extract_to.tzinfo is None:
-            extract_to.replace(tzinfo=tz.tzutc())
+            extract_to = extract_to.replace(tzinfo=tz.tzutc())
 
         if extract_to > now:
             LOG.warning("The extract-to parameter is in the future, after "
@@ -132,7 +132,7 @@ class Manager(object):
             if isinstance(extract_from, six.string_types):
                 extract_from = dateutil.parser.parse(extract_from)
             if extract_from.tzinfo is None:
-                extract_from.replace(tzinfo=tz.tzutc())
+                extract_from = extract_from.replace(tzinfo=tz.tzutc())
 
             if extract_from >= now:
                 LOG.error("Cannot extract records from the future, please "
@@ -141,15 +141,13 @@ class Manager(object):
                           f"(extract-from: {extract_from})")
                 sys.exit(1)
 
-            try:
-                record_count = 0
-                for extractor_name, extractor_cls in self.extractors:
-                    LOG.debug(f"Extractor {extractor_name}: extracting records"
-                              f"for project {project} "
-                              f"({extract_from} to {extract_to})")
-
+            record_count = 0
+            for extractor_name, extractor_cls in self.extractors:
+                LOG.debug(f"Extractor {extractor_name}: extracting records "
+                          f"for project {project} "
+                          f"({extract_from} to {extract_to})")
+                try:
                     extractor = extractor_cls(project)
-
                     records = extractor.extract(extract_from, extract_to)
                     current_count = len(records)
                     record_count += current_count
@@ -159,14 +157,12 @@ class Manager(object):
                               f"{current_count} records for project "
                               f"'{project}' "
                               f"({extract_from} to {extract_to})")
-
-                self.write_lastrun(project)
-            except Exception:
-                LOG.exception(f"Extractor {extractor_name}: cannot extract "
-                              f"records for '{project}', got "
-                              "the following exception: ")
-            else:
-                LOG.info(f"Extracted {record_count} records in total for "
-                         f"project '{project}' "
-                         f"({extract_from} to {extract_to})")
+                except Exception:
+                    LOG.exception(f"Extractor {extractor_name}: cannot extract "
+                                  f"records for '{project}', got "
+                                  "the following exception: ")
+            LOG.info(f"Extracted {record_count} records in total for "
+                     f"project '{project}' "
+                     f"({extract_from} to {extract_to})")
+            self.write_lastrun(project)
         return all_records

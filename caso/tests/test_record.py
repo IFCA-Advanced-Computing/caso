@@ -26,12 +26,12 @@ from caso.tests import base
 
 class TestCasoManager(base.TestCase):
     def test_invalid_version(self):
-        r = record.CloudRecord(uuid.uuid4().hex,
-                               "site-foo",
-                               "name-foo",
-                               uuid.uuid4().hex,
-                               uuid.uuid4().hex,
-                               "/Foo/User/Fqan")
+        r = record.CloudRecord(uuid=uuid.uuid4().hex,
+                               site_name="site-foo",
+                               compute_service="name-foo",
+                               user_id=uuid.uuid4().hex,
+                               group_id=uuid.uuid4().hex,
+                               fqan="/Foo/User/Fqan")
 
         self.assertRaises(exception.RecordVersionNotFound,
                           r.as_dict, version="0.0")
