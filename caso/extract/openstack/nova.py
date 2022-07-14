@@ -374,7 +374,6 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
 
         # Our records
         self.records = {}
-        self.ip_records = {}
         self.acc_records = {}
 
         # We cannot use just 'changes-since' in the servers.list() API query,
