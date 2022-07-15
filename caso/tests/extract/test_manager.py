@@ -22,11 +22,11 @@ import uuid
 import dateutil.parser
 from dateutil import tz
 import mock
-import os.path
 import six
 
 from caso.extract import manager
 from caso.tests import base
+
 
 class TestCasoManager(base.TestCase):
     def setUp(self):
