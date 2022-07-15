@@ -279,7 +279,6 @@ class StorageRecord(BaseRecord):
             return value
         return 0
 
-
     class Config:
         @staticmethod
         def map_fields(field: str) -> str:

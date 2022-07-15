@@ -158,8 +158,8 @@ class Manager(object):
                               f"'{project}' "
                               f"({extract_from} to {extract_to})")
                 except Exception:
-                    LOG.exception(f"Extractor {extractor_name}: cannot extract "
-                                  f"records for '{project}', got "
+                    LOG.exception(f"Extractor {extractor_name}: cannot "
+                                  f"extract records for '{project}', got "
                                   "the following exception: ")
             LOG.info(f"Extracted {record_count} records in total for "
                      f"project '{project}' "
