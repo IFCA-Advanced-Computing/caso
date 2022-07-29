@@ -293,7 +293,7 @@ class StorageRecord(BaseRecord):
                 "site_name": "SiteName",
                 "capacity": "Capacity",
                 "active_duration": "ActiveDuration",
-                "start_time": "ActiveDuration",
+                "start_time": "StartTime",
                 "storage_type": "Type",
                 "status": "Status",
                 "attached_to": "AttachedTo",
