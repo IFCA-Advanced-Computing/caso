@@ -18,11 +18,11 @@ import abc
 import json
 import warnings
 
-import xml.etree.ElementTree as ET
 import dirq.QueueSimple
 from oslo_config import cfg
 from oslo_log import log
 import six
+import xml.etree.ElementTree as ET
 
 import caso.exception
 import caso.messenger
