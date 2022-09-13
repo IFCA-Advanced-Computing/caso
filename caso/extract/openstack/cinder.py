@@ -64,6 +64,7 @@ class CinderExtractor(openstack.BaseOpenStackExtractor):
             status=volume.status,
             active_duration=active_duration,
             measure_time=measure_time,
+            start_time=vol_created,
             capacity=volume.size,
             user_dn=user
         )
@@ -115,6 +116,7 @@ class CinderExtractor(openstack.BaseOpenStackExtractor):
         # from the dates. We assume that all dates coming from upstream are
         # in UTC TZ.
         extract_from = extract_from.replace(tzinfo=None)
+        extract_to = extract_to.replace(tzinfo=None)
 
         # Our storage records
         self.str_records = {}
