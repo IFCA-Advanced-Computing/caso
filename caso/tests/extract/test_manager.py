@@ -20,6 +20,7 @@ import datetime
 import uuid
 
 import dateutil.parser
+from dateutil import tz
 import mock
 import six
 
@@ -69,8 +70,8 @@ class TestCasoManager(base.TestCase):
             ret = self.manager.get_records()
             m.assert_called_once_with(
                 "bazonk",
-                dateutil.parser.parse(extract_from),
-                dateutil.parser.parse(extract_to)
+                dateutil.parser.parse(extract_from).replace(tzinfo=tz.tzutc()),
+                dateutil.parser.parse(extract_to).replace(tzinfo=tz.tzutc())
             )
         self.assertEqual(records, ret["cloud"])
         self.assertEqual(ip_records, ret["ip"])
@@ -111,8 +112,8 @@ class TestCasoManager(base.TestCase):
             m_lr.assert_called_once_with("bazonk")
             m.assert_called_once_with(
                 "bazonk",
-                dateutil.parser.parse(lastrun),
-                dateutil.parser.parse(extract_to)
+                dateutil.parser.parse(lastrun).replace(tzinfo=tz.tzutc()),
+                dateutil.parser.parse(extract_to).replace(tzinfo=tz.tzutc())
             )
         self.assertEqual(records, ret["cloud"])
         self.assertEqual(ip_records, ret["ip"])
