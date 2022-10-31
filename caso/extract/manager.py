@@ -106,13 +106,13 @@ class Manager(object):
         lastrun parameter. If CONF.extract_to is present, it will be used
         instead of the extract_to parameter
         """
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(tz.tzutc())
         extract_to = CONF.extract_to or now
 
         if isinstance(extract_to, six.string_types):
             extract_to = dateutil.parser.parse(extract_to)
         if extract_to.tzinfo is None:
-            extract_to.replace(tzinfo=tz.tzutc())
+            extract_to = extract_to.replace(tzinfo=tz.tzutc())
 
         if extract_to > now:
             LOG.warning("The extract-to parameter is in the future, after "
@@ -129,7 +129,7 @@ class Manager(object):
             if isinstance(extract_from, six.string_types):
                 extract_from = dateutil.parser.parse(extract_from)
             if extract_from.tzinfo is None:
-                extract_from.replace(tzinfo=tz.tzutc())
+                extract_from = extract_from.replace(tzinfo=tz.tzutc())
 
             if extract_from >= now:
                 LOG.error("Cannot extract records from the future, please "
