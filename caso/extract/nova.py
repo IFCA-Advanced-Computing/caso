@@ -514,6 +514,7 @@ class OpenStackExtractor(base.BaseProjectExtractor):
         # Some API calls do not expect a TZ, so we have to remove the timezone
         # from the dates. We assume that all dates coming from upstream are
         # in UTC TZ.
+        extract_to = extract_to.replace(tzinfo=None)
         extract_from = extract_from.replace(tzinfo=None)
 
         LOG.debug("Extracting information from %s (%s) to %s (%s)",
