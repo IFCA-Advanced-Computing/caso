@@ -291,7 +291,9 @@ class OpenStackExtractor(base.BaseProjectExtractor):
         # Use a marker and iter over results until we do not have more to get
         while True:
             aux = self.nova.servers.list(
-                search_opts={"changes-since": extract_from.isoformat(timespec="seconds")},
+                search_opts={
+                    "changes-since": extract_from.isoformat(timespec="seconds")
+                },
                 limit=limit,
                 marker=marker
             )
@@ -348,8 +350,10 @@ class OpenStackExtractor(base.BaseProjectExtractor):
             server_start = self._get_server_start(server)
             server_end = self._get_server_end(server)
 
-            LOG.debug("Extracting information from server %s, started at %s (%s), ended at %s (%s)",
-                      server, server_start, type(server_start), server_end, type(server_end))
+            LOG.debug("Extracting information from server %s, "
+                      "started at %s (%s), ended at %s (%s)",
+                      server, server_start, type(server_start),
+                      server_end, type(server_end))
 
             # Some servers may be deleted before 'extract_from' but updated
             # afterwards
@@ -513,7 +517,8 @@ class OpenStackExtractor(base.BaseProjectExtractor):
         extract_from = extract_from.replace(tzinfo=None)
 
         LOG.debug("Extracting information from %s (%s) to %s (%s)",
-                  extract_from, type(extract_from), extract_to, type(extract_to))
+                  extract_from, type(extract_from),
+                  extract_to, type(extract_to))
 
         # Auxiliary variables to count ips
         self.ip_counts_v4 = collections.defaultdict(lambda: 0)

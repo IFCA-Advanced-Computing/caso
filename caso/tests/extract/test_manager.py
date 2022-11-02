@@ -21,8 +21,8 @@ import uuid
 
 import dateutil.parser
 from dateutil import tz
-import mock
 import six
+import unittest.mock as mock
 
 from caso.extract import manager
 from caso.tests import base

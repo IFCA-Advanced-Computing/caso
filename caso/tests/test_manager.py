@@ -16,9 +16,9 @@
 Tests for `caso.manager` module.
 """
 
-import mock
 from oslo_concurrency.fixture import lockutils as lock_fixture
 import six
+import unittest.mock as mock
 
 from caso import manager
 from caso.tests import base
