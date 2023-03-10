@@ -31,7 +31,7 @@ from caso.tests import base
 class TestCasoManager(base.TestCase):
     def setUp(self):
         super(TestCasoManager, self).setUp()
-        self.flags(extractor="nova")
+        self.flags(extractor=["nova"])
         self.p_extractor = mock.patch("caso.loading.get_available_extractors")
         self.p_extractor.return_value = {'nova': mock.MagicMock()}
         self.p_extractor.start()
