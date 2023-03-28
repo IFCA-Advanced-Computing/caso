@@ -151,7 +151,7 @@ class SSMMessenger(caso.messenger.BaseMessenger):
             elif isinstance(record, caso.record.StorageRecord):
                 entries_str.append(record)
             else:
-                raise caso.exception.CasoException("Unexpected record format!")
+                raise caso.exception.CasoError("Unexpected record format!")
 
         # FIXME(aloga): try except here
         queue = dirq.QueueSimple.QueueSimple(CONF.ssm.output_path)

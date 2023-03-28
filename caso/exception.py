@@ -22,7 +22,7 @@ import six
 LOG = log.getLogger(__name__)
 
 
-class CasoException(Exception):
+class CasoError(Exception):
     msg_fmt = "An unknown exception occurred."
 
     def __init__(self, message=None, **kwargs):
@@ -40,17 +40,17 @@ class CasoException(Exception):
                     LOG.error("{name}: {value}")
                 six.reraise(exc_info[0], exc_info[1], exc_info[2])
 
-        super(CasoException, self).__init__(message)
+        super(CasoError, self).__init__(message)
 
 
-class RecordVersionNotFound(CasoException):
+class RecordVersionNotFoundError(CasoError):
     msg_fmt = "Version {version} of accounting record could not be found."
 
 
-class MessengerNotFound(CasoException):
+class MessengerNotFoundError(CasoError):
     msg_fmt = "Messengers {names} could not be found."
 
 
-class LogstashConnectionError(CasoException):
+class LogstashConnectionError(CasoError):
     msg_fmt = ("Cannot send data to logstash {host}:{port}, "
                "reason: {exception}")
