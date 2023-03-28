@@ -118,7 +118,7 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
 
     def _count_ips_on_server(self, server):
         count = 0
-        for name, value in server.addresses.items():
+        for _name, value in server.addresses.items():
             for ip in value:
                 if ip["OS-EXT-IPS:type"] == "floating":
                     count += 1
