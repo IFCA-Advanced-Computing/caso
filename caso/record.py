@@ -79,6 +79,7 @@ class CloudRecord(BaseRecord):
     benchmark_value: typing.Optional[float]
     benchmark_type: typing.Optional[str]
 
+    @classmethod
     @pydantic.validator("wall_duration", always=True)
     def validate_wall_duration(cls, value, values):
         duration = None
@@ -89,6 +90,7 @@ class CloudRecord(BaseRecord):
             duration = int(duration.total_seconds())
         return duration
 
+    @classmethod
     @pydantic.validator("cpu_duration", always=True)
     def validate_cpu_duration(cls, value, values):
         duration = None
@@ -278,6 +280,7 @@ class StorageRecord(BaseRecord):
     capacity: int
 
     # (aidaph) Fix the return to something different to 0
+    @classmethod
     @pydantic.validator("attached_duration", always=True)
     def validate_attached_duration(cls, value):
         if value is not None:
