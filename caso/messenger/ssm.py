@@ -18,7 +18,7 @@ import json
 import typing
 import warnings
 
-import defusedxml.ElementTree as ET
+import defusedxml.ElementTree as ETree
 import dirq.QueueSimple
 from oslo_config import cfg
 from oslo_log import log
@@ -94,10 +94,10 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         ns = {
             "xmlns:sr": "http://eu-emi.eu/namespaces/2011/02/storagerecord"
         }
-        root = ET.Element("sr:StorageUsageRecords", attrib=ns)
+        root = ETree.Element("sr:StorageUsageRecords", attrib=ns)
         for record in entries:
-            sr = ET.SubElement(root, "sr:StorageUsageRecord")
-            ET.SubElement(
+            sr = ETree.SubElement(root, "sr:StorageUsageRecord")
+            ETree.SubElement(
                 sr,
                 "sr:RecordIdentity",
                 attrib={
@@ -105,22 +105,22 @@ class SSMMessenger(caso.messenger.BaseMessenger):
                     "sr:recordId": str(record.uuid),
                 },
             )
-            ET.SubElement(sr, "sr:StorageSystem").text = record.compute_service
-            ET.SubElement(sr, "sr:Site").text = record.site_name
-            subject = ET.SubElement(sr, "sr:SubjectIdentity")
-            ET.SubElement(subject, "sr:LocalUser").text = record.user_id
-            ET.SubElement(subject, "sr:LocalGroup").text = record.group_id
+            ETree.SubElement(sr, "sr:StorageSystem").text = record.compute_service
+            ETree.SubElement(sr, "sr:Site").text = record.site_name
+            subject = ETree.SubElement(sr, "sr:SubjectIdentity")
+            ETree.SubElement(subject, "sr:LocalUser").text = record.user_id
+            ETree.SubElement(subject, "sr:LocalGroup").text = record.group_id
             if record.user_dn:
-                ET.SubElement(subject, "sr:UserIdentity").text = record.user_dn
+                ETree.SubElement(subject, "sr:UserIdentity").text = record.user_dn
             if record.fqan:
-                ET.SubElement(subject, "sr:Group").text = record.fqan
-            ET.SubElement(sr,
-                          "sr:StartTime").text = record.start_time.isoformat()
-            ET.SubElement(sr,
-                          "sr:EndTime").text = record.measure_time.isoformat()
+                ETree.SubElement(subject, "sr:Group").text = record.fqan
+            ETree.SubElement(sr,
+                             "sr:StartTime").text = record.start_time.isoformat()
+            ETree.SubElement(sr,
+                             "sr:EndTime").text = record.measure_time.isoformat()
             capacity = str(int(record.capacity * 1073741824))   # 1 GiB = 2^30
-            ET.SubElement(sr, "sr:ResourceCapacityUsed").text = capacity
-        queue.add(ET.tostring(root))
+            ETree.SubElement(sr, "sr:ResourceCapacityUsed").text = capacity
+        queue.add(ETree.tostring(root))
 
     def push(self, records):
         if not records:
