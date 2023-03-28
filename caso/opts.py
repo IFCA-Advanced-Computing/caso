@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Module defining all the options to be managed by oslo."""
+
 import itertools
 
 import caso.extract.base
@@ -25,6 +27,7 @@ import caso.messenger.ssm
 
 
 def list_opts():
+    """Get the list of all configured options."""
     return [
         (
             "DEFAULT",

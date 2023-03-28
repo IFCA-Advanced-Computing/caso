@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Module containing the management of Keystone Clients for cASO."""
+
 from keystoneauth1 import exceptions
 from keystoneauth1 import loading
 from keystoneclient.v3 import client as ks_client_v3
@@ -26,11 +28,10 @@ CFG_GROUP = "keystone_auth"
 loading.register_auth_conf_options(CONF, CFG_GROUP)
 loading.register_session_conf_options(CONF, CFG_GROUP)
 
-opts = (
-    loading.get_auth_common_conf_options()
-    + loading.get_session_conf_options()
-    + loading.get_auth_plugin_conf_options("password")
-)
+opts = []
+opts += loading.get_auth_common_conf_options()
+opts += loading.get_session_conf_options()
+opts += loading.get_auth_plugin_conf_options("password")
 
 
 def get_session(conf, project):

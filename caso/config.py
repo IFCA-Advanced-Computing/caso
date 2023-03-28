@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Load and parse configuration options."""
+
 import logging
 import warnings
 
@@ -29,6 +31,7 @@ log.register_options(cfg.CONF)
 
 
 def parse_args(argv, default_config_files=None):
+    """Parse command line argments with oslo_config CONF object."""
     cfg.CONF(
         argv[1:],
         project="caso",

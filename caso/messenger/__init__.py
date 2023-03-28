@@ -14,13 +14,14 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Module containing the base class and manager for the cASO messengers."""
+
 import abc
 
 from oslo_config import cfg
 from oslo_log import log
 import six
 
-from caso import exception
 from caso import loading
 
 CONF = cfg.CONF
@@ -30,13 +31,18 @@ LOG = log.getLogger(__name__)
 
 @six.add_metaclass(abc.ABCMeta)
 class BaseMessenger(object):
+    """Base class for all messengers."""
+
     @abc.abstractmethod
     def push(self, records):
         """Push the records."""
 
 
 class Manager(object):
+    """Manager for all cASO messengers."""
+
     def __init__(self):
+        """Init the manager with all the configured messengers."""
         try:
             self.mgr = loading.get_enabled_messengers(CONF.messengers)
         except Exception as e:
@@ -45,6 +51,7 @@ class Manager(object):
             raise e
 
     def push_to_all(self, records):
+        """Push records to all the configured messengers."""
         try:
             self.mgr.map_method("push", records)
         except Exception as e:

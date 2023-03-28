@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Module containing the base class and configuration for all cASO extractors."""
+
 import abc
 import json
 import warnings
@@ -129,7 +131,10 @@ openstack_vm_statuses = {
 
 @six.add_metaclass(abc.ABCMeta)
 class BaseProjectExtractor(object):
+    """Abstract base class for all extractors in cASO."""
+
     def __init__(self, project):
+        """Initialize extractor, loading the VO map."""
         self.project = project
 
         # FIXME(remove this)
