@@ -57,7 +57,7 @@ class CloudRecord(_BaseRecord):
 
     status: str
 
-    image_id: str
+    image_id: typing.Optional[m_uuid.UUID]
 
     public_ip_count = 0
     cpu_count: int
