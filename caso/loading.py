@@ -79,7 +79,7 @@ def get_enabled_messengers(names):
     """
 
     def cb(names):
-        raise exception.MessengerNotFound(names=",".join(list(names)))
+        raise exception.MessengerNotFoundError(names=",".join(list(names)))
 
     mgr = stevedore.NamedExtensionManager(namespace=MESSENGER_NAMESPACE,
                                           names=names,
