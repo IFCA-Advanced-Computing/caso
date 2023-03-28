@@ -170,10 +170,12 @@ class NovaExtractor(base.BaseOpenStackExtractor):
 
         floating_ips = self._count_ips_on_server(server)
 
+        vm_name = server.name.encode("ascii", errors="ignore")
+
         r = record.CloudRecord(
             uuid=server.id,
             site_name=CONF.site_name,
-            name=server.name,
+            name=vm_name,
             user_id=server.user_id,
             group_id=server.tenant_id,
             fqan=self.vo,
