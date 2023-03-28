@@ -47,10 +47,6 @@ class Manager(object):
     def push_to_all(self, records):
         try:
             self.mgr.map_method("push", records)
-        except exception.RecordVersionNotFoundError as e:
-            # Oops, a messenger is using a weird version, stop working
-            LOG.error("Messenger is using an unknown record version")
-            raise e
         except Exception as e:
             # Capture exception so that we can continue working
             LOG.error(e)
