@@ -91,12 +91,12 @@ Now you can make your changes locally.
     $ tox
 
 Please note that tox runs the style tests automatically, since we have a test
-environment for it (named pep8).
+environment for it (named flake8).
 
-If you feel like running only the pep8 environment, please use the following
+If you feel like running only the flake8 environment, please use the following
 command::
 
-    $ tox -e pep8
+    $ tox -e flake8
 
 6. Include a release note describing your funcionality, using `reno`. In order
    to do this issue the following command::
