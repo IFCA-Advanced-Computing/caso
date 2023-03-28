@@ -12,9 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-"""
-Tests for `caso.manager` module.
-"""
+"""Tests for `caso.manager` module."""
 
 import mock
 from oslo_concurrency.fixture import lockutils as lock_fixture
@@ -25,10 +23,12 @@ from caso.tests import base
 
 
 class TestCasoManager(base.TestCase):
+    """Test case for the cASO Manager."""
 
     REQUIRES_LOCKING = True
 
     def setUp(self):
+        """Set global test fixtures and mocks."""
         self.useFixture(lock_fixture.ExternalLockFixture())
         super(TestCasoManager, self).setUp()
         self.patchers = {
@@ -43,6 +43,7 @@ class TestCasoManager(base.TestCase):
         self.manager = manager.Manager()
 
     def tearDown(self):
+        """Reset mocks and tear down."""
         for p in self.patchers.values():
             p.stop()
 

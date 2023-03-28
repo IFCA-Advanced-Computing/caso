@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Module containing all the cloud accounting records."""
+
 import abc
 import datetime
 import typing
@@ -27,7 +29,7 @@ from oslo_log import log
 LOG = log.getLogger(__name__)
 
 
-class BaseRecord(pydantic.BaseModel, abc.ABC):
+class _BaseRecord(pydantic.BaseModel, abc.ABC):
     """This is the base cASO record object."""
 
     version: str
@@ -37,7 +39,7 @@ class BaseRecord(pydantic.BaseModel, abc.ABC):
     compute_service: str
 
 
-class CloudRecord(BaseRecord):
+class CloudRecord(_BaseRecord):
     """The CloudRecord class holds information for each of the records.
 
     This class is versioned, following the Cloud Accounting Record versions.
@@ -81,7 +83,7 @@ class CloudRecord(BaseRecord):
 
     @classmethod
     @pydantic.validator("wall_duration", always=True)
-    def validate_wall_duration(cls, value, values):
+    def _validate_wall_duration(cls, value, values):
         duration = None
         if value is not None:
             duration = value
@@ -92,7 +94,7 @@ class CloudRecord(BaseRecord):
 
     @classmethod
     @pydantic.validator("cpu_duration", always=True)
-    def validate_cpu_duration(cls, value, values):
+    def _validate_cpu_duration(cls, value, values):
         duration = None
         if value is not None:
             duration = value
@@ -102,11 +104,15 @@ class CloudRecord(BaseRecord):
         return duration
 
     def set_cpu_duration(self, value: int):
+        """Set the CPU duration for the record."""
         self._cpu_duration = value
 
     class Config:
+        """Config class for Pydantic."""
+
         @staticmethod
         def map_fields(value: str) -> str:
+            """Map object fields to Cloud Accounting Record fields."""
             d = {
                 "uuid": "VMUUID",
                 "site_name": "SiteName",
@@ -143,7 +149,7 @@ class CloudRecord(BaseRecord):
         extra = "forbid"
 
 
-class IPRecord(BaseRecord):
+class IPRecord(_BaseRecord):
     """The IPRecord class holds information for each of the records.
 
     This class is versioned, following the Public IP Usage Record versions.
@@ -162,8 +168,11 @@ class IPRecord(BaseRecord):
     public_ip_count: int
 
     class Config:
+        """Config class for Pydantic."""
+
         @staticmethod
         def map_fields(field: str) -> str:
+            """Map object fields to accounting Public IP Usage record fields."""
             d = {
                 "measure_time": "MeasurementTime",
                 "site_name": "SiteName",
@@ -184,7 +193,7 @@ class IPRecord(BaseRecord):
         extra = "forbid"
 
 
-class AcceleratorRecord(object):
+class AcceleratorRecord(_BaseRecord):
     """The AcceleratorRecord class holds information for each of the records.
 
     This class is versioned, following the Accelerator Usage Record versions
@@ -216,16 +225,21 @@ class AcceleratorRecord(object):
 
     @property
     def active_duration(self) -> int:
+        """Get the active duration for the record (property)."""
         if self._active_duration is not None:
             return self._active_duration
         return self.available_duration
 
     def set_active_duration(self, value: int):
+        """Set the active duration for the record."""
         self._active_duration = value
 
     class Config:
+        """Config class for Pydantic."""
+
         @staticmethod
         def map_fields(field: str) -> str:
+            """Map object fields to accounting Accelerator Usage Record fields."""
             d = {
                 "measurement_month": "MeasurementMonth",
                 "measurement_year": "MeasurementYear",
@@ -251,7 +265,7 @@ class AcceleratorRecord(object):
         extra = "forbid"
 
 
-class StorageRecord(BaseRecord):
+class StorageRecord(_BaseRecord):
     """The StorageRecord class holds information for each of the records.
 
     This class is versioned, following the Storage Accounting Definition on
@@ -282,14 +296,17 @@ class StorageRecord(BaseRecord):
     # (aidaph) Fix the return to something different to 0
     @classmethod
     @pydantic.validator("attached_duration", always=True)
-    def validate_attached_duration(cls, value):
+    def _validate_attached_duration(cls, value):
         if value is not None:
             return value
         return 0
 
     class Config:
+        """Config class for Pydantic."""
+
         @staticmethod
         def map_fields(field: str) -> str:
+            """Map object fields to accounting EMI StAR record values."""
             d = {
                 "measure_time": "CreateTime",
                 "uuid": "VolumeUUID",

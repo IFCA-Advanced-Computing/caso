@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Module containing the OpenStack Compute (Nova) record extractor."""
+
 import operator
 
 import dateutil.parser
@@ -27,7 +29,7 @@ import novaclient.exceptions
 from oslo_config import cfg
 from oslo_log import log
 
-from caso.extract import openstack
+from caso.extract.openstack import base
 from caso import record
 from datetime import datetime
 
@@ -41,8 +43,11 @@ CONF.import_group("accelerator", "caso.extract.base")
 LOG = log.getLogger(__name__)
 
 
-class NovaExtractor(openstack.BaseOpenStackExtractor):
+class NovaExtractor(base.BaseOpenStackExtractor):
+    """An OpenStack Compute (Nova) record extractor for cASO."""
+
     def __init__(self, project):
+        """Get a Nova record extractor for a given project."""
         super(NovaExtractor, self).__init__(project)
 
         self.nova = self._get_nova_client()
@@ -53,19 +58,22 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
         self.images = self._get_images()
 
     def _get_nova_client(self):
+        """Get a nova client with a keystone session."""
         region_name = CONF.region_name
         session = self._get_keystone_session()
         return novaclient.client.Client(2, session=session, region_name=region_name)
 
     def _get_glance_client(self):
+        """Get a glance client with a keystone session."""
         session = self._get_keystone_session()
         return glanceclient.client.Client(2, session=session)
 
     def _get_neutron_client(self):
+        """Get a neutron client with a keystone session."""
         session = self._get_keystone_session()
         return neutronclient.v2_0.client.Client(session=session)
 
-    def build_acc_records(self, server, server_record, extract_from, extract_to):
+    def _build_acc_records(self, server, server_record, extract_from, extract_to):
         records = {}
         flavor = self.flavors.get(server.flavor["id"])
         if not flavor:
@@ -122,7 +130,7 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
                     count += 1
         return count
 
-    def build_record(self, server):
+    def _build_record(self, server):
         user = self.users[server.user_id]
 
         server_start = self._get_server_start(server)
@@ -253,9 +261,9 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
             if server_start > extract_to or (server_end and server_end < extract_from):
                 continue
 
-            self.records[server.id] = self.build_record(server)
+            self.records[server.id] = self._build_record(server)
             self.acc_records.update(
-                self.build_acc_records(
+                self._build_acc_records(
                     server, self.records[server.id], extract_from, extract_to
                 )
             )
@@ -309,8 +317,8 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
                 if server_start > extract_to:
                     continue
 
-                record = self.build_record(server)
-                acc_records = self.build_acc_records(
+                record = self._build_record(server)
+                acc_records = self._build_acc_records(
                     server, record, extract_from, extract_to
                 )
                 self.acc_records.update(acc_records)

@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Module managing the loading of extractors and managers."""
+
 import stevedore
 
 from caso import exception

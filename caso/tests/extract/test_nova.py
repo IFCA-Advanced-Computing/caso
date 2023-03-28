@@ -12,17 +12,23 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Tests for the OpenStack nova extractor."""
+
 from caso.extract.openstack import nova
 from caso.tests import base
 
 
 class TestCasoManager(base.TestCase):
+    """Test case for Nova extractor."""
+
     def setUp(self):
+        """Run before each test method to initialize test environment."""
         super(TestCasoManager, self).setUp()
         self.flags(mapping_file="etc/caso/voms.json.sample")
         self.extractor = nova.NovaExtractor()
 
     def tearDown(self):
+        """Run after each test, reset state and environment."""
         self.reset_flags()
 
         super(TestCasoManager, self).tearDown()

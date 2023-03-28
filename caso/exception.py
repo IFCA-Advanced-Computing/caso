@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""cASO exceptions are defined here."""
+
 import sys
 
 from oslo_log import log
@@ -23,9 +25,12 @@ LOG = log.getLogger(__name__)
 
 
 class CasoError(Exception):
+    """Generic cASO error."""
+
     msg_fmt = "An unknown exception occurred."
 
     def __init__(self, message=None, **kwargs):
+        """Initialize the exception with a given message, formatted with kwargs."""
         self.kwargs = kwargs
 
         if not message:
@@ -44,8 +49,12 @@ class CasoError(Exception):
 
 
 class MessengerNotFoundError(CasoError):
+    """An error representing that a messenger could not be found."""
+
     msg_fmt = "Messengers {names} could not be found."
 
 
 class LogstashConnectionError(CasoError):
+    """An error with the Logstash server."""
+
     msg_fmt = "Cannot send data to logstash {host}:{port}, " "reason: {exception}"

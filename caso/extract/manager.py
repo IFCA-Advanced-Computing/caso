@@ -13,6 +13,9 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+
+"""Module containing the manager for all extractors configured in cASO."""
+
 import datetime
 import os.path
 import sys
@@ -73,7 +76,14 @@ LOG = log.getLogger(__name__)
 
 
 class Manager(object):
+    """A manager for the configured extractors.
+
+    The manager is intended to load all configured extractors, get the records from the
+    last time the extractor was called (or from a given date).
+    """
+
     def __init__(self):
+        """Initialize a extractor manager, loading all configured extractors."""
         extractors = [
             (i, loading.get_available_extractors()[i]) for i in CONF.extractor
         ]
@@ -81,6 +91,7 @@ class Manager(object):
         self.last_run_base = os.path.join(CONF.spooldir, "lastrun")
 
     def get_lastrun(self, project):
+        """Get lastrun file for a given project."""
         lfile = f"{self.last_run_base}.{project}"
         if not os.path.exists(lfile):
             LOG.warning(
@@ -106,6 +117,7 @@ class Manager(object):
         return date
 
     def write_lastrun(self, project):
+        """Write a lastrun file for a given project."""
         if CONF.dry_run:
             return
         lfile = f"{self.last_run_base}.{project}"
@@ -113,7 +125,7 @@ class Manager(object):
             fd.write(str(datetime.datetime.now(tz.tzutc())))
 
     def get_records(self):
-        """Get records from given date
+        """Get records from given date.
 
         If CONF.extract_from is present, it will be used instead of the
         lastrun parameter. If CONF.extract_to is present, it will be used
