@@ -253,7 +253,7 @@ class StorageRecord(BaseRecord):
 
     version: str = "0.1"
 
-    uuid: uuid.UUID
+    uuid: m_uuid.UUID
     name: str
 
     user_id: str
