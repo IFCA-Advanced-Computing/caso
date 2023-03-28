@@ -1,0 +1,448 @@
+[DEFAULT]
+
+#
+# From caso
+#
+
+# List of messengers that will dispatch records. valid values are
+# logstash,noop,ssm,ssmv4. You can specify more than one messenger. (list
+# value)
+#messengers = noop
+
+# Spool directory. (string value)
+#spooldir = /var/spool/caso
+
+# Directory to use for lock files. For security, the specified directory should
+# only be writable by the user running the processes that need locking.
+# Defaults to environment variable CASO_LOCK_PATH or $spooldir (string value)
+#lock_path = $spooldir
+
+# Extract records but do not push records to SSM. This will not update the last
+# run date. (boolean value)
+# Deprecated group/name - [DEFAULT]/dry_run
+#dry_run = false
+
+# Site name as in GOCDB. (string value)
+#site_name = <None>
+
+# Service name within the site (string value)
+#service_name = $site_name
+
+# List of projects to extract accounting records from. (list value)
+# Deprecated group/name - [DEFAULT]/tenants
+#projects =
+
+# File containing the VO <-> project mapping as used in Keystone-VOMS. (string
+# value)
+#mapping_file = /etc/caso/voms.json
+
+# Extract record changes until this date. If it is not set, we use now. If a
+# server has ended after this date, it will be included, but the consuption
+# reported will end on this date. If no time zone is specified, UTC will be
+# used. (string value)
+# Deprecated group/name - [DEFAULT]/extract_to
+#extract_to = <None>
+
+# Extract records that have changed after this date. This means that if a
+# record has started before this date, and it has changed after this date (i.e.
+# it is still running or it has ended) it will be reported.
+# If it is not set, extract records from last run. If it is set to None and
+# last run file is not present, it will extract records from the beginning of
+# time. If no time zone is specified, UTC will be used. (string value)
+# Deprecated group/name - [DEFAULT]/extract_from
+#extract_from = <None>
+
+# Which extractor to use for getting the data. If you do not specify anything,
+# nova will be used. Available choices are frozenset({'neutron', 'nova',
+# 'cinder'}) (list value)
+#extractor = nova
+
+#
+# From oslo.config
+#
+
+# Path to a config file to use. Multiple config files can be specified, with
+# values in later files taking precedence. Defaults to %(default)s. This option
+# must be set from the command-line. (unknown value)
+#config_file = ['~/.project/project.conf', '~/project.conf', '/etc/project/project.conf', '/etc/project.conf']
+
+# Path to a config directory to pull `*.conf` files from. This file set is
+# sorted, so as to provide a predictable parse order if individual options are
+# over-ridden. The set is parsed after the file(s) specified via previous
+# --config-file, arguments hence over-ridden options in the directory take
+# precedence. This option must be set from the command-line. (list value)
+#config_dir = ~/.project/project.conf.d/,~/project.conf.d/,/etc/project/project.conf.d/,/etc/project.conf.d/
+
+# Lists configuration groups that provide more details for accessing
+# configuration settings from locations other than local files. (list value)
+#config_source =
+
+#
+# From oslo.log
+#
+
+# If set to true, the logging level will be set to DEBUG instead of the default
+# INFO level. (boolean value)
+# Note: This option can be changed without restarting.
+#debug = false
+
+# The name of a logging configuration file. This file is appended to any
+# existing logging configuration files. For details about logging configuration
+# files, see the Python logging module documentation. Note that when logging
+# configuration files are used then all logging configuration is set in the
+# configuration file and other logging configuration options are ignored (for
+# example, log-date-format). (string value)
+# Note: This option can be changed without restarting.
+# Deprecated group/name - [DEFAULT]/log_config
+#log_config_append = <None>
+
+# Defines the format string for %%(asctime)s in log records. Default:
+# %(default)s . This option is ignored if log_config_append is set. (string
+# value)
+#log_date_format = %Y-%m-%d %H:%M:%S
+
+# (Optional) Name of log file to send logging output to. If no default is set,
+# logging will go to stderr as defined by use_stderr. This option is ignored if
+# log_config_append is set. (string value)
+# Deprecated group/name - [DEFAULT]/logfile
+#log_file = <None>
+
+# (Optional) The base directory used for relative log_file  paths. This option
+# is ignored if log_config_append is set. (string value)
+# Deprecated group/name - [DEFAULT]/logdir
+#log_dir = <None>
+
+# Uses logging handler designed to watch file system. When log file is moved or
+# removed this handler will open a new log file with specified path
+# instantaneously. It makes sense only if log_file option is specified and
+# Linux platform is used. This option is ignored if log_config_append is set.
+# (boolean value)
+#watch_log_file = false
+
+# Use syslog for logging. Existing syslog format is DEPRECATED and will be
+# changed later to honor RFC5424. This option is ignored if log_config_append
+# is set. (boolean value)
+#use_syslog = false
+
+# Enable journald for logging. If running in a systemd environment you may wish
+# to enable journal support. Doing so will use the journal native protocol
+# which includes structured metadata in addition to log messages.This option is
+# ignored if log_config_append is set. (boolean value)
+#use_journal = false
+
+# Syslog facility to receive log lines. This option is ignored if
+# log_config_append is set. (string value)
+#syslog_log_facility = LOG_USER
+
+# Use JSON formatting for logging. This option is ignored if log_config_append
+# is set. (boolean value)
+#use_json = false
+
+# Log output to standard error. This option is ignored if log_config_append is
+# set. (boolean value)
+#use_stderr = false
+
+# Log output to Windows Event Log. (boolean value)
+#use_eventlog = false
+
+# The amount of time before the log files are rotated. This option is ignored
+# unless log_rotation_type is set to "interval". (integer value)
+#log_rotate_interval = 1
+
+# Rotation interval type. The time of the last file change (or the time when
+# the service was started) is used when scheduling the next rotation. (string
+# value)
+# Possible values:
+# Seconds - <No description provided>
+# Minutes - <No description provided>
+# Hours - <No description provided>
+# Days - <No description provided>
+# Weekday - <No description provided>
+# Midnight - <No description provided>
+#log_rotate_interval_type = days
+
+# Maximum number of rotated log files. (integer value)
+#max_logfile_count = 30
+
+# Log file maximum size in MB. This option is ignored if "log_rotation_type" is
+# not set to "size". (integer value)
+#max_logfile_size_mb = 200
+
+# Log rotation type. (string value)
+# Possible values:
+# interval - Rotate logs at predefined time intervals.
+# size - Rotate logs once they reach a predefined size.
+# none - Do not rotate log files.
+#log_rotation_type = none
+
+# Format string to use for log messages with context. Used by
+# oslo_log.formatters.ContextFormatter (string value)
+#logging_context_format_string = %(asctime)s.%(msecs)03d %(process)d %(levelname)s %(name)s [%(global_request_id)s %(request_id)s %(user_identity)s] %(instance)s%(message)s
+
+# Format string to use for log messages when context is undefined. Used by
+# oslo_log.formatters.ContextFormatter (string value)
+#logging_default_format_string = %(asctime)s.%(msecs)03d %(process)d %(levelname)s %(name)s [-] %(instance)s%(message)s
+
+# Additional data to append to log message when logging level for the message
+# is DEBUG. Used by oslo_log.formatters.ContextFormatter (string value)
+#logging_debug_format_suffix = %(funcName)s %(pathname)s:%(lineno)d
+
+# Prefix each line of exception output with this format. Used by
+# oslo_log.formatters.ContextFormatter (string value)
+#logging_exception_prefix = %(asctime)s.%(msecs)03d %(process)d ERROR %(name)s %(instance)s
+
+# Defines the format string for %(user_identity)s that is used in
+# logging_context_format_string. Used by oslo_log.formatters.ContextFormatter
+# (string value)
+#logging_user_identity_format = %(user)s %(project)s %(domain)s %(system_scope)s %(user_domain)s %(project_domain)s
+
+# List of package logging levels in logger=LEVEL pairs. This option is ignored
+# if log_config_append is set. (list value)
+#default_log_levels = amqp=WARN,amqplib=WARN,boto=WARN,qpid=WARN,sqlalchemy=WARN,suds=INFO,oslo.messaging=INFO,oslo_messaging=INFO,iso8601=WARN,requests.packages.urllib3.connectionpool=WARN,urllib3.connectionpool=WARN,websocket=WARN,requests.packages.urllib3.util.retry=WARN,urllib3.util.retry=WARN,keystonemiddleware=WARN,routes.middleware=WARN,stevedore=WARN,taskflow=WARN,keystoneauth=WARN,oslo.cache=INFO,oslo_policy=INFO,dogpile.core.dogpile=INFO
+
+# Enables or disables publication of error events. (boolean value)
+#publish_errors = false
+
+# The format for an instance that is passed with the log message. (string
+# value)
+#instance_format = "[instance: %(uuid)s] "
+
+# The format for an instance UUID that is passed with the log message. (string
+# value)
+#instance_uuid_format = "[instance: %(uuid)s] "
+
+# Interval, number of seconds, of log rate limiting. (integer value)
+#rate_limit_interval = 0
+
+# Maximum number of logged messages per rate_limit_interval. (integer value)
+#rate_limit_burst = 0
+
+# Log level name used by rate limiting: CRITICAL, ERROR, INFO, WARNING, DEBUG
+# or empty string. Logs with level greater or equal to rate_limit_except_level
+# are not filtered. An empty string means that all levels are filtered. (string
+# value)
+#rate_limit_except_level = CRITICAL
+
+# Enables or disables fatal status of deprecations. (boolean value)
+#fatal_deprecations = false
+
+
+[accelerator]
+
+#
+# From caso
+#
+
+# Metadata key used to retrieve the accelerator type from the flavor
+# properties. (string value)
+# Deprecated group/name - [DEFAULT]/accelerator_type_key
+#type_key = Accelerator:Type
+
+# Metadata key used to retrieve the accelerator vendor from the flavor
+# properties. (string value)
+# Deprecated group/name - [DEFAULT]/accelerator_vendor_key
+#vendor_key = Accelerator:Vendor
+
+# Metadata key used to retrieve the accelerator model from the flavor
+# properties. (string value)
+# Deprecated group/name - [DEFAULT]/accelerator_model_key
+#model_key = Accelerator:Model
+
+# Metadata key used to retrieve the accelerator number from the flavor
+# properties. (string value)
+# Deprecated group/name - [DEFAULT]/accelerator_number_key
+#number_key = Accelerator:Number
+
+
+[benchmark]
+
+#
+# From caso
+#
+
+# Metadata key used to retrieve the benchmark type from the flavor properties.
+# (string value)
+# Deprecated group/name - [DEFAULT]/benchmark_name_key
+#name_key = accounting:benchmark_type
+
+# Metadata key used to retrieve the benchmark value from the flavor properties.
+# (string value)
+# Deprecated group/name - [DEFAULT]/benchmark_value_key
+#value_key = accounting:benchmark_value
+
+
+[keystone_auth]
+
+#
+# From caso
+#
+
+# Authentication type to load (string value)
+# Deprecated group/name - [keystone_auth]/auth_plugin
+#auth_type = <None>
+
+# Config Section from which to load plugin specific options (string value)
+#auth_section = <None>
+
+# PEM encoded Certificate Authority to use when verifying HTTPs connections.
+# (string value)
+#cafile = <None>
+
+# PEM encoded client certificate cert file (string value)
+#certfile = <None>
+
+# PEM encoded client certificate key file (string value)
+#keyfile = <None>
+
+# Verify HTTPS connections. (boolean value)
+#insecure = false
+
+# Timeout value for http requests (integer value)
+#timeout = <None>
+
+# Collect per-API call timing information. (boolean value)
+#collect_timing = false
+
+# Log requests to multiple loggers. (boolean value)
+#split_loggers = false
+
+# Authentication URL (string value)
+#auth_url = <None>
+
+# Scope for system operations (string value)
+#system_scope = <None>
+
+# Domain ID to scope to (string value)
+#domain_id = <None>
+
+# Domain name to scope to (string value)
+#domain_name = <None>
+
+# Project ID to scope to (string value)
+# Deprecated group/name - [keystone_auth]/tenant_id
+#project_id = <None>
+
+# Project name to scope to (string value)
+# Deprecated group/name - [keystone_auth]/tenant_name
+#project_name = <None>
+
+# Domain ID containing project (string value)
+#project_domain_id = <None>
+
+# Domain name containing project (string value)
+#project_domain_name = <None>
+
+# ID of the trust to use as a trustee use (string value)
+#trust_id = <None>
+
+# Optional domain ID to use with v3 and v2 parameters. It will be used for both
+# the user and project domain in v3 and ignored in v2 authentication. (string
+# value)
+#default_domain_id = <None>
+
+# Optional domain name to use with v3 API and v2 parameters. It will be used
+# for both the user and project domain in v3 and ignored in v2 authentication.
+# (string value)
+#default_domain_name = <None>
+
+# User id (string value)
+#user_id = <None>
+
+# Username (string value)
+# Deprecated group/name - [keystone_auth]/user_name
+#username = <None>
+
+# User's domain id (string value)
+#user_domain_id = <None>
+
+# User's domain name (string value)
+#user_domain_name = <None>
+
+# User's password (string value)
+#password = <None>
+
+
+[logstash]
+
+#
+# From caso
+#
+
+# Logstash host to send records to. (string value)
+#host = localhost
+
+# Logstash server port. (integer value)
+#port = 5000
+
+
+[sample_remote_file_source]
+# Example of using a remote_file source
+#
+# remote_file: A backend driver for remote files served through http[s].
+#
+# Required options:
+#   - uri: URI containing the file location.
+#
+# Non-required options:
+#   - ca_path: The path to a CA_BUNDLE file or directory with
+#              certificates of trusted CAs.
+#
+#   - client_cert: Client side certificate, as a single file path
+#                  containing either the certificate only or the
+#                  private key and the certificate.
+#
+#   - client_key: Client side private key, in case client_cert is
+#                 specified but does not includes the private key.
+
+#
+# From oslo.config
+#
+
+# The name of the driver that can load this configuration source. (string
+# value)
+#
+# This option has a sample default set, which means that
+# its actual default value may vary from the one documented
+# below.
+#driver = remote_file
+
+# Required option with the URI of the extra configuration file's location. (uri
+# value)
+#
+# This option has a sample default set, which means that
+# its actual default value may vary from the one documented
+# below.
+#uri = https://example.com/my-configuration.ini
+
+# The path to a CA_BUNDLE file or directory with certificates of trusted CAs.
+# (string value)
+#
+# This option has a sample default set, which means that
+# its actual default value may vary from the one documented
+# below.
+#ca_path = /etc/ca-certificates
+
+# Client side certificate, as a single file path containing either the
+# certificate only or the private key and the certificate. (string value)
+#
+# This option has a sample default set, which means that
+# its actual default value may vary from the one documented
+# below.
+#client_cert = /etc/ca-certificates/service-client-keystore
+
+# Client side private key, in case client_cert is specified but does not
+# includes the private key. (string value)
+#client_key = <None>
+
+
+[ssm]
+
+#
+# From caso
+#
+
+# Directory to put the generated SSM records. (string value)
+#output_path = /var/spool/apel/outgoing/openstack
+
+# Maximum number of records to send per message (integer value)
+#max_size = 100
