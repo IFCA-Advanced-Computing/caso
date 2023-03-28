@@ -26,12 +26,14 @@ from caso import keystone_client
 CONF = cfg.CONF
 
 opts = [
-    cfg.StrOpt('region_name',
-               default=None,
-               help='OpenStack Region to use. This option will force cASO to '
-                    'extract records from a specific OpenStack Region, in '
-                    'there are several defined in the OpenStack site. '
-                    'Defaults to None.')
+    cfg.StrOpt(
+        "region_name",
+        default=None,
+        help="OpenStack Region to use. This option will force cASO to "
+        "extract records from a specific OpenStack Region, in "
+        "there are several defined in the OpenStack site. "
+        "Defaults to None.",
+    )
 ]
 
 CONF.register_opts(opts)
@@ -101,8 +103,10 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
     def _get_vo(self):
         vo = self.voms_map.get(self.project)
         if vo is None:
-            LOG.warning("No mapping could be found for project "
-                        f"'{self.project}', please check mapping file!")
+            LOG.warning(
+                "No mapping could be found for project "
+                f"'{self.project}', please check mapping file!"
+            )
         return vo
 
     # FIXME(aloga): this has to go inside a record

@@ -27,7 +27,7 @@ CONF = cfg.CONF
 
 def main():
     caso.config.parse_args(sys.argv)
-    log.setup(cfg.CONF, 'caso')
+    log.setup(cfg.CONF, "caso")
     manager = caso.manager.Manager()
     manager.run()
 

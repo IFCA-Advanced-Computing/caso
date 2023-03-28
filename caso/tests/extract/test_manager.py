@@ -67,20 +67,18 @@ class TestCasoManager(base.TestCase):
         )
         self.m_extractor.return_value.extract.assert_called_once_with(
             dateutil.parser.parse(extract_from).replace(tzinfo=tz.tzutc()),
-            dateutil.parser.parse(extract_to).replace(tzinfo=tz.tzutc())
+            dateutil.parser.parse(extract_to).replace(tzinfo=tz.tzutc()),
         )
         self.assertEqual(self.records, ret)
 
     def test_get_records_wrong_extract_from(self):
         self.flags(projects=["foo"])
         self.flags(extract_from="1999-12-99")
-        self.assertRaises(ValueError,
-                          self.manager.get_records)
+        self.assertRaises(ValueError, self.manager.get_records)
 
     def test_get_records_wrong_extract_to(self):
         self.flags(extract_to="1999-12-99")
-        self.assertRaises(ValueError,
-                          self.manager.get_records)
+        self.assertRaises(ValueError, self.manager.get_records)
 
     def test_get_records_with_lastrun(self):
         self.flags(dry_run=True)
@@ -100,16 +98,16 @@ class TestCasoManager(base.TestCase):
             )
             self.m_extractor.return_value.extract.assert_called_once_with(
                 dateutil.parser.parse(lastrun).replace(tzinfo=tz.tzutc()),
-                dateutil.parser.parse(extract_to).replace(tzinfo=tz.tzutc())
+                dateutil.parser.parse(extract_to).replace(tzinfo=tz.tzutc()),
             )
         self.assertEqual(self.records, ret)
 
     def test_lastrun_exists(self):
         expected = datetime.datetime(2014, 12, 10, 13, 10, 26, 664598)
         if six.PY3:
-            builtins_open = 'builtins.open'
+            builtins_open = "builtins.open"
         else:
-            builtins_open = '__builtin__.open'
+            builtins_open = "__builtin__.open"
 
         fopen = mock.mock_open(read_data=str(expected))
         with mock.patch("os.path.exists") as path:
@@ -119,9 +117,9 @@ class TestCasoManager(base.TestCase):
 
     def test_lastrun_is_invalid(self):
         if six.PY3:
-            builtins_open = 'builtins.open'
+            builtins_open = "builtins.open"
         else:
-            builtins_open = '__builtin__.open'
+            builtins_open = "__builtin__.open"
         fopen = mock.mock_open(read_data="foo")
         with mock.patch("os.path.exists") as path:
             with mock.patch(builtins_open, fopen):
@@ -139,9 +137,9 @@ class TestCasoManager(base.TestCase):
     def test_write_lastrun(self):
         self.flags(projects=["bazonk"])
         if six.PY3:
-            builtins_open = 'builtins.open'
+            builtins_open = "builtins.open"
         else:
-            builtins_open = '__builtin__.open'
+            builtins_open = "__builtin__.open"
 
         with mock.patch(builtins_open, mock.mock_open()) as m:
             self.manager.get_records()

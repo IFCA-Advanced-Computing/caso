@@ -55,8 +55,7 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
     def _get_nova_client(self):
         region_name = CONF.region_name
         session = self._get_keystone_session()
-        return novaclient.client.Client(2, session=session,
-                                        region_name=region_name)
+        return novaclient.client.Client(2, session=session, region_name=region_name)
 
     def _get_glance_client(self):
         session = self._get_keystone_session()
@@ -66,8 +65,7 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
         session = self._get_keystone_session()
         return neutronclient.v2_0.client.Client(session=session)
 
-    def build_acc_records(self, server, server_record, extract_from,
-                          extract_to):
+    def build_acc_records(self, server, server_record, extract_from, extract_to):
         records = {}
         flavor = self.flavors.get(server.flavor["id"])
         if not flavor:
@@ -134,8 +132,8 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
 
         image_id = None
         if server.image:
-            image = self.images.get(server.image['id'])
-            image_id = server.image['id']
+            image = self.images.get(server.image["id"])
+            image_id = server.image["id"]
             if image:
                 if image.get("vmcatcher_event_ad_mpuri", None) is not None:
                     image_id = image.get("vmcatcher_event_ad_mpuri", None)
@@ -155,10 +153,12 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
             if any([bench_name, bench_value]):
                 LOG.warning(f"Benchmark for flavor {flavor} not properly set")
             else:
-                LOG.debug(f"Benchmark information for flavor {flavor} not set,"
-                          " please indicate the corret name_key and value_key "
-                          "in the [benchmark] section of the configuration "
-                          "file or set the correct properties in the flavor.")
+                LOG.debug(
+                    f"Benchmark information for flavor {flavor} not set,"
+                    " please indicate the corret name_key and value_key "
+                    "in the [benchmark] section of the configuration "
+                    "file or set the correct properties in the flavor."
+                )
 
         floating_ips = self._count_ips_on_server(server)
 
@@ -180,7 +180,7 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
             memory=memory,
             cpu_count=cpu_count,
             disk=disk,
-            public_ip_count=floating_ips
+            public_ip_count=floating_ips,
         )
         return r
 
@@ -193,7 +193,7 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
 
     @staticmethod
     def _get_server_end(server):
-        server_end = server.__getattr__('OS-SRV-USG:terminated_at')
+        server_end = server.__getattr__("OS-SRV-USG:terminated_at")
         if server_end is None:
             # If the server has no end_time, and no launched_at, we should use
             # server.created as the end time (i.e. VM has not started at all)
@@ -216,9 +216,7 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
         # Use a marker and iter over results until we do not have more to get
         while True:
             aux = self.nova.servers.list(
-                search_opts={"changes-since": extract_from},
-                limit=limit,
-                marker=marker
+                search_opts={"changes-since": extract_from}, limit=limit, marker=marker
             )
             servers.extend(aux)
 
@@ -252,14 +250,14 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
 
             # Some servers may be deleted before 'extract_from' but updated
             # afterwards
-            if (server_start > extract_to or
-                    (server_end and server_end < extract_from)):
+            if server_start > extract_to or (server_end and server_end < extract_from):
                 continue
 
             self.records[server.id] = self.build_record(server)
             self.acc_records.update(
-                self.build_acc_records(server, self.records[server.id],
-                                       extract_from, extract_to)
+                self.build_acc_records(
+                    server, self.records[server.id], extract_from, extract_to
+                )
             )
 
             # Wall and CPU durations are absolute values, not deltas for the
@@ -299,7 +297,8 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
                         "the following page for more details: "
                         "https://caso.readthedocs.io/en/stable/"
                         "troubleshooting.html#cannot-find-vm-in-api".format(
-                            usage["instance_id"])
+                            usage["instance_id"]
+                        )
                     )
                     if CONF.debug:
                         LOG.exception(e)
@@ -311,15 +310,16 @@ class NovaExtractor(openstack.BaseOpenStackExtractor):
                     continue
 
                 record = self.build_record(server)
-                acc_records = self.build_acc_records(server, record,
-                                                     extract_from, extract_to)
+                acc_records = self.build_acc_records(
+                    server, record, extract_from, extract_to
+                )
                 self.acc_records.update(acc_records)
 
                 server_start = record.start_time
 
                 # End time must ben the time when the machine was ended, but it
                 # may be none
-                if usage.get('ended_at', None) is not None:
+                if usage.get("ended_at", None) is not None:
                     server_end = dateutil.parser.parse(usage["ended_at"])
                     record.end_time = server_end
                 else:

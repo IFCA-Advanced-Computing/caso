@@ -23,62 +23,76 @@ from oslo_log import log
 import six
 
 opts = [
-    cfg.StrOpt('site_name',
-               help='Site name as in GOCDB.'),
-    cfg.StrOpt('service_name',
-               default='$site_name',
-               help='Service name within the site'),
-    cfg.ListOpt('projects',
-                default=[],
-                deprecated_name='tenants',
-                help='List of projects to extract accounting records from.'),
-    cfg.StrOpt('mapping_file',
-               default='/etc/caso/voms.json',
-               deprecated_group="extractor",
-               help='File containing the VO <-> project mapping as used '
-               'in Keystone-VOMS.'),
+    cfg.StrOpt("site_name", help="Site name as in GOCDB."),
+    cfg.StrOpt(
+        "service_name", default="$site_name", help="Service name within the site"
+    ),
+    cfg.ListOpt(
+        "projects",
+        default=[],
+        deprecated_name="tenants",
+        help="List of projects to extract accounting records from.",
+    ),
+    cfg.StrOpt(
+        "mapping_file",
+        default="/etc/caso/voms.json",
+        deprecated_group="extractor",
+        help="File containing the VO <-> project mapping as used " "in Keystone-VOMS.",
+    ),
 ]
 
 accelerator_opts = [
-    cfg.StrOpt('type_key',
-               default='Accelerator:Type',
-               deprecated_name='accelerator_type_key',
-               deprecated_group='DEFAULT',
-               help='Metadata key used to retrieve the accelerator type '
-                    'from the flavor properties.'),
-    cfg.StrOpt('vendor_key',
-               default='Accelerator:Vendor',
-               deprecated_name='accelerator_vendor_key',
-               deprecated_group='DEFAULT',
-               help='Metadata key used to retrieve the accelerator vendor '
-                    'from the flavor properties.'),
-    cfg.StrOpt('model_key',
-               default='Accelerator:Model',
-               deprecated_name='accelerator_model_key',
-               deprecated_group='DEFAULT',
-               help='Metadata key used to retrieve the accelerator model '
-                    'from the flavor properties.'),
-    cfg.StrOpt('number_key',
-               default='Accelerator:Number',
-               deprecated_name='accelerator_number_key',
-               deprecated_group='DEFAULT',
-               help='Metadata key used to retrieve the accelerator number '
-                    'from the flavor properties.'),
+    cfg.StrOpt(
+        "type_key",
+        default="Accelerator:Type",
+        deprecated_name="accelerator_type_key",
+        deprecated_group="DEFAULT",
+        help="Metadata key used to retrieve the accelerator type "
+        "from the flavor properties.",
+    ),
+    cfg.StrOpt(
+        "vendor_key",
+        default="Accelerator:Vendor",
+        deprecated_name="accelerator_vendor_key",
+        deprecated_group="DEFAULT",
+        help="Metadata key used to retrieve the accelerator vendor "
+        "from the flavor properties.",
+    ),
+    cfg.StrOpt(
+        "model_key",
+        default="Accelerator:Model",
+        deprecated_name="accelerator_model_key",
+        deprecated_group="DEFAULT",
+        help="Metadata key used to retrieve the accelerator model "
+        "from the flavor properties.",
+    ),
+    cfg.StrOpt(
+        "number_key",
+        default="Accelerator:Number",
+        deprecated_name="accelerator_number_key",
+        deprecated_group="DEFAULT",
+        help="Metadata key used to retrieve the accelerator number "
+        "from the flavor properties.",
+    ),
 ]
 
 benchmark_opts = [
-    cfg.StrOpt('name_key',
-               default='accounting:benchmark_type',
-               deprecated_name='benchmark_name_key',
-               deprecated_group='DEFAULT',
-               help='Metadata key used to retrieve the benchmark type '
-                    'from the flavor properties.'),
-    cfg.StrOpt('value_key',
-               default='accounting:benchmark_value',
-               deprecated_name='benchmark_value_key',
-               deprecated_group='DEFAULT',
-               help='Metadata key used to retrieve the benchmark value '
-                    'from the flavor properties.'),
+    cfg.StrOpt(
+        "name_key",
+        default="accounting:benchmark_type",
+        deprecated_name="benchmark_name_key",
+        deprecated_group="DEFAULT",
+        help="Metadata key used to retrieve the benchmark type "
+        "from the flavor properties.",
+    ),
+    cfg.StrOpt(
+        "value_key",
+        default="accounting:benchmark_value",
+        deprecated_name="benchmark_value_key",
+        deprecated_group="DEFAULT",
+        help="Metadata key used to retrieve the benchmark value "
+        "from the flavor properties.",
+    ),
 ]
 
 CONF = cfg.CONF
@@ -89,27 +103,27 @@ CONF.register_opts(accelerator_opts, group="accelerator")
 LOG = log.getLogger(__name__)
 
 openstack_vm_statuses = {
-    'active': 'started',
-    'build': 'started',
-    'confirming_resize': 'started',
-    'deleted': 'completed',
-    'error': 'error',
-    'hard_reboot': 'started',
-    'migrating': 'started',
-    'password': 'started',
-    'paused': 'paused',
-    'reboot': 'started',
-    'rebuild': 'started',
-    'rescue': 'started',
-    'resize': 'started',
-    'revert_resize': 'started',
-    'verify_resize': 'started',
-    'shutoff': 'completed',
-    'suspended': 'suspended',
-    'terminated': 'completed',
-    'stopped': 'stopped',
-    'saving': 'started',
-    'unknown': 'unknown',
+    "active": "started",
+    "build": "started",
+    "confirming_resize": "started",
+    "deleted": "completed",
+    "error": "error",
+    "hard_reboot": "started",
+    "migrating": "started",
+    "password": "started",
+    "paused": "paused",
+    "reboot": "started",
+    "rebuild": "started",
+    "rescue": "started",
+    "resize": "started",
+    "revert_resize": "started",
+    "verify_resize": "started",
+    "shutoff": "completed",
+    "suspended": "suspended",
+    "terminated": "completed",
+    "stopped": "stopped",
+    "saving": "started",
+    "unknown": "unknown",
 }
 
 
@@ -130,11 +144,17 @@ class BaseProjectExtractor(object):
                 tenant = vomap.get("tenant", None)
                 tenants = vomap.get("tenants", [])
                 if tenant is not None:
-                    warnings.warn("Using deprecated 'tenant' mapping, please "
-                                  "use 'projects' instead", DeprecationWarning)
+                    warnings.warn(
+                        "Using deprecated 'tenant' mapping, please "
+                        "use 'projects' instead",
+                        DeprecationWarning,
+                    )
                 if tenants:
-                    warnings.warn("Using deprecated 'tenants' mapping, please "
-                                  "use 'projects' instead", DeprecationWarning)
+                    warnings.warn(
+                        "Using deprecated 'tenants' mapping, please "
+                        "use 'projects' instead",
+                        DeprecationWarning,
+                    )
                 tenants.append(tenant)
                 projects = vomap.get("projects", tenants)
                 if not projects:
@@ -147,7 +167,7 @@ class BaseProjectExtractor(object):
 
         :param status: OpenStack status.
         """
-        return openstack_vm_statuses.get(status.lower(), 'unknown')
+        return openstack_vm_statuses.get(status.lower(), "unknown")
 
     @abc.abstractmethod
     def extract(self, extract_from):

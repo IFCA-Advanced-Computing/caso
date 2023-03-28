@@ -17,7 +17,6 @@
 import pbr.version
 
 
-__version__ = pbr.version.VersionInfo(
-    'caso').release_string()
+__version__ = pbr.version.VersionInfo("caso").release_string()
 
 user_agent = f"caso/{__version__} (OpenStack)"

@@ -24,6 +24,7 @@ LOG = log.getLogger(__name__)
 
 class NoopMessenger(caso.messenger.BaseMessenger):
     """Noop messenger that does nothing."""
+
     def push(self, records):
         """Push records to nowhere."""
         for uuid, _ in six.iteritems(records):
