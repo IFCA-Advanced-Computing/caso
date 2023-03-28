@@ -37,7 +37,7 @@ class CasoError(Exception):
                 # log the issue and the kwargs
                 LOG.exception('Exception in string format operation')
                 for name, value in six.iteritems(kwargs):
-                    LOG.error("{name}: {value}")
+                    LOG.error(f"{name}: {value}")
                 six.reraise(exc_info[0], exc_info[1], exc_info[2])
 
         super(CasoError, self).__init__(message)
