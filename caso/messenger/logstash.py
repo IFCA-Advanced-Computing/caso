@@ -25,12 +25,8 @@ import caso.messenger
 
 
 opts = [
-    cfg.StrOpt('host',
-               default="localhost",
-               help='Logstash host to send records to.'),
-    cfg.IntOpt('port',
-               default=5000,
-               help='Logstash server port.'),
+    cfg.StrOpt("host", default="localhost", help="Logstash host to send records to."),
+    cfg.IntOpt("port", default=5000, help="Logstash server port."),
 ]
 
 CONF = cfg.CONF
@@ -56,12 +52,14 @@ class LogstashMessenger(caso.messenger.BaseMessenger):
             for _, record in six.iteritems(records):
                 self.sock.sendall(record.as_json() + "\n")
         except socket.error as e:
-            raise exception.LogstashConnectionError(host=self.host,
-                                                    port=self.port,
-                                                    exception=e)
+            raise exception.LogstashConnectionError(
+                host=self.host, port=self.port, exception=e
+            )
         else:
-            LOG.info("Sent {} records to logstash {}:{}".format(len(records),
-                                                                self.host,
-                                                                self.port))
+            LOG.info(
+                "Sent {} records to logstash {}:{}".format(
+                    len(records), self.host, self.port
+                )
+            )
         finally:
             self.sock.close()

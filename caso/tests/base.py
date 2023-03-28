@@ -26,7 +26,7 @@ import testtools
 
 CONF = cfg.CONF
 
-_TRUE_VALUES = ('True', 'true', '1', 'yes')
+_TRUE_VALUES = ("True", "true", "1", "yes")
 
 
 class TestCase(testtools.TestCase):
@@ -39,7 +39,7 @@ class TestCase(testtools.TestCase):
         """Run before each test method to initialize test environment."""
 
         super(TestCase, self).setUp()
-        test_timeout = os.environ.get('OS_TEST_TIMEOUT', 0)
+        test_timeout = os.environ.get("OS_TEST_TIMEOUT", 0)
         try:
             test_timeout = int(test_timeout)
         except ValueError:
@@ -51,24 +51,23 @@ class TestCase(testtools.TestCase):
         self.useFixture(fixtures.NestedTempfile())
         self.useFixture(fixtures.TempHomeDir())
 
-        if os.environ.get('OS_STDOUT_CAPTURE') in _TRUE_VALUES:
-            stdout = self.useFixture(fixtures.StringStream('stdout')).stream
-            self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
-        if os.environ.get('OS_STDERR_CAPTURE') in _TRUE_VALUES:
-            stderr = self.useFixture(fixtures.StringStream('stderr')).stream
-            self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
+        if os.environ.get("OS_STDOUT_CAPTURE") in _TRUE_VALUES:
+            stdout = self.useFixture(fixtures.StringStream("stdout")).stream
+            self.useFixture(fixtures.MonkeyPatch("sys.stdout", stdout))
+        if os.environ.get("OS_STDERR_CAPTURE") in _TRUE_VALUES:
+            stderr = self.useFixture(fixtures.StringStream("stderr")).stream
+            self.useFixture(fixtures.MonkeyPatch("sys.stderr", stderr))
 
         self.log_fixture = self.useFixture(fixtures.FakeLogger())
 
         if self.REQUIRES_LOCKING:
             lock_path = self.useFixture(fixtures.TempDir()).path
-            self.fixture = self.useFixture(
-                config_fixture.Config(lockutils.CONF))
+            self.fixture = self.useFixture(config_fixture.Config(lockutils.CONF))
             self.fixture.config(lock_path=lock_path)
 
     def flags(self, **kw):
         """Override flag variables for a test."""
-        group = kw.pop('group', None)
+        group = kw.pop("group", None)
         for k, v in six.iteritems(kw):
             CONF.set_override(k, v, group)
 

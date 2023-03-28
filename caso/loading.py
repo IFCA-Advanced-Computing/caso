@@ -28,8 +28,7 @@ def _get_names(what):
 
 
 def _get(what):
-    mgr = stevedore.ExtensionManager(namespace=what,
-                                     propagate_map_exceptions=True)
+    mgr = stevedore.ExtensionManager(namespace=what, propagate_map_exceptions=True)
 
     return dict(mgr.map(lambda ext: (ext.entry_point.name, ext.plugin)))
 
@@ -81,10 +80,12 @@ def get_enabled_messengers(names):
     def cb(names):
         raise exception.MessengerNotFoundError(names=",".join(list(names)))
 
-    mgr = stevedore.NamedExtensionManager(namespace=MESSENGER_NAMESPACE,
-                                          names=names,
-                                          name_order=True,
-                                          on_missing_entrypoints_callback=cb,
-                                          invoke_on_load=True,
-                                          propagate_map_exceptions=True)
+    mgr = stevedore.NamedExtensionManager(
+        namespace=MESSENGER_NAMESPACE,
+        names=names,
+        name_order=True,
+        on_missing_entrypoints_callback=cb,
+        invoke_on_load=True,
+        propagate_map_exceptions=True,
+    )
     return mgr

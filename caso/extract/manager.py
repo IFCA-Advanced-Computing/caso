@@ -26,33 +26,42 @@ import six
 from caso import loading
 
 cli_opts = [
-    cfg.ListOpt('projects',
-                default=[],
-                deprecated_name='tenants',
-                help='List of projects to extract accounting records from.'),
-    cfg.StrOpt('extract-to',
-               deprecated_name='extract_to',
-               help='Extract record changes until this date. '
-                    'If it is not set, we use now. If a server has '
-                    'ended after this date, it will be included, but '
-                    'the consuption reported will end on this date. '
-                    'If no time zone is specified, UTC will be used.'),
-    cfg.StrOpt('extract-from',
-               deprecated_name='extract_from',
-               help='Extract records that have changed after this date. This '
-                    'means that if a record has started before this date, and '
-                    'it has changed after this date (i.e. it is still running '
-                    'or it has ended) it will be reported. \n'
-                    'If it is not set, extract records from last run. '
-                    'If it is set to None and last run file is not present, '
-                    'it will extract records from the beginning of time. '
-                    'If no time zone is specified, UTC will be used.'),
-    cfg.ListOpt('extractor',
-                default=['nova'],
-                help='Which extractor to use for getting the data. '
-                     'If you do not specify anything, nova will be '
-                     'used. Available choices are {}'.format(
-                         loading.get_available_extractor_names())),
+    cfg.ListOpt(
+        "projects",
+        default=[],
+        deprecated_name="tenants",
+        help="List of projects to extract accounting records from.",
+    ),
+    cfg.StrOpt(
+        "extract-to",
+        deprecated_name="extract_to",
+        help="Extract record changes until this date. "
+        "If it is not set, we use now. If a server has "
+        "ended after this date, it will be included, but "
+        "the consuption reported will end on this date. "
+        "If no time zone is specified, UTC will be used.",
+    ),
+    cfg.StrOpt(
+        "extract-from",
+        deprecated_name="extract_from",
+        help="Extract records that have changed after this date. This "
+        "means that if a record has started before this date, and "
+        "it has changed after this date (i.e. it is still running "
+        "or it has ended) it will be reported. \n"
+        "If it is not set, extract records from last run. "
+        "If it is set to None and last run file is not present, "
+        "it will extract records from the beginning of time. "
+        "If no time zone is specified, UTC will be used.",
+    ),
+    cfg.ListOpt(
+        "extractor",
+        default=["nova"],
+        help="Which extractor to use for getting the data. "
+        "If you do not specify anything, nova will be "
+        "used. Available choices are {}".format(
+            loading.get_available_extractor_names()
+        ),
+    ),
 ]
 
 CONF = cfg.CONF
@@ -66,8 +75,7 @@ LOG = log.getLogger(__name__)
 class Manager(object):
     def __init__(self):
         extractors = [
-            (i, loading.get_available_extractors()[i])
-            for i in CONF.extractor
+            (i, loading.get_available_extractors()[i]) for i in CONF.extractor
         ]
         self.extractors = extractors
         self.last_run_base = os.path.join(CONF.spooldir, "lastrun")
@@ -75,8 +83,10 @@ class Manager(object):
     def get_lastrun(self, project):
         lfile = f"{self.last_run_base}.{project}"
         if not os.path.exists(lfile):
-            LOG.warning("WARNING: Old global lastrun file detected and no "
-                        "project specific file found, using it for this run")
+            LOG.warning(
+                "WARNING: Old global lastrun file detected and no "
+                "project specific file found, using it for this run"
+            )
             lfile = self.last_run_base
 
         date = "1970-01-01"
@@ -118,10 +128,12 @@ class Manager(object):
             extract_to = extract_to.replace(tzinfo=tz.tzutc())
 
         if extract_to > now:
-            LOG.warning("The extract-to parameter is in the future, after "
-                        "current date and time, cASO will limit the record "
-                        "generation to the current date and time. "
-                        f"(extract-to: {extract_to}")
+            LOG.warning(
+                "The extract-to parameter is in the future, after "
+                "current date and time, cASO will limit the record "
+                "generation to the current date and time. "
+                f"(extract-to: {extract_to}"
+            )
             extract_to = now
 
         all_records = []
@@ -135,17 +147,21 @@ class Manager(object):
                 extract_from = extract_from.replace(tzinfo=tz.tzutc())
 
             if extract_from >= now:
-                LOG.error("Cannot extract records from the future, please "
-                          "check the extract-from parameter or the last run "
-                          f"file for the project {project}!"
-                          f"(extract-from: {extract_from})")
+                LOG.error(
+                    "Cannot extract records from the future, please "
+                    "check the extract-from parameter or the last run "
+                    f"file for the project {project}!"
+                    f"(extract-from: {extract_from})"
+                )
                 sys.exit(1)
 
             record_count = 0
             for extractor_name, extractor_cls in self.extractors:
-                LOG.debug(f"Extractor {extractor_name}: extracting records "
-                          f"for project {project} "
-                          f"({extract_from} to {extract_to})")
+                LOG.debug(
+                    f"Extractor {extractor_name}: extracting records "
+                    f"for project {project} "
+                    f"({extract_from} to {extract_to})"
+                )
                 try:
                     extractor = extractor_cls(project)
                     records = extractor.extract(extract_from, extract_to)
@@ -153,16 +169,22 @@ class Manager(object):
                     record_count += current_count
                     all_records.extend(records)
 
-                    LOG.debug(f"Extractor {extractor_name}: extracted "
-                              f"{current_count} records for project "
-                              f"'{project}' "
-                              f"({extract_from} to {extract_to})")
+                    LOG.debug(
+                        f"Extractor {extractor_name}: extracted "
+                        f"{current_count} records for project "
+                        f"'{project}' "
+                        f"({extract_from} to {extract_to})"
+                    )
                 except Exception:
-                    LOG.exception(f"Extractor {extractor_name}: cannot "
-                                  f"extract records for '{project}', got "
-                                  "the following exception: ")
-            LOG.info(f"Extracted {record_count} records in total for "
-                     f"project '{project}' "
-                     f"({extract_from} to {extract_to})")
+                    LOG.exception(
+                        f"Extractor {extractor_name}: cannot "
+                        f"extract records for '{project}', got "
+                        "the following exception: "
+                    )
+            LOG.info(
+                f"Extracted {record_count} records in total for "
+                f"project '{project}' "
+                f"({extract_from} to {extract_to})"
+            )
             self.write_lastrun(project)
         return all_records

@@ -35,7 +35,7 @@ class CasoError(Exception):
                 exc_info = sys.exc_info()
                 # kwargs doesn't match a variable in the message
                 # log the issue and the kwargs
-                LOG.exception('Exception in string format operation')
+                LOG.exception("Exception in string format operation")
                 for name, value in six.iteritems(kwargs):
                     LOG.error(f"{name}: {value}")
                 six.reraise(exc_info[0], exc_info[1], exc_info[2])
@@ -52,5 +52,4 @@ class MessengerNotFoundError(CasoError):
 
 
 class LogstashConnectionError(CasoError):
-    msg_fmt = ("Cannot send data to logstash {host}:{port}, "
-               "reason: {exception}")
+    msg_fmt = "Cannot send data to logstash {host}:{port}, " "reason: {exception}"

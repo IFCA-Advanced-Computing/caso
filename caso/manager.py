@@ -27,37 +27,35 @@ from caso import utils
 
 opts = [
     cfg.ListOpt(
-        'messengers',
-        default=['noop'],
-        help='List of messengers that will dispatch records. '
-             'valid values are {}. You can specify more than '
-             'one messenger.'.format(
-                 ",".join(sorted(loading.get_available_messenger_names()))
-        )
+        "messengers",
+        default=["noop"],
+        help="List of messengers that will dispatch records. "
+        "valid values are {}. You can specify more than "
+        "one messenger.".format(
+            ",".join(sorted(loading.get_available_messenger_names()))
+        ),
     ),
-    cfg.StrOpt(
-        'spooldir',
-        default='/var/spool/caso',
-        help='Spool directory.'
-    ),
+    cfg.StrOpt("spooldir", default="/var/spool/caso", help="Spool directory."),
 ]
 
 override_lock = cfg.StrOpt(
     "lock_path",
     default=os.environ.get("CASO_LOCK_PATH", "$spooldir"),
     help="Directory to use for lock files. For security, the specified "
-         "directory should only be writable by the user running the "
-         "processes that need locking. Defaults to environment variable "
-         "CASO_LOCK_PATH or $spooldir"
+    "directory should only be writable by the user running the "
+    "processes that need locking. Defaults to environment variable "
+    "CASO_LOCK_PATH or $spooldir",
 )
 opts.append(override_lock)
 
 cli_opts = [
-    cfg.BoolOpt('dry-run',
-                deprecated_name='dry_run',
-                default=False,
-                help='Extract records but do not push records to SSM. This '
-                'will not update the last run date.'),
+    cfg.BoolOpt(
+        "dry-run",
+        deprecated_name="dry_run",
+        default=False,
+        help="Extract records but do not push records to SSM. This "
+        "will not update the last run date.",
+    ),
 ]
 
 CONF = cfg.CONF
@@ -81,8 +79,9 @@ class Manager(object):
         self.extractor_manager = caso.extract.manager.Manager()
         self.messenger = caso.messenger.Manager()
 
-        @lockutils.synchronized("caso_should_not_run_in_parallel",
-                                lock_path=self.lock_path, external=True)
+        @lockutils.synchronized(
+            "caso_should_not_run_in_parallel", lock_path=self.lock_path, external=True
+        )
         def synchronized():
             records = self.extractor_manager.get_records()
             if not CONF.dry_run:
