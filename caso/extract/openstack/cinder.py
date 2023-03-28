@@ -46,9 +46,9 @@ class CinderExtractor(openstack.BaseOpenStackExtractor):
         user = self.users[volume.user_id]
         measure_time = self._get_measure_time()
 
-        vol_start = volume.__getattr__('created_at')
+        vol_start = volume.__getattr__("created_at")
         vol_created = dateutil.parser.parse(vol_start)
-        if (vol_created < extract_from):
+        if vol_created < extract_from:
             vol_created = extract_from
 
         active_duration = (extract_to - vol_created).total_seconds()
@@ -66,14 +66,14 @@ class CinderExtractor(openstack.BaseOpenStackExtractor):
             measure_time=measure_time,
             start_time=vol_created,
             capacity=volume.size,
-            user_dn=user
+            user_dn=user,
         )
 
         if volume.status == "in-use":
             attached_to = volume.attachments[0]["server_id"]
             attached_at = volume.attachments[0]["attached_at"]
             attached_at = dateutil.parser.parse(attached_at)
-            if (attached_at < extract_from):
+            if attached_at < extract_from:
                 attached_at = extract_from
             attacht = (extract_to - attached_at).total_seconds()
             r.attached_duration = attacht
@@ -88,9 +88,7 @@ class CinderExtractor(openstack.BaseOpenStackExtractor):
         # Use a marker and iter over results until we do not have more to get
         while True:
             aux = self.cinder.volumes.list(
-                search_opts={"changes-since": extract_from},
-                limit=limit,
-                marker=marker
+                search_opts={"changes-since": extract_from}, limit=limit, marker=marker
             )
             volumes.extend(aux)
 
@@ -124,8 +122,6 @@ class CinderExtractor(openstack.BaseOpenStackExtractor):
         volumes = self._get_volumes(extract_from)
 
         for vol in volumes:
-            self.str_records[vol.id] = self.build_record(vol,
-                                                         extract_from,
-                                                         extract_to)
+            self.str_records[vol.id] = self.build_record(vol, extract_from, extract_to)
 
         return list(self.str_records.values())

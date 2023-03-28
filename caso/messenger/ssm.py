@@ -34,12 +34,14 @@ from caso import utils
 LOG = log.getLogger(__name__)
 
 opts = [
-    cfg.StrOpt('output_path',
-               default='/var/spool/apel/outgoing/openstack',
-               help="Directory to put the generated SSM records."),
-    cfg.IntOpt('max_size',
-               default=100,
-               help="Maximum number of records to send per message"),
+    cfg.StrOpt(
+        "output_path",
+        default="/var/spool/apel/outgoing/openstack",
+        help="Directory to put the generated SSM records.",
+    ),
+    cfg.IntOpt(
+        "max_size", default=100, help="Maximum number of records to send per message"
+    ),
 ]
 
 CONF = cfg.CONF
@@ -60,19 +62,21 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         # FIXME(aloga): try except here
         utils.makedirs(CONF.ssm.output_path)
 
-    def push_compute_message(self,
-                             queue: dirq.QueueSimple.QueueSimple,
-                             entries: typing.List[str]):
+    def push_compute_message(
+        self, queue: dirq.QueueSimple.QueueSimple, entries: typing.List[str]
+    ):
         message = f"APEL-cloud-message: v{self.compute_version}\n"
         aux = "%%\n".join(entries)
         message += f"{aux}\n"
         queue.add(message.encode("utf-8"))
 
-    def push_json_message(self,
-                          queue: dirq.QueueSimple.QueueSimple,
-                          entries: typing.List[str],
-                          msg_type: str,
-                          version: str):
+    def push_json_message(
+        self,
+        queue: dirq.QueueSimple.QueueSimple,
+        entries: typing.List[str],
+        msg_type: str,
+        version: str,
+    ):
         message = {
             "Type": msg_type,
             "Version": version,
@@ -80,22 +84,22 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         }
         queue.add(json.dumps(message))
 
-    def push_ip_message(self,
-                        queue: dirq.QueueSimple.QueueSimple,
-                        entries: typing.List[str]):
-        self.push_json_message(queue, entries, "APEL Public IP message",
-                               self.ip_version)
+    def push_ip_message(
+        self, queue: dirq.QueueSimple.QueueSimple, entries: typing.List[str]
+    ):
+        self.push_json_message(
+            queue, entries, "APEL Public IP message", self.ip_version
+        )
 
-    def push_acc_message(self,
-                         queue: dirq.QueueSimple.QueueSimple,
-                         entries: typing.List[str]):
-        self.push_json_message(queue, entries, "APEL-accelerator-message",
-                               self.acc_version)
+    def push_acc_message(
+        self, queue: dirq.QueueSimple.QueueSimple, entries: typing.List[str]
+    ):
+        self.push_json_message(
+            queue, entries, "APEL-accelerator-message", self.acc_version
+        )
 
     def push_str_message(self, queue, entries):
-        ns = {
-            "xmlns:sr": "http://eu-emi.eu/namespaces/2011/02/storagerecord"
-        }
+        ns = {"xmlns:sr": "http://eu-emi.eu/namespaces/2011/02/storagerecord"}
         root = ETree.Element("sr:StorageUsageRecords", attrib=ns)
         for record in entries:
             sr = ETree.SubElement(root, "sr:StorageUsageRecord")
@@ -116,11 +120,9 @@ class SSMMessenger(caso.messenger.BaseMessenger):
                 ETree.SubElement(subject, "sr:UserIdentity").text = record.user_dn
             if record.fqan:
                 ETree.SubElement(subject, "sr:Group").text = record.fqan
-            ETree.SubElement(sr,
-                             "sr:StartTime").text = record.start_time.isoformat()
-            ETree.SubElement(sr,
-                             "sr:EndTime").text = record.measure_time.isoformat()
-            capacity = str(int(record.capacity * 1073741824))   # 1 GiB = 2^30
+            ETree.SubElement(sr, "sr:StartTime").text = record.start_time.isoformat()
+            ETree.SubElement(sr, "sr:EndTime").text = record.measure_time.isoformat()
+            capacity = str(int(record.capacity * 1073741824))  # 1 GiB = 2^30
             ETree.SubElement(sr, "sr:ResourceCapacityUsed").text = capacity
         queue.add(ETree.tostring(root))
 
@@ -159,26 +161,28 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         # Divide message into smaller chunks as per GGUS #143436
         # https://ggus.eu/index.php?mode=ticket_info&ticket_id=143436
         for i in range(0, len(entries_cloud), CONF.ssm.max_size):
-            entries = entries_cloud[i:i + CONF.ssm.max_size]
+            entries = entries_cloud[i : i + CONF.ssm.max_size]
             self.push_compute_message(queue, entries)
 
         for i in range(0, len(entries_ip), CONF.ssm.max_size):
-            entries = entries_ip[i:i + CONF.ssm.max_size]
+            entries = entries_ip[i : i + CONF.ssm.max_size]
             self.push_ip_message(queue, entries)
 
         for i in range(0, len(entries_acc), CONF.ssm.max_size):
-            entries = entries_acc[i:i + CONF.ssm.max_size]
+            entries = entries_acc[i : i + CONF.ssm.max_size]
             self.push_acc_message(queue, entries)
 
         for i in range(0, len(entries_str), CONF.ssm.max_size):
-            entries = entries_str[i:i + CONF.ssm.max_size]
+            entries = entries_str[i : i + CONF.ssm.max_size]
             self.push_str_message(queue, entries)
 
 
 class SSMMessengerV04(SSMMessenger):
     def __init__(self):
-        msg = ("Using an versioned SSM messenger is deprecated, please use "
-               "'ssm' as messenger instead in order to use the latest "
-               "version.")
+        msg = (
+            "Using an versioned SSM messenger is deprecated, please use "
+            "'ssm' as messenger instead in order to use the latest "
+            "version."
+        )
         warnings.warn(msg, DeprecationWarning)
         super(SSMMessengerV04, self).__init__()

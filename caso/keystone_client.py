@@ -26,30 +26,32 @@ CFG_GROUP = "keystone_auth"
 loading.register_auth_conf_options(CONF, CFG_GROUP)
 loading.register_session_conf_options(CONF, CFG_GROUP)
 
-opts = (loading.get_auth_common_conf_options() +
-        loading.get_session_conf_options() +
-        loading.get_auth_plugin_conf_options('password'))
+opts = (
+    loading.get_auth_common_conf_options()
+    + loading.get_session_conf_options()
+    + loading.get_auth_plugin_conf_options("password")
+)
 
 
 def get_session(conf, project):
     """Get an auth session."""
     # First try using project_id
-    auth_plugin = loading.load_auth_from_conf_options(conf, CFG_GROUP,
-                                                      project_id=project)
-    sess = loading.load_session_from_conf_options(conf, CFG_GROUP,
-                                                  auth=auth_plugin)
+    auth_plugin = loading.load_auth_from_conf_options(
+        conf, CFG_GROUP, project_id=project
+    )
+    sess = loading.load_session_from_conf_options(conf, CFG_GROUP, auth=auth_plugin)
     try:
         sess.get_token()
     except exceptions.Unauthorized:
-        auth_plugin = loading.load_auth_from_conf_options(conf, CFG_GROUP,
-                                                          project_name=project)
+        auth_plugin = loading.load_auth_from_conf_options(
+            conf, CFG_GROUP, project_name=project
+        )
         # Failure, now try project_name
-        sess = loading.load_session_from_conf_options(conf, CFG_GROUP,
-                                                      auth=auth_plugin)
+        sess = loading.load_session_from_conf_options(conf, CFG_GROUP, auth=auth_plugin)
     return sess
 
 
 def get_client(conf, project):
     """Return a client for Keystone."""
     sess = get_session(conf, project)
-    return ks_client_v3.Client(session=sess, interface='public')
+    return ks_client_v3.Client(session=sess, interface="public")

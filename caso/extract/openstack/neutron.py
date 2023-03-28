@@ -59,7 +59,7 @@ class NeutronExtractor(openstack.BaseOpenStackExtractor):
             fqan=self.vo,
             ip_version=version,
             public_ip_count=ip_count,
-            compute_service=CONF.service_name
+            compute_service=CONF.service_name,
         )
 
         return r
@@ -98,8 +98,9 @@ class NeutronExtractor(openstack.BaseOpenStackExtractor):
         for floating_ip in floating_ips["floatingips"]:
             ip = floating_ip["floating_ip_address"]
             ip_version = ipaddress.ip_address(ip).version
-            ip_start = datetime.strptime(floating_ip["created_at"],
-                                         '%Y-%m-%dT%H:%M:%SZ')
+            ip_start = datetime.strptime(
+                floating_ip["created_at"], "%Y-%m-%dT%H:%M:%SZ"
+            )
             if ip_start > extract_to:
                 continue
             else:
@@ -108,14 +109,13 @@ class NeutronExtractor(openstack.BaseOpenStackExtractor):
                 elif ip_version == 6:
                     ip_counts_v6[user] += 1
 
-        for (ip_version, ip_counts) in [(4, ip_counts_v4),
-                                        (6, ip_counts_v6)]:
+        for (ip_version, ip_counts) in [(4, ip_counts_v4), (6, ip_counts_v6)]:
             for user_id, count in ip_counts.items():
                 if count == 0:
                     continue
 
-                self.ip_records[user_id] = self.build_ip_record(user_id,
-                                                                count,
-                                                                ip_version)
+                self.ip_records[user_id] = self.build_ip_record(
+                    user_id, count, ip_version
+                )
 
         return list(self.ip_records.values())

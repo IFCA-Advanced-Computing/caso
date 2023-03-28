@@ -32,9 +32,9 @@ class TestCasoManager(base.TestCase):
         self.useFixture(lock_fixture.ExternalLockFixture())
         super(TestCasoManager, self).setUp()
         self.patchers = {
-            "makedirs": mock.patch('caso.utils.makedirs'),
-            "extract": mock.patch('caso.extract.manager.Manager'),
-            "messenger": mock.patch('caso.messenger.Manager'),
+            "makedirs": mock.patch("caso.utils.makedirs"),
+            "extract": mock.patch("caso.extract.manager.Manager"),
+            "messenger": mock.patch("caso.messenger.Manager"),
         }
         self.mocks = {}
         for k, p in six.iteritems(self.patchers):
