@@ -134,6 +134,30 @@ class SSMMessenger(caso.messenger.BaseMessenger):
             ETree.SubElement(sr, "sr:ResourceCapacityUsed").text = capacity
         queue.add(ETree.tostring(root))
 
+    def _push(self, entries_cloud, entries_ip, entries_acc, entries_str):
+        """Push all messages, dividing them into smaller chunks.
+
+        This method gets lists of messages to be pushed in smaller chucks as per GGUS
+        ticket 143436: https://ggus.eu/index.php?mode=ticket_info&ticket_id=143436
+        """
+        queue = dirq.QueueSimple.QueueSimple(CONF.ssm.output_path)
+
+        for i in range(0, len(entries_cloud), CONF.ssm.max_size):
+            entries = entries_cloud[i : i + CONF.ssm.max_size]  # noqa(E203)
+            self.push_compute_message(queue, entries)
+
+        for i in range(0, len(entries_ip), CONF.ssm.max_size):
+            entries = entries_ip[i : i + CONF.ssm.max_size]  # noqa(E203)
+            self.push_ip_message(queue, entries)
+
+        for i in range(0, len(entries_acc), CONF.ssm.max_size):
+            entries = entries_acc[i : i + CONF.ssm.max_size]  # noqa(E203)
+            self.push_acc_message(queue, entries)
+
+        for i in range(0, len(entries_str), CONF.ssm.max_size):
+            entries = entries_str[i : i + CONF.ssm.max_size]  # noqa(E203)
+            self.push_str_message(queue, entries)
+
     def push(self, records):
         """Push all records to SSM.
 
@@ -174,26 +198,7 @@ class SSMMessenger(caso.messenger.BaseMessenger):
             else:
                 raise caso.exception.CasoError("Unexpected record format!")
 
-        # FIXME(aloga): try except here
-        queue = dirq.QueueSimple.QueueSimple(CONF.ssm.output_path)
-
-        # Divide message into smaller chunks as per GGUS #143436
-        # https://ggus.eu/index.php?mode=ticket_info&ticket_id=143436
-        for i in range(0, len(entries_cloud), CONF.ssm.max_size):
-            entries = entries_cloud[i : i + CONF.ssm.max_size]  # noqa(E203)
-            self.push_compute_message(queue, entries)
-
-        for i in range(0, len(entries_ip), CONF.ssm.max_size):
-            entries = entries_ip[i : i + CONF.ssm.max_size]  # noqa(E203)
-            self.push_ip_message(queue, entries)
-
-        for i in range(0, len(entries_acc), CONF.ssm.max_size):
-            entries = entries_acc[i : i + CONF.ssm.max_size]  # noqa(E203)
-            self.push_acc_message(queue, entries)
-
-        for i in range(0, len(entries_str), CONF.ssm.max_size):
-            entries = entries_str[i : i + CONF.ssm.max_size]  # noqa(E203)
-            self.push_str_message(queue, entries)
+        self._push(entries_cloud, entries_ip, entries_acc, entries_str)
 
 
 class SSMMessengerV04(SSMMessenger):
