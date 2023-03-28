@@ -70,11 +70,11 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
                 return self._users.values()
 
             def __getitem__(self, key):
-                user = self._users.get(key, None)
-                if user is None:
-                    user = self.parent._get_keystone_user(key)
-                    self._users[key] = user
-                return user
+                if key is None:
+                    return None
+                if key not in self._users:
+                    self._users[key] = self.parent._get_keystone_user(key)
+                return self._users.get(key, None)
 
         # Membership in keystone can be direct (a user belongs to a project) or
         # via group membership, therefore we cannot get a list directly. We
