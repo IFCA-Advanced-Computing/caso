@@ -15,6 +15,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Base test case for all tests."""
+
 import os
 
 import fixtures
@@ -30,14 +32,12 @@ _TRUE_VALUES = ("True", "true", "1", "yes")
 
 
 class TestCase(testtools.TestCase):
-
     """Test case base class for all unit tests."""
 
     REQUIRES_LOCKING = False
 
     def setUp(self):
         """Run before each test method to initialize test environment."""
-
         super(TestCase, self).setUp()
         test_timeout = os.environ.get("OS_TEST_TIMEOUT", 0)
         try:

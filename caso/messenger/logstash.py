@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Module containing a Logstask cASO messenger."""
+
 import socket
 
 from oslo_config import cfg
@@ -39,6 +41,7 @@ class LogstashMessenger(caso.messenger.BaseMessenger):
     """Format and send records to a logstash host."""
 
     def __init__(self, host=CONF.logstash.host, port=CONF.logstash.port):
+        """Get a logstash messenger for a given host and port."""
         super(LogstashMessenger, self).__init__()
         self.host = CONF.logstash.host
         self.port = CONF.logstash.port

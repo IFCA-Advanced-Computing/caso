@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""The cASO manager: get configured records and push to configured messengers."""
+
 import os
 import os.path
 
@@ -65,7 +67,10 @@ CONF.register_cli_opts(cli_opts)
 
 
 class Manager(object):
+    """cASO manager class to deal with the main functionality."""
+
     def __init__(self):
+        """Initialize the cASO manager with configued options."""
         utils.makedirs(CONF.spooldir)
 
         self.extractor_manager = None
@@ -74,6 +79,13 @@ class Manager(object):
         self.lock_path = CONF.lock_path
 
     def run(self):
+        """Run the manager.
+
+        This method runs the main cASo functionality, namely:
+            - Gets the global lock
+            - Gets all records from the configured extractors
+            - Pushes all the records to the messengers
+        """
         # Load the managers here to have the config options loaded and
         # available
         self.extractor_manager = caso.extract.manager.Manager()

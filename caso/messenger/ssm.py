@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Module containing the APEL SSM Messenger."""
+
 import json
 import typing
 import warnings
@@ -51,18 +53,22 @@ __all__ = ["SSMMessenger", "SSMMessengerV04"]
 
 
 class SSMMessenger(caso.messenger.BaseMessenger):
+    """SSM Messenger that pushes formatted messages to a dirq instance."""
+
     compute_version = "0.4"
     ip_version = "0.2"
     acc_version = "0.1"
     str_version = None  # FIXME: this cannot have a none version
 
     def __init__(self):
+        """Initialize the SSM messenger with configured values."""
         # FIXME(aloga): try except here
         utils.makedirs(CONF.ssm.output_path)
 
     def push_compute_message(
         self, queue: dirq.QueueSimple.QueueSimple, entries: typing.List[str]
     ):
+        """Push a compute message, formatted following the CloudRecord."""
         message = f"APEL-cloud-message: v{self.compute_version}\n"
         aux = "%%\n".join(entries)
         message += f"{aux}\n"
@@ -75,6 +81,7 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         msg_type: str,
         version: str,
     ):
+        """Push a JSON message with a UsageRecords list."""
         message = {
             "Type": msg_type,
             "Version": version,
@@ -85,6 +92,7 @@ class SSMMessenger(caso.messenger.BaseMessenger):
     def push_ip_message(
         self, queue: dirq.QueueSimple.QueueSimple, entries: typing.List[str]
     ):
+        """Push an IP message."""
         self.push_json_message(
             queue, entries, "APEL Public IP message", self.ip_version
         )
@@ -92,11 +100,13 @@ class SSMMessenger(caso.messenger.BaseMessenger):
     def push_acc_message(
         self, queue: dirq.QueueSimple.QueueSimple, entries: typing.List[str]
     ):
+        """Push an accelerator message."""
         self.push_json_message(
             queue, entries, "APEL-accelerator-message", self.acc_version
         )
 
     def push_str_message(self, queue, entries):
+        """Push a storage message."""
         ns = {"xmlns:sr": "http://eu-emi.eu/namespaces/2011/02/storagerecord"}
         root = ETree.Element("sr:StorageUsageRecords", attrib=ns)
         for record in entries:
@@ -125,6 +135,17 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         queue.add(ETree.tostring(root))
 
     def push(self, records):
+        """Push all records to SSM.
+
+        This includes pushing the following records:
+            - Cloud records
+            - IP records
+            - Accelerator records
+            - Storage records
+
+        This method will iterate over all the records, transforming them into the
+        correct messages, then pushing it.
+        """
         if not records:
             return
 
@@ -159,24 +180,30 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         # Divide message into smaller chunks as per GGUS #143436
         # https://ggus.eu/index.php?mode=ticket_info&ticket_id=143436
         for i in range(0, len(entries_cloud), CONF.ssm.max_size):
-            entries = entries_cloud[i : i + CONF.ssm.max_size]
+            entries = entries_cloud[i : i + CONF.ssm.max_size]  # noqa(E203)
             self.push_compute_message(queue, entries)
 
         for i in range(0, len(entries_ip), CONF.ssm.max_size):
-            entries = entries_ip[i : i + CONF.ssm.max_size]
+            entries = entries_ip[i : i + CONF.ssm.max_size]  # noqa(E203)
             self.push_ip_message(queue, entries)
 
         for i in range(0, len(entries_acc), CONF.ssm.max_size):
-            entries = entries_acc[i : i + CONF.ssm.max_size]
+            entries = entries_acc[i : i + CONF.ssm.max_size]  # noqa(E203)
             self.push_acc_message(queue, entries)
 
         for i in range(0, len(entries_str), CONF.ssm.max_size):
-            entries = entries_str[i : i + CONF.ssm.max_size]
+            entries = entries_str[i : i + CONF.ssm.max_size]  # noqa(E203)
             self.push_str_message(queue, entries)
 
 
 class SSMMessengerV04(SSMMessenger):
+    """Deprecated versioned SSM Messenger."""
+
     def __init__(self):
+        """Initialize the SSM V04 messenger.
+
+        Deprecated not to be used, please stop using SSM versioned messengers.
+        """
         msg = (
             "Using an versioned SSM messenger is deprecated, please use "
             "'ssm' as messenger instead in order to use the latest "

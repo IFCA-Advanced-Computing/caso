@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Module containing the OpenStack Volume (Cinder) record extractor."""
+
 import operator
 
 import cinderclient.v3.client
@@ -21,7 +23,7 @@ import dateutil.parser
 from oslo_config import cfg
 from oslo_log import log
 
-from caso.extract import openstack
+from caso.extract.openstack import base
 from caso import record
 
 CONF = cfg.CONF
@@ -32,17 +34,22 @@ CONF.import_opt("site_name", "caso.extract.base")
 LOG = log.getLogger(__name__)
 
 
-class CinderExtractor(openstack.BaseOpenStackExtractor):
+class CinderExtractor(base.BaseOpenStackExtractor):
+    """An OpenStack Volume (Cinder) record extractor for cASO."""
+
     def __init__(self, project):
+        """Get a Cinder record extractor for a given project."""
         super(CinderExtractor, self).__init__(project)
 
         self.cinder = self._get_cinder_client()
 
     def _get_cinder_client(self):
+        """Get Cinder client with keystone session."""
         session = self._get_keystone_session()
         return cinderclient.v3.client.Client(session=session)
 
-    def build_record(self, volume, extract_from, extract_to):
+    def _build_record(self, volume, extract_from, extract_to):
+        """Build an individual record."""
         user = self.users[volume.user_id]
         measure_time = self._get_measure_time()
 
@@ -82,6 +89,7 @@ class CinderExtractor(openstack.BaseOpenStackExtractor):
         return r
 
     def _get_volumes(self, extract_from):
+        """Get all volumes for a given date."""
         volumes = []
         limit = 200
         marker = None
@@ -122,6 +130,6 @@ class CinderExtractor(openstack.BaseOpenStackExtractor):
         volumes = self._get_volumes(extract_from)
 
         for vol in volumes:
-            self.str_records[vol.id] = self.build_record(vol, extract_from, extract_to)
+            self.str_records[vol.id] = self._build_record(vol, extract_from, extract_to)
 
         return list(self.str_records.values())

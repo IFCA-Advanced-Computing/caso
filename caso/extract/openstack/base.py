@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Module containing the base class for all OpenStack extractors."""
+
 import datetime
 
 import keystoneauth1.exceptions.http
@@ -42,7 +44,10 @@ LOG = log.getLogger(__name__)
 
 
 class BaseOpenStackExtractor(base.BaseProjectExtractor):
+    """Base OpenStack Extractor that all other extractors should inherit from."""
+
     def __init__(self, project):
+        """Initialize the OpenStack extractor for a given project."""
         super(BaseOpenStackExtractor, self).__init__(project)
 
         self.vo = self._get_vo()
@@ -77,17 +82,21 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
         self.users = Users(self)
 
     def _get_keystone_session(self):
+        """Get a Keystone session for the configured project in the object."""
         session = keystone_client.get_session(CONF, self.project)
         return session
 
     def _get_keystone_client(self):
+        """Get a Keystone Client for the configured project in the object."""
         client = keystone_client.get_client(CONF, self.project)
         return client
 
     def _get_project_id(self):
+        """Get the project ID from the project in the object."""
         return self.keystone.projects.get(self.project).id
 
     def _get_keystone_user(self, uuid):
+        """Get the Keystone username for a given uuid."""
         try:
             user = self.keystone.users.get(user=uuid)
             return user.name
@@ -101,6 +110,7 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
             return None
 
     def _get_vo(self):
+        """Get the VO where the project should be mapped."""
         vo = self.voms_map.get(self.project)
         if vo is None:
             LOG.warning(
@@ -112,5 +122,6 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
     # FIXME(aloga): this has to go inside a record
     @staticmethod
     def _get_measure_time():
+        """Get current measurement time."""
         measure_time = datetime.datetime.now()
         return measure_time

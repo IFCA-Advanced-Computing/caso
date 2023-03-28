@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Module containing a No-Op (No Operation) messenger that does nothing."""
+
 from oslo_log import log
 import six
 

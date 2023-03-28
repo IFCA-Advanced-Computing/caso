@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+"""Module containing the  OpenStack Network (Neutron) record extractor."""
+
 import collections
 import ipaddress
 
@@ -21,7 +23,7 @@ import neutronclient.v2_0.client
 from oslo_config import cfg
 from oslo_log import log
 
-from caso.extract import openstack
+from caso.extract.openstack import base
 from caso import record
 from datetime import datetime
 
@@ -35,8 +37,11 @@ CONF.import_group("accelerator", "caso.extract.base")
 LOG = log.getLogger(__name__)
 
 
-class NeutronExtractor(openstack.BaseOpenStackExtractor):
+class NeutronExtractor(base.BaseOpenStackExtractor):
+    """An OpenStack Network (Neutron) record extractor for cASO."""
+
     def __init__(self, project):
+        """Get a Neutron record extractor for a given project."""
         super(NeutronExtractor, self).__init__(project)
 
         self.neutron = self._get_neutron_client()
@@ -45,7 +50,7 @@ class NeutronExtractor(openstack.BaseOpenStackExtractor):
         session = self._get_keystone_session()
         return neutronclient.v2_0.client.Client(session=session)
 
-    def build_ip_record(self, user_id, ip_count, version):
+    def _build_ip_record(self, user_id, ip_count, version):
         user = self.users[user_id]
 
         measure_time = self._get_measure_time()
@@ -114,7 +119,7 @@ class NeutronExtractor(openstack.BaseOpenStackExtractor):
                 if count == 0:
                     continue
 
-                self.ip_records[user_id] = self.build_ip_record(
+                self.ip_records[user_id] = self._build_ip_record(
                     user_id, count, ip_version
                 )
 
