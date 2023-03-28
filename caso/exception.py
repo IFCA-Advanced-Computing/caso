@@ -43,10 +43,6 @@ class CasoError(Exception):
         super(CasoError, self).__init__(message)
 
 
-class RecordVersionNotFoundError(CasoError):
-    msg_fmt = "Version {version} of accounting record could not be found."
-
-
 class MessengerNotFoundError(CasoError):
     msg_fmt = "Messengers {names} could not be found."
 
