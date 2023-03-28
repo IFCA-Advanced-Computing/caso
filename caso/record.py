@@ -50,14 +50,14 @@ class CloudRecord(_BaseRecord):
     uuid: m_uuid.UUID
     name: str
 
-    user_id: m_uuid.UUID
+    user_id: str
     user_dn: typing.Optional[str]
-    group_id: m_uuid.UUID
+    group_id: str
     fqan: str
 
     status: str
 
-    image_id: m_uuid.UUID
+    image_id: str
 
     public_ip_count = 0
     cpu_count: int
@@ -157,9 +157,9 @@ class IPRecord(_BaseRecord):
 
     version = "0.2"
 
-    user_id: typing.Optional[m_uuid.UUID]
+    user_id: typing.Optional[str]
     user_dn: typing.Optional[str]
-    group_id: m_uuid.UUID
+    group_id: str
     fqan: str
 
     measure_time: datetime.datetime
@@ -217,7 +217,7 @@ class AcceleratorRecord(_BaseRecord):
     associated_record_type: str = "cloud"
 
     accelerator_type: str
-    cores: int
+    cores: typing.Optional[int]
     model: str
 
     benchmark_value: typing.Optional[float]
@@ -247,7 +247,7 @@ class AcceleratorRecord(_BaseRecord):
                 "uuid": "AccUUID",
                 "user_dn": "GlobalUserName",
                 "fqan": "FQAN",
-                "site": "SiteName",
+                "site_name": "SiteName",
                 "count": "Count",
                 "cores": "Cores",
                 "active_duration": "ActiveDuration",
