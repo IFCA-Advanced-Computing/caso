@@ -19,8 +19,8 @@
 import json
 import typing
 import warnings
+import xml.etree.ElementTree as ETree
 
-import defusedxml.ElementTree as ETree
 import dirq.QueueSimple
 from oslo_config import cfg
 from oslo_log import log
