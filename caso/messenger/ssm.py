@@ -19,7 +19,8 @@
 import json
 import typing
 import warnings
-import xml.etree.ElementTree as ETree
+# We are not parsing XML so this is safe
+import xml.etree.ElementTree as ETree  # nosec
 
 import dirq.QueueSimple
 from oslo_config import cfg
