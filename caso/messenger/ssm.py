@@ -64,8 +64,11 @@ class SSMMessenger(caso.messenger.BaseMessenger):
 
     def __init__(self):
         """Initialize the SSM messenger with configured values."""
-        # FIXME(aloga): try except here
-        utils.makedirs(CONF.ssm.output_path)
+        try:
+            utils.makedirs(CONF.ssm.output_path)
+        except Exception as err:
+            LOG.error(f"Failed to create path {CONF.ssm.output_path} because {err}")
+            raise err
 
     def _push_message_cloud(
         self, queue: dirq.QueueSimple.QueueSimple, entries: typing.List[str]
