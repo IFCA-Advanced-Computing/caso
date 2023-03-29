@@ -44,10 +44,10 @@ def get_session(conf, project):
     try:
         sess.get_token()
     except exceptions.Unauthorized:
-        auth_plugin = loading.load_auth_from_conf_options(
-            conf, CFG_GROUP, project_name=project
-        )
         # Failure, now try project_name
+        auth_plugin = loading.load_auth_from_conf_options(
+            conf, CFG_GROUP, project_name=project, project_id=None
+        )
         sess = loading.load_session_from_conf_options(conf, CFG_GROUP, auth=auth_plugin)
     return sess
 
