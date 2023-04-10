@@ -81,7 +81,7 @@ cli_opts = [
     ),
     cfg.ListOpt(
         "extractor",
-        default=["nova"],
+        default=["nova", "cinder", "neutron"],
         help="Which extractor to use for getting the data. "
         "If you do not specify anything, nova will be "
         "used. Available choices are {}".format(

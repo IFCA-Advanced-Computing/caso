@@ -1,0 +1,6 @@
+---
+upgrade:
+  - |
+    Now cASO defaults to all the installed default extractors, that are the
+    OpenStack Compute (nova), Volume (cinder) and Network (neutron), publishing
+    Cloud, Storage and IP records.
