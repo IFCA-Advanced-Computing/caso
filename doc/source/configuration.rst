@@ -25,14 +25,12 @@ OpenStack installation in order to be able to extract accounting records.
 User credentials (required)
 ---------------------------
 
-In the next section you will configure an OpenStack Keystone credentials in
-order to extract the records. The cASO user has to be a member of each of the
-projects (another option is to convert that user in an administrator, but the
-former option is a safer approach) for which it is extracting the accounting.
-Otherwise, ``cASO`` will not be able to get the usages and will fail.
-
-In order to do so, we are going to setup a new role ``accounting`` a new user
-``accounting``, adding it to each of the projects with that role::
+In the next section you will configure an OpenStack Keystone credentials in order to
+extract the records. The cASO user has to be a member of each of the projects (another
+option is to convert that user in an administrator, but the former option is a safer
+approach) for which it is extracting the accounting, with the ``reader`` role (this is
+a default OpenStack Keystone role). Otherwise, ``cASO`` will not be able to get the
+usages and will fail::
 
     openstack user create --password <password> accounting
     # For each of the projects, add the user with the accounting role
@@ -136,21 +134,24 @@ of every option. You should check at least the following options:
   domain-based authentication, as otherwise gathering the information might
   fail. This option, and the usage of ``caso_tag`` below will set up the final
   project list.
-* ``caso_tag`` (default value: ``caso``), specified the tag to be used filter
-  projects to extract their usage. The projects that are listed with this tag,
-  as well as the ``projects`` list set above will set up the final project list.
+* ``caso_tag`` (default value: ``caso``), specified the tag to be used filter projects
+  to extract their usage. The projects that are listed with this tag, as well as the
+  ``projects`` list set above will set up the final project list. If you only use tags,
+  and want to remove a project from being published, you just need to remove the tag
+  from the project.
 * ``messengers`` (list, default: ``noop``). List of the messengers to publish
   data to. Records will be pushed to all these messengers, in order. Valid
   messengers shipped with cASO are:
 
-      * ``ssm`` for publishing APEL V0.2 records (deprecated).
-      * ``ssmv2`` for publishing APEL V0.2 records (deprecated).
-      * ``ssmv4`` for publishing APEL V0.3 records (current).
+      * ``ssm`` for publishing APEL records.
       * ``logstash`` for publishing to Logstash.
       * ``noop`` do nothing at all.
 
   Note that there might be other messengers available in the system if they are
-  registered into the ``caso.messenger`` entry point namespace.
+  registered into the ``caso.messenger`` entry point namespace. Please also note that
+  versioning of the SSM messenger is deprecated.
+* ``vo_property`` (default: ``accounting:VO``). The project that will be set in the
+  OpenStack Keystone project to map a given project to a specific VO.
 * **DEPRECATED** ``mapping_file`` (default: ``/etc/caso/voms.json``). File containing
   the mapping from VOs to local projects as configured in Keystone-VOMS, in the
   following form::
@@ -163,10 +164,6 @@ of every option. You should check at least the following options:
 
   Note that you have to use either the project ID or project name for the
   mapping, as configured in the ``projects`` configuration variable.
-
-* ``benchmark_name_key`` and ``benchmark_value_key``. These two configuration
-  options are used by ``cASO`` to retrieve the benchmark information form the
-  OpenStack flavors.
 
 ``[keystone_auth]`` section
 ---------------------------
