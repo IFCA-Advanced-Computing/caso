@@ -35,7 +35,6 @@ cli_opts = [
     cfg.ListOpt(
         "projects",
         default=[],
-        deprecated_name="tenants",
         help="List of projects to extract accounting records from. You can "
         "use this option, or add 'caso' tag to the project in Keystone. "
         "Please refer to the documentation for more details.",
@@ -63,7 +62,6 @@ cli_opts = [
     ),
     cfg.StrOpt(
         "extract-to",
-        deprecated_name="extract_to",
         help="Extract record changes until this date. "
         "If it is not set, we use now. If a server has "
         "ended after this date, it will be included, but "
@@ -72,7 +70,6 @@ cli_opts = [
     ),
     cfg.StrOpt(
         "extract-from",
-        deprecated_name="extract_from",
         help="Extract records that have changed after this date. This "
         "means that if a record has started before this date, and "
         "it has changed after this date (i.e. it is still running "

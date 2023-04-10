@@ -54,7 +54,6 @@ opts.append(override_lock)
 cli_opts = [
     cfg.BoolOpt(
         "dry-run",
-        deprecated_name="dry_run",
         default=False,
         help="Extract records but do not push records to SSM. This "
         "will not update the last run date.",

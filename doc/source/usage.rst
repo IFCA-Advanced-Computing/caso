@@ -91,7 +91,7 @@ extract accountig records:
    Which extractor to use for getting the data. If you do not specify anything,
    nova will be used. Allowed values: nova
 
-.. option:: --projects PROJECTS, --tenants PROJECTS
+.. option:: --projects PROJECTS
 
    List of projects to extract accounting records from.
 

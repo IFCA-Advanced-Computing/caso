@@ -34,32 +34,24 @@ accelerator_opts = [
     cfg.StrOpt(
         "type_key",
         default="Accelerator:Type",
-        deprecated_name="accelerator_type_key",
-        deprecated_group="DEFAULT",
         help="Metadata key used to retrieve the accelerator type "
         "from the flavor properties.",
     ),
     cfg.StrOpt(
         "vendor_key",
         default="Accelerator:Vendor",
-        deprecated_name="accelerator_vendor_key",
-        deprecated_group="DEFAULT",
         help="Metadata key used to retrieve the accelerator vendor "
         "from the flavor properties.",
     ),
     cfg.StrOpt(
         "model_key",
         default="Accelerator:Model",
-        deprecated_name="accelerator_model_key",
-        deprecated_group="DEFAULT",
         help="Metadata key used to retrieve the accelerator model "
         "from the flavor properties.",
     ),
     cfg.StrOpt(
         "number_key",
         default="Accelerator:Number",
-        deprecated_name="accelerator_number_key",
-        deprecated_group="DEFAULT",
         help="Metadata key used to retrieve the accelerator number "
         "from the flavor properties.",
     ),
@@ -69,16 +61,12 @@ benchmark_opts = [
     cfg.StrOpt(
         "name_key",
         default="accounting:benchmark_type",
-        deprecated_name="benchmark_name_key",
-        deprecated_group="DEFAULT",
         help="Metadata key used to retrieve the benchmark type "
         "from the flavor properties.",
     ),
     cfg.StrOpt(
         "value_key",
         default="accounting:benchmark_value",
-        deprecated_name="benchmark_value_key",
-        deprecated_group="DEFAULT",
         help="Metadata key used to retrieve the benchmark value "
         "from the flavor properties.",
     ),

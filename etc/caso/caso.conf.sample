@@ -31,7 +31,6 @@
 # List of projects to extract accounting records from. You can use this option,
 # or add 'caso' tag to the project in Keystone. Please refer to the
 # documentation for more details. (list value)
-# Deprecated group/name - [DEFAULT]/tenants
 #projects =
 
 # Tag used to mark a project in Keystone to be extracted by cASO (string value)
