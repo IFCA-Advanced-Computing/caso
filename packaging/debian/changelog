@@ -1,3 +1,25 @@
+python3-caso (4.1.0-1) stable; urgency=medium
+
+  * [a74fb28] Remove duplicated option
+  * [1142758] Let operators mark projects directly on keystone
+  * [ce9e416] Use Keystone properties to load VO mapping.
+  * [fc039e2] Move VM status method to Nova extractor
+  * [3982e48] nova: move accelerator and benchmark options to correct place
+  * [416d2f7] extractors: move projects options to correct place
+  * [91f4e8e] Load VO mapping in correct place
+  * [8fef5fe] Move all clients to the base class
+  * [01eab94] Remove old last run file management
+  * [4f0252c] Add migrate command to ease migration
+  * [b89fbc1] Set UUID also for IP records
+  * [a8e6d5b] Provide better error message when pushing records
+  * [4bda67d] Fix noop messenger
+  * [bb8ffee] Include project names in project listing
+  * [93b9df3] Update documentation
+  * [b014846] Include caso-projects in usage commands
+  * [6aaad9d] Remove deprecated option
+
+ -- Alvaro Lopez Garcia <aloga@ifca.unican.es>  Mon, 10 Apr 2023 14:29:16 +0200
+
 python3-caso (4.0.0-1) stable; urgency=medium
 
   [ Alvaro Lopez Garcia ]

@@ -51,6 +51,8 @@ mv %{buildroot}/usr/etc/ %{buildroot}/etc
 
 %files 
 %{_bindir}/caso-extract
+%{_bindir}/caso-mapping-migrate
+%{_bindir}/caso-projects
 %{python3_sitelib}/caso/
 %{python3_sitelib}/caso-%{version}*
 %config /etc/caso/caso.conf.sample
@@ -58,6 +60,24 @@ mv %{buildroot}/usr/etc/ %{buildroot}/etc
 %exclude /etc/caso/caso-config-generator.conf
 
 %changelog
+* Mon Apr 10 2023 Alvaro Lopez Garcia <aloga@ifca.unican.es> 4.1.0
+- Remove duplicated option
+- Let operators mark projects directly on keystone
+- Use Keystone properties to load VO mapping.
+- Move VM status method to Nova extractor
+- nova: move accelerator and benchmark options to correct place
+- extractors: move projects options to correct place
+- Load VO mapping in correct place
+- Move all clients to the base class
+- Remove old last run file management
+- Add migrate command to ease migration
+- Set UUID also for IP records
+- Provide better error message when pushing records
+- Fix noop messenger
+- Include project names in project listing
+- Update documentation
+- Include caso-projects in usage commands
+- Remove deprecated option
 * Thu Mar 20 2023 Alvaro Lopez Garcia <aloga@ifca.unican.es> 4.0.0
 - Remove deprecated extractor base class
 - Allow to configure more than one extractor
