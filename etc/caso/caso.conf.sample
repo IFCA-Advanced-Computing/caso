@@ -19,7 +19,6 @@
 
 # Extract records but do not push records to SSM. This will not update the last
 # run date. (boolean value)
-# Deprecated group/name - [DEFAULT]/dry_run
 #dry_run = false
 
 # Site name as in GOCDB. (string value)
@@ -54,7 +53,6 @@
 # server has ended after this date, it will be included, but the consuption
 # reported will end on this date. If no time zone is specified, UTC will be
 # used. (string value)
-# Deprecated group/name - [DEFAULT]/extract_to
 #extract_to = <None>
 
 # Extract records that have changed after this date. This means that if a
@@ -63,7 +61,6 @@
 # If it is not set, extract records from last run. If it is set to None and
 # last run file is not present, it will extract records from the beginning of
 # time. If no time zone is specified, UTC will be used. (string value)
-# Deprecated group/name - [DEFAULT]/extract_from
 #extract_from = <None>
 
 # Which extractor to use for getting the data. If you do not specify anything,
@@ -249,22 +246,18 @@
 
 # Metadata key used to retrieve the accelerator type from the flavor
 # properties. (string value)
-# Deprecated group/name - [DEFAULT]/accelerator_type_key
 #type_key = Accelerator:Type
 
 # Metadata key used to retrieve the accelerator vendor from the flavor
 # properties. (string value)
-# Deprecated group/name - [DEFAULT]/accelerator_vendor_key
 #vendor_key = Accelerator:Vendor
 
 # Metadata key used to retrieve the accelerator model from the flavor
 # properties. (string value)
-# Deprecated group/name - [DEFAULT]/accelerator_model_key
 #model_key = Accelerator:Model
 
 # Metadata key used to retrieve the accelerator number from the flavor
 # properties. (string value)
-# Deprecated group/name - [DEFAULT]/accelerator_number_key
 #number_key = Accelerator:Number
 
 
@@ -276,12 +269,10 @@
 
 # Metadata key used to retrieve the benchmark type from the flavor properties.
 # (string value)
-# Deprecated group/name - [DEFAULT]/benchmark_name_key
 #name_key = accounting:benchmark_type
 
 # Metadata key used to retrieve the benchmark value from the flavor properties.
 # (string value)
-# Deprecated group/name - [DEFAULT]/benchmark_value_key
 #value_key = accounting:benchmark_value
 
 
