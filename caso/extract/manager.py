@@ -46,7 +46,7 @@ cli_opts = [
     ),
     cfg.StrOpt(
         "vo_property",
-        default="accounting:VO",
+        default="VO",
         help="Property key used to get the VO name from the project properties. ",
     ),
     cfg.StrOpt(
