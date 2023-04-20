@@ -1,4 +1,4 @@
-python3-caso (4.1.0-0rc2) stable; urgency=medium
+python3-caso (4.1.0-1) stable; urgency=medium
 
   * [a74fb28] Remove duplicated option
   * [1142758] Let operators mark projects directly on keystone
