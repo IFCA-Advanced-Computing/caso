@@ -16,6 +16,7 @@
 
 """Module containing the APEL SSM Messenger."""
 
+import datetime
 import json
 import typing
 import warnings
@@ -75,7 +76,7 @@ class SSMMessenger(caso.messenger.BaseMessenger):
     ):
         """Push a compute message, formatted following the CloudRecord."""
         message = f"APEL-cloud-message: v{self.version_cloud}\n"
-        aux = "%%\n".join(entries)
+        aux = "\n%%\n".join(entries)
         message += f"{aux}\n"
         queue.add(message.encode("utf-8"))
 
@@ -189,11 +190,14 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         }
         for record in records:
             if isinstance(record, caso.record.CloudRecord):
-                aux = ""
+                aux = []
                 for k, v in six.iteritems(record.dict(**opts)):
                     if v is not None:
-                        aux += f"{k}: {v}\n"
-                entries_cloud.append(aux)
+                        if isinstance(v, datetime.datetime):
+                            aux.append(f"{k}: {int(v.timestamp())}")
+                        else:
+                            aux.append(f"{k}: {v}")
+                entries_cloud.append("\n".join(aux))
             elif isinstance(record, caso.record.IPRecord):
                 entries_ip.append(record.json(**opts))
             elif isinstance(record, caso.record.AcceleratorRecord):
