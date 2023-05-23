@@ -208,6 +208,7 @@ valid_accelerator_records_dict = [
         "AccUUID": "99cf5d02-a573-46a1-b90d-0f7327126876",
         "AssociatedRecordType": "cloud",
         "AvailableDuration": 5000,
+        "ActiveDuration": 5000,
         "Count": 3,
         "FQAN": "VO 1 FQAN",
         "GlobalUserName": "d4e547e6f298fe34389@foobar.eu",
@@ -223,6 +224,7 @@ valid_accelerator_records_dict = [
         "AccUUID": "99cf5d02-a573-46a1-b90d-0f7327126876",
         "AssociatedRecordType": "cloud",
         "AvailableDuration": 5000,
+        "ActiveDuration": 5000,
         "Count": 30,
         "FQAN": "VO 1 FQAN",
         "GlobalUserName": "d4e547e6f298fe34389@foobar.eu",
@@ -281,8 +283,8 @@ valid_storage_records_dict = [
         "LocalGroup": "313c6f62-e05f-4ec7-b0f2-256612db18f5",
         "FQAN": "VO 1 FQAN",
         "ActiveDuration": 400,
-        "CreateTime": "2023-05-25T21:59:06+00:00",
-        "StartTime": "2023-05-20T21:59:06+00:00",
+        "CreateTime": 1685051946,
+        "StartTime": 1684619946,
         "Type": "Block Storage (cinder)",
         "Status": "in-use",
         "Capacity": 322122547200,
@@ -298,8 +300,8 @@ valid_storage_records_dict = [
         "LocalGroup": "313c6f62-e05f-4ec7-b0f2-256612db18f5",
         "FQAN": "VO 2 FQAN",
         "ActiveDuration": 400,
-        "CreateTime": "2023-05-25T21:59:06+00:00",
-        "StartTime": "2023-05-20T21:59:06+00:00",
+        "CreateTime": 1685051946,
+        "StartTime": 1684533546,
         "Type": "Block Storage (cinder)",
         "Status": "in-use",
         "Capacity": 122122547200,
@@ -309,44 +311,39 @@ valid_storage_records_dict = [
 # Cloud Record fixtures
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def cloud_record() -> caso.record.CloudRecord:
     """Get a fixture for the CloudRecord."""
     record = caso.record.CloudRecord(**valid_cloud_records_fields[0])
-    # Remove this when moving to Pydantic 2
-    record.wall_duration = 432000
-    record.cpu_duration = 3456000
     return record
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def another_cloud_record() -> caso.record.CloudRecord:
     """Get another fixture for the CloudRecord."""
     record = caso.record.CloudRecord(**valid_cloud_records_fields[1])
-    record.wall_duration = 432000
-    record.cpu_duration = 3456000
     return record
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def valid_cloud_record() -> dict:
     """Get a fixture for a valid record."""
     return valid_cloud_records_dict[0]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def valid_cloud_records() -> typing.List[dict]:
     """Get a fixture for valid records as a dict."""
     return valid_cloud_records_dict
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def another_valid_cloud_record() -> dict:
     """Get another fixture for a valid record as a dict."""
     return valid_cloud_records_dict[0]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def cloud_record_list(
     cloud_record, another_cloud_record
 ) -> typing.List[caso.record.CloudRecord]:
@@ -357,39 +354,39 @@ def cloud_record_list(
 # IP record fixtures
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def ip_record() -> caso.record.IPRecord:
     """Get a fixture for an IP record."""
     record = caso.record.IPRecord(**valid_ip_records_fields[0])
     return record
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def another_ip_record() -> caso.record.IPRecord:
     """Get another fixture for an IP record."""
     record = caso.record.IPRecord(**valid_ip_records_fields[1])
     return record
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def valid_ip_record() -> dict:
     """Get a fixture for a valid IP record as a dict."""
     return valid_ip_records_dict[0]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def valid_ip_records() -> typing.List[dict]:
     """Get a fixture for all IP records as a dict."""
     return valid_ip_records_dict
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def another_valid_ip_record() -> dict:
     """Get another fixture for an IP record as a dict."""
     return valid_ip_records_dict[1]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def ip_record_list(ip_record, another_ip_record) -> typing.List[caso.record.IPRecord]:
     """Get a fixture for a list of IP records."""
     return [ip_record, another_ip_record]
@@ -398,33 +395,33 @@ def ip_record_list(ip_record, another_ip_record) -> typing.List[caso.record.IPRe
 # Accelerator records
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def accelerator_record() -> caso.record.AcceleratorRecord:
     """Get a fixture for the AcceleratorRecord."""
     record = caso.record.AcceleratorRecord(**valid_accelerator_records_fields[0])
     return record
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def another_accelerator_record() -> caso.record.AcceleratorRecord:
     """Get another fixture for the AcceleratorRecord."""
     record = caso.record.AcceleratorRecord(**valid_accelerator_records_fields[1])
     return record
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def valid_accelerator_record() -> dict:
     """Get a fixture for a valid record."""
     return valid_accelerator_records_dict[0]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def valid_accelerator_records() -> typing.List[dict]:
     """Get a fixture for valid records as a dict."""
     return valid_accelerator_records_dict
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def accelerator_record_list(
     accelerator_record, another_accelerator_record
 ) -> typing.List[caso.record.AcceleratorRecord]:
@@ -435,33 +432,33 @@ def accelerator_record_list(
 # Storage records
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def storage_record() -> caso.record.StorageRecord:
     """Get a fixture for the StorageRecord."""
     record = caso.record.StorageRecord(**valid_storage_records_fields[0])
     return record
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def another_storage_record() -> caso.record.StorageRecord:
     """Get another fixture for the StorageRecord."""
     record = caso.record.StorageRecord(**valid_storage_records_fields[1])
     return record
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def valid_storage_record() -> dict:
     """Get a fixture for a valid record."""
     return valid_storage_records_dict[0]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def valid_storage_records() -> typing.List[dict]:
     """Get a fixture for valid records as a dict."""
     return valid_storage_records_dict
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def storage_record_list(
     storage_record, another_storage_record
 ) -> typing.List[caso.record.StorageRecord]:
@@ -498,7 +495,7 @@ def expected_entries_cloud() -> typing.List[str]:
         "CloudComputeService: Fake Cloud Service\n"
         f"CloudType: {cloud_type}\n"
         "CpuCount: 8\n"
-        "CpuDuration: 3456000\n"
+        "CpuDuration: 4147200\n"
         "Disk: 250\n"
         "EndTime: 1685051946\n"
         "FQAN: VO 2 FQAN\n"
@@ -513,7 +510,7 @@ def expected_entries_cloud() -> typing.List[str]:
         "StartTime: 1684533546\n"
         "Status: completed\n"
         "VMUUID: a53738e1-13eb-4047-800c-067d14ce3d22\n"
-        "WallDuration: 432000",
+        "WallDuration: 518400",
     ]
 
     return ssm_entries
@@ -535,14 +532,14 @@ def expected_message_cloud() -> str:
         "WallDuration: 432000\n"
         "%%"
         "\nCloudComputeService: Fake Cloud Service\n"
-        f"CloudType: {cloud_type}\nCpuCount: 8\nCpuDuration: 3456000\n"
+        f"CloudType: {cloud_type}\nCpuCount: 8\nCpuDuration: 4147200\n"
         "Disk: 250\nEndTime: 1685051946\nFQAN: VO 2 FQAN\nGlobalUserName: User DN\n"
         "ImageId: b39a8ed9-e15d-4b71-ada2-daf88efbac0a\n"
         "LocalGroupId: 03b6a6c4-cf2b-48b9-82f1-69c52b9f30af\n"
         "LocalUserId: a4519d7d-f60a-4908-9d63-7d9e17422188\nMachineName: VM Name 2\n"
         "Memory: 16\nPublicIPCount: 7\nSiteName: TEST-Site\nStartTime: 1684533546\n"
         "Status: completed\nVMUUID: a53738e1-13eb-4047-800c-067d14ce3d22\n"
-        "WallDuration: 432000\n"
+        "WallDuration: 518400\n"
     )
     return message.encode("utf-8")
 
@@ -551,28 +548,28 @@ def expected_message_cloud() -> str:
 def expected_entries_ip() -> typing.List[str]:
     """Get a fixture for all IP entries."""
     ssm_entries = [
-        '{"SiteName": "TEST-Site", '
-        f'"CloudType": "{cloud_type}", '
-        '"CloudComputeService": "Fake Cloud Service", '
-        '"uuid": "e3c5aeef-37b8-4332-ad9f-9d068f156dc2", '
-        '"LocalUser": "a4519d7d-f60a-4908-9d63-7d9e17422188", '
-        '"GlobalUserName": "User 1 DN", '
-        '"LocalGroup": "03b6a6c4-cf2b-48b9-82f1-69c52b9f30af", '
-        '"FQAN": "VO 1 FQAN", '
-        '"MeasurementTime": 1685051946, '
-        '"IPVersion": 4, '
-        '"IPCount": 10}',
-        '{"SiteName": "TEST-Site", '
-        f'"CloudType": "{cloud_type}", '
-        '"CloudComputeService": "Fake Cloud Service", '
-        '"uuid": "5c50720e-a653-4d70-9b0e-d4388687fcbc", '
-        '"LocalUser": "3391a44e-3728-478d-abde-b86c25356571", '
-        '"GlobalUserName": "User 2 DN", '
-        '"LocalGroup": "2dae43c4-1889-4e63-b172-d4e99381e30a", '
-        '"FQAN": "VO 2 FQAN", '
-        '"MeasurementTime": 1685051946, '
-        '"IPVersion": 6, '
-        '"IPCount": 20}',
+        '{"SiteName":"TEST-Site",'
+        f'"CloudType":"{cloud_type}",'
+        '"CloudComputeService":"Fake Cloud Service",'
+        '"uuid":"e3c5aeef-37b8-4332-ad9f-9d068f156dc2",'
+        '"LocalUser":"a4519d7d-f60a-4908-9d63-7d9e17422188",'
+        '"GlobalUserName":"User 1 DN",'
+        '"LocalGroup":"03b6a6c4-cf2b-48b9-82f1-69c52b9f30af",'
+        '"FQAN":"VO 1 FQAN",'
+        '"IPVersion":4,'
+        '"IPCount":10,'
+        '"MeasurementTime":1685051946}',
+        '{"SiteName":"TEST-Site",'
+        f'"CloudType":"{cloud_type}",'
+        '"CloudComputeService":"Fake Cloud Service",'
+        '"uuid":"5c50720e-a653-4d70-9b0e-d4388687fcbc",'
+        '"LocalUser":"3391a44e-3728-478d-abde-b86c25356571",'
+        '"GlobalUserName":"User 2 DN",'
+        '"LocalGroup":"2dae43c4-1889-4e63-b172-d4e99381e30a",'
+        '"FQAN":"VO 2 FQAN",'
+        '"IPVersion":6,'
+        '"IPCount":20,'
+        '"MeasurementTime":1685051946}',
     ]
     return ssm_entries
 
@@ -590,9 +587,9 @@ def expected_message_ip() -> str:
         '"GlobalUserName": "User 1 DN", '
         '"LocalGroup": "03b6a6c4-cf2b-48b9-82f1-69c52b9f30af", '
         '"FQAN": "VO 1 FQAN", '
-        '"MeasurementTime": 1685051946, '
         '"IPVersion": 4, '
-        '"IPCount": 10}, '
+        '"IPCount": 10, '
+        '"MeasurementTime": 1685051946}, '
         '{"SiteName": "TEST-Site", '
         f'"CloudType": "{cloud_type}", '
         '"CloudComputeService": "Fake Cloud Service", '
@@ -601,9 +598,9 @@ def expected_message_ip() -> str:
         '"GlobalUserName": "User 2 DN", '
         '"LocalGroup": "2dae43c4-1889-4e63-b172-d4e99381e30a", '
         '"FQAN": "VO 2 FQAN", '
-        '"MeasurementTime": 1685051946, '
         '"IPVersion": 6, '
-        '"IPCount": 20}'
+        '"IPCount": 20, '
+        '"MeasurementTime": 1685051946}'
         "]}"
     )
     return message
@@ -613,32 +610,34 @@ def expected_message_ip() -> str:
 def expected_entries_accelerator() -> typing.List[str]:
     """Get a fixture for all accelerator entries."""
     ssm_entries = [
-        '{"SiteName": "TEST-Site", '
-        f'"CloudType": "{cloud_type}", '
-        '"CloudComputeService": "Fake Cloud Service", '
-        '"AccUUID": "99cf5d02-a573-46a1-b90d-0f7327126876", '
-        '"GlobalUserName": "d4e547e6f298fe34389@foobar.eu", '
-        '"FQAN": "VO 1 FQAN", '
-        '"Count": 3, '
-        '"AvailableDuration": 5000, '
-        '"MeasurementMonth": 6, '
-        '"MeasurementYear": 2022, '
-        '"AssociatedRecordType": "cloud", '
-        '"Type": "GPU", '
-        '"Model": "Foobar A200"}',
-        '{"SiteName": "TEST-Site", '
-        f'"CloudType": "{cloud_type}", '
-        '"CloudComputeService": "Fake Cloud Service", '
-        '"AccUUID": "99cf5d02-a573-46a1-b90d-0f7327126876", '
-        '"GlobalUserName": "d4e547e6f298fe34389@foobar.eu", '
-        '"FQAN": "VO 1 FQAN", '
-        '"Count": 30, '
-        '"AvailableDuration": 5000, '
-        '"MeasurementMonth": 2, '
-        '"MeasurementYear": 2022, '
-        '"AssociatedRecordType": "cloud", '
-        '"Type": "GPU", '
-        '"Model": "Foobar A300"}',
+        '{"SiteName":"TEST-Site",'
+        f'"CloudType":"{cloud_type}",'
+        '"CloudComputeService":"Fake Cloud Service",'
+        '"AccUUID":"99cf5d02-a573-46a1-b90d-0f7327126876",'
+        '"GlobalUserName":"d4e547e6f298fe34389@foobar.eu",'
+        '"FQAN":"VO 1 FQAN",'
+        '"Count":3,'
+        '"AvailableDuration":5000,'
+        '"MeasurementMonth":6,'
+        '"MeasurementYear":2022,'
+        '"AssociatedRecordType":"cloud",'
+        '"Type":"GPU",'
+        '"Model":"Foobar A200",'
+        '"ActiveDuration":5000}',
+        '{"SiteName":"TEST-Site",'
+        f'"CloudType":"{cloud_type}",'
+        '"CloudComputeService":"Fake Cloud Service",'
+        '"AccUUID":"99cf5d02-a573-46a1-b90d-0f7327126876",'
+        '"GlobalUserName":"d4e547e6f298fe34389@foobar.eu",'
+        '"FQAN":"VO 1 FQAN",'
+        '"Count":30,'
+        '"AvailableDuration":5000,'
+        '"MeasurementMonth":2,'
+        '"MeasurementYear":2022,'
+        '"AssociatedRecordType":"cloud",'
+        '"Type":"GPU",'
+        '"Model":"Foobar A300",'
+        '"ActiveDuration":5000}',
     ]
 
     return ssm_entries
@@ -661,7 +660,8 @@ def expected_message_accelerator() -> str:
         '"MeasurementYear": 2022, '
         '"AssociatedRecordType": "cloud", '
         '"Type": "GPU", '
-        '"Model": "Foobar A200"}, '
+        '"Model": "Foobar A200", '
+        '"ActiveDuration": 5000}, '
         '{"SiteName": "TEST-Site", '
         f'"CloudType": "{cloud_type}", '
         '"CloudComputeService": "Fake Cloud Service", '
@@ -674,7 +674,8 @@ def expected_message_accelerator() -> str:
         '"MeasurementYear": 2022, '
         '"AssociatedRecordType": "cloud", '
         '"Type": "GPU", '
-        '"Model": "Foobar A300"}'
+        '"Model": "Foobar A300", '
+        '"ActiveDuration": 5000}'
         "]}"
     )
     return message

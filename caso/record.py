@@ -50,6 +50,8 @@ class _BaseRecord(pydantic.BaseModel, abc.ABC):
 
 
 class _ValidCloudStatus(str, enum.Enum):
+    """This is a private class to enum valid cloud statuses."""
+
     started = "started"
     completed = "completed"
     error = "error"
@@ -57,6 +59,40 @@ class _ValidCloudStatus(str, enum.Enum):
     suspended = "suspended"
     stopped = "stopped"
     unknown = "unknown"
+
+
+def map_cloud_fields(value: str) -> str:
+    """Map object fields to Cloud Accounting Record fields."""
+    d = {
+        "uuid": "VMUUID",
+        "site_name": "SiteName",
+        "name": "MachineName",
+        "user_id": "LocalUserId",
+        "group_id": "LocalGroupId",
+        "fqan": "FQAN",
+        "status": "Status",
+        "start_time_epoch": "StartTime",
+        "end_time_epoch": "EndTime",
+        "suspend_duration": "SuspendDuration",
+        "wall_duration": "WallDuration",
+        "cpu_duration": "CpuDuration",
+        "cpu_count": "CpuCount",
+        "network_type": "NetworkType",
+        "network_in": "NetworkInbound",
+        "network_out": "NetworkOutbound",
+        "memory": "Memory",
+        "disk": "Disk",
+        "storage_record_id": "StorageRecordId",
+        "image_id": "ImageId",
+        "cloud_type": "CloudType",
+        "user_dn": "GlobalUserName",
+        "public_ip_count": "PublicIPCount",
+        "benchmark_value": "Benchmark",
+        "benchmark_type": "BenchmarkType",
+        "compute_service": "CloudComputeService",
+        "cloud_type": "CloudType",
+    }
+    return d.get(value, value)
 
 
 class CloudRecord(_BaseRecord):
@@ -71,60 +107,116 @@ class CloudRecord(_BaseRecord):
     name: str
 
     user_id: str
-    user_dn: typing.Optional[str]
+    user_dn: typing.Optional[str] = None
     group_id: str
     fqan: str
 
     status: _ValidCloudStatus
 
-    image_id: typing.Optional[str]
+    image_id: typing.Optional[str] = None
 
-    public_ip_count = 0
+    public_ip_count: int = 0
     cpu_count: int
     memory: int
     disk: int
 
-    start_time: datetime.datetime
-    end_time: typing.Optional[datetime.datetime]
+    # Make these fields private, and deal with them as properties. This is done as  all
+    # the accounting infrastructure needs start and end times as integers, but it is
+    # easier for us to maintain them as datetime objects internally.
+    _start_time: datetime.datetime
+    _end_time: typing.Optional[datetime.datetime] = None
 
-    # NOTE(aloga): due to the validation that we are doing below until
-    # https://github.com/samuelcolvin/pydantic/issues/935
-    # and
-    # https://github.com/samuelcolvin/pydantic/pull/2625
-    # are closed, we need to define the durations here, so do not move them
-    # around, otherwise we cannot access the needed fields
-    suspend_duration: typing.Optional[int]
+    suspend_duration: typing.Optional[int] = None
 
-    wall_duration: typing.Optional[int]
-    cpu_duration: typing.Optional[int]
+    _wall_duration: typing.Optional[int] = None
+    _cpu_duration: typing.Optional[int] = None
 
-    benchmark_value: typing.Optional[float]
-    benchmark_type: typing.Optional[str]
+    benchmark_value: typing.Optional[float] = None
+    benchmark_type: typing.Optional[str] = None
 
-    @classmethod
-    @pydantic.validator("wall_duration", always=True)
-    def _validate_wall_duration(cls, value, values):
+    def __init__(
+        self,
+        start_time: datetime.datetime,
+        end_time: datetime.datetime,
+        *args,
+        **kwargs,
+    ):
+        """Initialize the record."""
+        super(CloudRecord, self).__init__(*args, **kwargs)
+
+        # Set start time and end times, see comment above.
+        self._start_time = start_time
+        self._end_time = end_time
+
+    @property
+    def start_time(self) -> datetime.datetime:
+        """Get start time."""
+        return self._start_time
+
+    @start_time.setter
+    def start_time(self, start_time: datetime.datetime) -> None:
+        """Set start time."""
+        self._start_time = start_time
+
+    # NOTE(aloga): we need to specify an alias here, as per the following bug:
+    # https://github.com/pydantic/pydantic/issues/5825
+    # This is needed for all computed fields.
+    @pydantic.computed_field(alias="StartTime")  # type: ignore[misc]
+    @property
+    def start_time_epoch(self) -> int:
+        """Get start time as epoch."""
+        return int(self._start_time.timestamp())
+
+    @property
+    def end_time(self) -> typing.Optional[datetime.datetime]:
+        """Get end time."""
+        if self._end_time is not None:
+            return self._end_time
+        else:
+            return None
+
+    @end_time.setter
+    def end_time(self, end_time: datetime.datetime) -> None:
+        """Set end time."""
+        self._end_time = end_time
+
+    @pydantic.computed_field()  # type: ignore[misc]
+    @property
+    def end_time_epoch(self) -> typing.Optional[int]:
+        """Get end time as epoch."""
+        return int(self.end_time.timestamp())
+
+    @pydantic.computed_field()  # type: ignore[misc]
+    @property
+    def wall_duration(self) -> typing.Optional[int]:
+        """Get wall duration."""
         duration = None
-        if value is not None:
-            duration = value
-        elif values["end_time"]:
-            duration = values["end_time"] - values["self.start_time"]
+        if self._wall_duration is not None:
+            duration = self._wall_duration
+        elif self.end_time:
+            duration = self.end_time - self.start_time
             duration = int(duration.total_seconds())
         return duration
 
-    @classmethod
-    @pydantic.validator("cpu_duration", always=True)
-    def _validate_cpu_duration(cls, value, values):
+    @wall_duration.setter
+    def wall_duration(self, wall: int) -> None:
+        """Set wall duration."""
+        self._wall_duration = wall
+
+    @pydantic.computed_field()  # type: ignore[misc]
+    @property
+    def cpu_duration(self) -> typing.Optional[int]:
+        """Get CPU duration."""
         duration = None
-        if value is not None:
-            duration = value
-        elif values["wall_duration"] is not None and values["cpu_count"]:
-            duration = values["wall_duration"] * values["cpu_count"]
-            duration = int(duration)
+        if self._cpu_duration is not None:
+            duration = self._cpu_duration
+        elif self.wall_duration is not None and self.cpu_count:
+            duration = self.wall_duration * self.cpu_count
         return duration
 
-    def set_cpu_duration(self, value: int):
-        """Set the CPU duration for the record."""
+    @cpu_duration.setter
+    def cpu_duration(self, value: int) -> None:
+        """Set the CPU duration."""
         self._cpu_duration = value
 
     def ssm_message(self):
@@ -137,52 +229,33 @@ class CloudRecord(_BaseRecord):
         # is just a dictionary representation of the object, where no serialization is
         # done. In order to get objects correctly serialized we need to convert to JSON,
         # then reload the model
-        serialized_record = json.loads(self.json(**opts))
+        serialized_record = json.loads(self.model_dump_json(**opts))
         aux = [f"{k}: {v}" for k, v in serialized_record.items()]
         aux.sort()
         return "\n".join(aux)
 
-    class Config:
-        """Config class for Pydantic."""
+    model_config = dict(
+        alias_generator=map_cloud_fields,
+        populate_by_name=True,
+        extra="forbid",
+    )
 
-        @staticmethod
-        def map_fields(value: str) -> str:
-            """Map object fields to Cloud Accounting Record fields."""
-            d = {
-                "uuid": "VMUUID",
-                "site_name": "SiteName",
-                "name": "MachineName",
-                "user_id": "LocalUserId",
-                "group_id": "LocalGroupId",
-                "fqan": "FQAN",
-                "status": "Status",
-                "start_time": "StartTime",
-                "end_time": "EndTime",
-                "suspend_duration": "SuspendDuration",
-                "wall_duration": "WallDuration",
-                "cpu_duration": "CpuDuration",
-                "cpu_count": "CpuCount",
-                "network_type": "NetworkType",
-                "network_in": "NetworkInbound",
-                "network_out": "NetworkOutbound",
-                "memory": "Memory",
-                "disk": "Disk",
-                "storage_record_id": "StorageRecordId",
-                "image_id": "ImageId",
-                "cloud_type": "CloudType",
-                "user_dn": "GlobalUserName",
-                "public_ip_count": "PublicIPCount",
-                "benchmark_value": "Benchmark",
-                "benchmark_type": "BenchmarkType",
-                "compute_service": "CloudComputeService",
-            }
-            return d.get(value, value)
 
-        json_encoders = {datetime.datetime: lambda v: int(v.timestamp())}
-        alias_generator = map_fields
-        allow_population_by_field_name = True
-        underscore_attrs_are_private = True
-        extra = "forbid"
+def map_ip_fields(field: str) -> str:
+    """Map object fields to accounting Public IP Usage record fields."""
+    d = {
+        "measure_time_epoch": "MeasurementTime",
+        "site_name": "SiteName",
+        "cloud_type": "CloudType",
+        "user_id": "LocalUser",
+        "group_id": "LocalGroup",
+        "fqan": "FQAN",
+        "user_dn": "GlobalUserName",
+        "ip_version": "IPVersion",
+        "public_ip_count": "IPCount",
+        "compute_service": "CloudComputeService",
+    }
+    return d.get(field, field)
 
 
 class IPRecord(_BaseRecord):
@@ -200,10 +273,35 @@ class IPRecord(_BaseRecord):
     group_id: str
     fqan: str
 
-    measure_time: datetime.datetime
+    # Make these fields private, and deal with them as properties. This is done as  all
+    # the accounting infrastructure needs start and end times as integers, but it is
+    # easier for us to maintain them as datetime objects internally.
+    _measure_time: datetime.datetime
 
     ip_version: int
     public_ip_count: int
+
+    def __init__(self, measure_time: datetime.datetime, *args, **kwargs):
+        """Initialize the record."""
+        super(IPRecord, self).__init__(*args, **kwargs)
+
+        self._measure_time = measure_time
+
+    @property
+    def measure_time(self) -> datetime.datetime:
+        """Get measurement time."""
+        return self._measure_time
+
+    @pydantic.computed_field()
+    @property
+    def measure_time_epoch(self) -> int:
+        """Get measurement time as epoch."""
+        return int(self._measure_time.timestamp())
+
+    @measure_time.setter
+    def measure_time(self, measure_time: datetime.datetime) -> None:
+        """Set measurement time."""
+        self._measure_time = measure_time
 
     def ssm_message(self):
         """Render record as the expected SSM message."""
@@ -211,33 +309,37 @@ class IPRecord(_BaseRecord):
             "by_alias": True,
             "exclude_none": True,
         }
-        return self.json(**opts)
+        return self.model_dump_json(**opts)
 
-    class Config:
-        """Config class for Pydantic."""
+    model_config = dict(
+        alias_generator=map_ip_fields,
+        populate_by_name=True,
+        extra="forbid",
+    )
 
-        @staticmethod
-        def map_fields(field: str) -> str:
-            """Map object fields to accounting Public IP Usage record fields."""
-            d = {
-                "measure_time": "MeasurementTime",
-                "site_name": "SiteName",
-                "cloud_type": "CloudType",
-                "user_id": "LocalUser",
-                "group_id": "LocalGroup",
-                "fqan": "FQAN",
-                "user_dn": "GlobalUserName",
-                "ip_version": "IPVersion",
-                "public_ip_count": "IPCount",
-                "compute_service": "CloudComputeService",
-            }
-            return d.get(field, field)
 
-        json_encoders = {datetime.datetime: lambda v: int(v.timestamp())}
-        alias_generator = map_fields
-        allow_population_by_field_name = True
-        underscore_attrs_are_private = True
-        extra = "forbid"
+def map_accelerator_fields(field: str) -> str:
+    """Map object fields to accounting Accelerator Usage Record fields."""
+    d = {
+        "measurement_month": "MeasurementMonth",
+        "measurement_year": "MeasurementYear",
+        "associated_record_type": "AssociatedRecordType",
+        "uuid": "AccUUID",
+        "user_dn": "GlobalUserName",
+        "fqan": "FQAN",
+        "site_name": "SiteName",
+        "count": "Count",
+        "cores": "Cores",
+        "active_duration": "ActiveDuration",
+        "available_duration": "AvailableDuration",
+        "benchmark_type": "BenchmarkType",
+        "benchmark": "Benchmark",
+        "accelerator_type": "Type",
+        "model": "Model",
+        "compute_service": "CloudComputeService",
+        "cloud_type": "CloudType",
+    }
+    return d.get(field, field)
 
 
 class AcceleratorRecord(_BaseRecord):
@@ -256,7 +358,7 @@ class AcceleratorRecord(_BaseRecord):
 
     count: int
     available_duration: int
-    _active_duration: typing.Optional[int]
+    _active_duration: typing.Optional[int] = None
 
     measurement_month: int
     measurement_year: int
@@ -264,12 +366,13 @@ class AcceleratorRecord(_BaseRecord):
     associated_record_type: str = "cloud"
 
     accelerator_type: str
-    cores: typing.Optional[int]
+    cores: typing.Optional[int] = None
     model: str
 
-    benchmark_value: typing.Optional[float]
-    benchmark_type: typing.Optional[str]
+    benchmark_value: typing.Optional[float] = None
+    benchmark_type: typing.Optional[str] = None
 
+    @pydantic.computed_field  # type: ignore[misc]
     @property
     def active_duration(self) -> int:
         """Get the active duration for the record (property)."""
@@ -277,7 +380,8 @@ class AcceleratorRecord(_BaseRecord):
             return self._active_duration
         return self.available_duration
 
-    def set_active_duration(self, value: int):
+    @active_duration.setter
+    def active_duration(self, value: int) -> None:
         """Set the active duration for the record."""
         self._active_duration = value
 
@@ -287,40 +391,37 @@ class AcceleratorRecord(_BaseRecord):
             "by_alias": True,
             "exclude_none": True,
         }
-        return self.json(**opts)
+        return self.model_dump_json(**opts)
 
-    class Config:
-        """Config class for Pydantic."""
+    model_config = dict(
+        alias_generator=map_accelerator_fields,
+        populate_by_name=True,
+        extra="forbid",
+    )
 
-        @staticmethod
-        def map_fields(field: str) -> str:
-            """Map object fields to accounting Accelerator Usage Record fields."""
-            d = {
-                "measurement_month": "MeasurementMonth",
-                "measurement_year": "MeasurementYear",
-                "associated_record_type": "AssociatedRecordType",
-                "uuid": "AccUUID",
-                "user_dn": "GlobalUserName",
-                "fqan": "FQAN",
-                "site_name": "SiteName",
-                "count": "Count",
-                "cores": "Cores",
-                "active_duration": "ActiveDuration",
-                "available_duration": "AvailableDuration",
-                "benchmark_type": "BenchmarkType",
-                "benchmark": "Benchmark",
-                "accelerator_type": "Type",
-                "model": "Model",
-                "cloud_type": "CloudType",
-                "compute_service": "CloudComputeService",
-            }
-            return d.get(field, field)
 
-        json_encoders = {datetime.datetime: lambda v: int(v.timestamp())}
-        alias_generator = map_fields
-        allow_population_by_field_name = True
-        underscore_attrs_are_private = True
-        extra = "forbid"
+def map_storage_fields(field: str) -> str:
+    """Map object fields to accounting EMI StAR record values."""
+    d = {
+        "uuid": "VolumeUUID",
+        "name": "RecordName",
+        "user_id": "LocalUser",
+        "user_dn": "GlobalUserName",
+        "group_id": "LocalGroup",
+        "fqan": "FQAN",
+        "site_name": "SiteName",
+        "capacity": "Capacity",
+        "active_duration": "ActiveDuration",
+        "measure_time_epoch": "CreateTime",
+        "start_time_epoch": "StartTime",
+        "storage_type": "Type",
+        "status": "Status",
+        "attached_to": "AttachedTo",
+        "attached_duration": "AttachedDuration",
+        "compute_service": "CloudComputeService",
+        "cloud_type": "CloudType",
+    }
+    return d.get(field, field)
 
 
 class StorageRecord(_BaseRecord):
@@ -336,28 +437,69 @@ class StorageRecord(_BaseRecord):
     name: str
 
     user_id: str
-    user_dn: typing.Optional[str]
+    user_dn: typing.Optional[str] = None
     group_id: str
     fqan: str
 
     active_duration: int
-    attached_duration: typing.Optional[float]
-    attached_to: typing.Optional[str]
-    measure_time: datetime.datetime
-    start_time: datetime.datetime
+    attached_duration: typing.Optional[float] = None
+    attached_to: typing.Optional[str] = None
+
+    # Make these fields private, and deal with them as properties. This is done as  all
+    # the accounting infrastructure needs start and end times as integers, but it is
+    # easier for us to maintain them as datetime objects internally.
+    _measure_time: datetime.datetime
+    _start_time: datetime.datetime
 
     storage_type: typing.Optional[str] = "Block Storage (cinder)"
 
     status: str
     capacity: int
 
-    # (aidaph) Fix the return to something different to 0
-    @classmethod
-    @pydantic.validator("attached_duration", always=True)
-    def _validate_attached_duration(cls, value):
-        if value is not None:
-            return value
-        return 0
+    def __init__(
+        self,
+        start_time: datetime.datetime,
+        measure_time: datetime.datetime,
+        *args,
+        **kwargs,
+    ):
+        """Initialize the record."""
+        super(StorageRecord, self).__init__(*args, **kwargs)
+
+        self._start_time = start_time
+        self._measure_time = measure_time
+
+    @property
+    def start_time(self) -> datetime.datetime:
+        """Get start time."""
+        return self._start_time
+
+    @pydantic.computed_field()  # type: ignore[misc]
+    @property
+    def start_time_epoch(self) -> int:
+        """Get start time as epoch."""
+        return int(self._start_time.timestamp())
+
+    @start_time.setter
+    def start_time(self, start_time: datetime.datetime) -> None:
+        """Set start time."""
+        self._start_time = start_time
+
+    @property
+    def measure_time(self) -> datetime.datetime:
+        """Get measurement time."""
+        return self._measure_time
+
+    @pydantic.computed_field()  # type: ignore[misc]
+    @property
+    def measure_time_epoch(self) -> int:
+        """Get measurement time as epoch."""
+        return int(self._measure_time.timestamp())
+
+    @measure_time.setter
+    def measure_time(self, measure_time: datetime.datetime) -> None:
+        """Set measurement time."""
+        self._measure_time = measure_time
 
     def ssm_message(self):
         """Render record as the expected SSM message."""
@@ -386,34 +528,8 @@ class StorageRecord(_BaseRecord):
         ETree.SubElement(sr, "sr:ResourceCapacityUsed").text = capacity
         return ETree.tostring(sr)
 
-    class Config:
-        """Config class for Pydantic."""
-
-        @staticmethod
-        def map_fields(field: str) -> str:
-            """Map object fields to accounting EMI StAR record values."""
-            d = {
-                "measure_time": "CreateTime",
-                "uuid": "VolumeUUID",
-                "name": "RecordName",
-                "user_id": "LocalUser",
-                "user_dn": "GlobalUserName",
-                "group_id": "LocalGroup",
-                "fqan": "FQAN",
-                "site_name": "SiteName",
-                "capacity": "Capacity",
-                "active_duration": "ActiveDuration",
-                "start_time": "StartTime",
-                "storage_type": "Type",
-                "status": "Status",
-                "attached_to": "AttachedTo",
-                "attached_duration": "AttachedDuration",
-                "cloud_type": "CloudType",
-                "compute_service": "CloudComputeService",
-            }
-            return d.get(field, field)
-
-        alias_generator = map_fields
-        allow_population_by_field_name = True
-        underscore_attrs_are_private = True
-        extra = "forbid"
+    model_config = dict(
+        alias_generator=map_storage_fields,
+        populate_by_name=True,
+        extra="forbid",
+    )

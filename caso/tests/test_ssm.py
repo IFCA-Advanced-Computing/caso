@@ -176,6 +176,8 @@ def test_complete_accelerator_message(
     """Test a complete cloud message."""
 
     def mock_add(message):
+        print(message)
+        print(expected_message_accelerator)
         assert message == expected_message_accelerator
 
     with monkeypatch.context() as m:
