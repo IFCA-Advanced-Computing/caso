@@ -196,6 +196,7 @@ class SSMMessenger(caso.messenger.BaseMessenger):
                 serialized_record = json.loads(record.json(**opts))
                 for k, v in serialized_record.items():
                     aux.append(f"{k}: {v}")
+                aux.sort()
                 entries_cloud.append("\n".join(aux))
             elif isinstance(record, caso.record.IPRecord):
                 entries_ip.append(record.json(**opts))
