@@ -193,6 +193,7 @@ class SSMMessenger(caso.messenger.BaseMessenger):
                 aux = []
                 for k, v in six.iteritems(record.dict(**opts)):
                     if v is not None:
+                        # FIXME(aloga): to be handled at record level.
                         if isinstance(v, datetime.datetime):
                             aux.append(f"{k}: {int(v.timestamp())}")
                         else:

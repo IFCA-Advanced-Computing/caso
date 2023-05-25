@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Fixes issue 115, where timestamps where incorrecly rendered. This fix
+    requires a republish of records.

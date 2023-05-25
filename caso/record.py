@@ -189,6 +189,7 @@ class IPRecord(_BaseRecord):
             }
             return d.get(field, field)
 
+        json_encoders = {datetime: lambda v: int(v.timestamp())}
         alias_generator = map_fields
         allow_population_by_field_name = True
         underscore_attrs_are_private = True
