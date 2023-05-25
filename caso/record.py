@@ -143,6 +143,7 @@ class CloudRecord(_BaseRecord):
             }
             return d.get(value, value)
 
+        json_encoders = {datetime.datetime: lambda v: int(v.timestamp())}
         alias_generator = map_fields
         allow_population_by_field_name = True
         underscore_attrs_are_private = True
@@ -189,7 +190,7 @@ class IPRecord(_BaseRecord):
             }
             return d.get(field, field)
 
-        json_encoders = {datetime: lambda v: int(v.timestamp())}
+        json_encoders = {datetime.datetime: lambda v: int(v.timestamp())}
         alias_generator = map_fields
         allow_population_by_field_name = True
         underscore_attrs_are_private = True
@@ -262,6 +263,7 @@ class AcceleratorRecord(_BaseRecord):
             }
             return d.get(field, field)
 
+        json_encoders = {datetime.datetime: lambda v: int(v.timestamp())}
         alias_generator = map_fields
         allow_population_by_field_name = True
         underscore_attrs_are_private = True

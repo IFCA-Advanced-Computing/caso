@@ -16,7 +16,6 @@
 
 """Module containing the APEL SSM Messenger."""
 
-import datetime
 import json
 import typing
 import warnings
@@ -27,7 +26,6 @@ import xml.etree.ElementTree as ETree  # nosec
 import dirq.QueueSimple
 from oslo_config import cfg
 from oslo_log import log
-import six
 
 import caso.exception
 import caso.messenger
@@ -191,13 +189,13 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         for record in records:
             if isinstance(record, caso.record.CloudRecord):
                 aux = []
-                for k, v in six.iteritems(record.dict(**opts)):
-                    if v is not None:
-                        # FIXME(aloga): to be handled at record level.
-                        if isinstance(v, datetime.datetime):
-                            aux.append(f"{k}: {int(v.timestamp())}")
-                        else:
-                            aux.append(f"{k}: {v}")
+                # NOTE(aloga): do not iter over the dictionary returned by record.dict()
+                # as this is just a dictionary representation of the object, where no
+                # serialization is done. In order to get objects correctly serialized
+                # we need to convert to JSON, then reload the model
+                serialized_record = json.loads(record.json(**opts))
+                for k, v in serialized_record.items():
+                    aux.append(f"{k}: {v}")
                 entries_cloud.append("\n".join(aux))
             elif isinstance(record, caso.record.IPRecord):
                 entries_ip.append(record.json(**opts))
