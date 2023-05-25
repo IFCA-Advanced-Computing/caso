@@ -311,11 +311,39 @@ def expected_entries_cloud():
 
 
 @pytest.fixture
+def expected_message_cloud():
+    """Get a fixture for a complete Cloud message."""
+    message = (
+        "APEL-cloud-message: v0.4\n"
+        "CloudComputeService: Fake Cloud Service\n"
+        f"CloudType: {cloud_type}\nCpuCount: 8\nCpuDuration: 3456000\n"
+        "Disk: 250\nEndTime: 1685044746\nFQAN: VO 1 FQAN\nGlobalUserName: User DN\n"
+        "ImageId: b39a8ed9-e15d-4b71-ada2-daf88efbac0a\n"
+        "LocalGroupId: 03b6a6c4-cf2b-48b9-82f1-69c52b9f30af\n"
+        "LocalUserId: a4519d7d-f60a-4908-9d63-7d9e17422188\nMachineName: VM Name 1\n"
+        "Memory: 16\nPublicIPCount: 7\nSiteName: TEST-Site\nStartTime: 1684612746\n"
+        "Status: started\nVMUUID: 721cf1db-0e0f-4c24-a5ea-cd75e0f303e8\n"
+        "WallDuration: 432000\n"
+        "%%"
+        "\nCloudComputeService: Fake Cloud Service\n"
+        f"CloudType: {cloud_type}\nCpuCount: 8\nCpuDuration: 3456000\n"
+        "Disk: 250\nEndTime: 1685044746\nFQAN: VO 2 FQAN\nGlobalUserName: User DN\n"
+        "ImageId: b39a8ed9-e15d-4b71-ada2-daf88efbac0a\n"
+        "LocalGroupId: 03b6a6c4-cf2b-48b9-82f1-69c52b9f30af\n"
+        "LocalUserId: a4519d7d-f60a-4908-9d63-7d9e17422188\nMachineName: VM Name 2\n"
+        "Memory: 16\nPublicIPCount: 7\nSiteName: TEST-Site\nStartTime: 1684526346\n"
+        "Status: completed\nVMUUID: a53738e1-13eb-4047-800c-067d14ce3d22\n"
+        "WallDuration: 432000\n"
+    )
+    return message.encode("utf-8")
+
+
+@pytest.fixture
 def expected_entries_ip():
     """Get a fixture for all IP entries."""
     ssm_entries = [
         '{"SiteName": "TEST-Site", '
-        '"CloudType": "caso/4.1.0.0rc1 (OpenStack)", '
+        f'"CloudType": "{cloud_type}", '
         '"CloudComputeService": "Fake Cloud Service", '
         '"uuid": "e3c5aeef-37b8-4332-ad9f-9d068f156dc2", '
         '"LocalUser": "a4519d7d-f60a-4908-9d63-7d9e17422188", '
@@ -326,7 +354,7 @@ def expected_entries_ip():
         '"IPVersion": 4, '
         '"IPCount": 10}',
         '{"SiteName": "TEST-Site", '
-        '"CloudType": "caso/4.1.0.0rc1 (OpenStack)", '
+        f'"CloudType": "{cloud_type}", '
         '"CloudComputeService": "Fake Cloud Service", '
         '"uuid": "5c50720e-a653-4d70-9b0e-d4388687fcbc", '
         '"LocalUser": "3391a44e-3728-478d-abde-b86c25356571", '
@@ -338,3 +366,35 @@ def expected_entries_ip():
         '"IPCount": 20}',
     ]
     return ssm_entries
+
+
+@pytest.fixture
+def expected_message_ip():
+    """Get a fixture for a complete IP message."""
+    message = (
+        '{"Type": "APEL Public IP message", "Version": "0.2", "UsageRecords": ['
+        '{"SiteName": "TEST-Site", '
+        f'"CloudType": "{cloud_type}", '
+        '"CloudComputeService": "Fake Cloud Service", '
+        '"uuid": "e3c5aeef-37b8-4332-ad9f-9d068f156dc2", '
+        '"LocalUser": "a4519d7d-f60a-4908-9d63-7d9e17422188", '
+        '"GlobalUserName": "User 1 DN", '
+        '"LocalGroup": "03b6a6c4-cf2b-48b9-82f1-69c52b9f30af", '
+        '"FQAN": "VO 1 FQAN", '
+        '"MeasurementTime": 1685044746, '
+        '"IPVersion": 4, '
+        '"IPCount": 10}, '
+        '{"SiteName": "TEST-Site", '
+        f'"CloudType": "{cloud_type}", '
+        '"CloudComputeService": "Fake Cloud Service", '
+        '"uuid": "5c50720e-a653-4d70-9b0e-d4388687fcbc", '
+        '"LocalUser": "3391a44e-3728-478d-abde-b86c25356571", '
+        '"GlobalUserName": "User 2 DN", '
+        '"LocalGroup": "2dae43c4-1889-4e63-b172-d4e99381e30a", '
+        '"FQAN": "VO 2 FQAN", '
+        '"MeasurementTime": 1685044746, '
+        '"IPVersion": 6, '
+        '"IPCount": 20}'
+        "]}"
+    )
+    return message

@@ -68,19 +68,17 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         except Exception as err:
             LOG.error(f"Failed to create path {CONF.ssm.output_path} because {err}")
             raise err
+        self.queue = dirq.QueueSimple.QueueSimple(CONF.ssm.output_path)
 
-    def _push_message_cloud(
-        self, queue: dirq.QueueSimple.QueueSimple, entries: typing.List[str]
-    ):
+    def _push_message_cloud(self, entries: typing.List[str]):
         """Push a compute message, formatted following the CloudRecord."""
         message = f"APEL-cloud-message: v{self.version_cloud}\n"
         aux = "\n%%\n".join(entries)
         message += f"{aux}\n"
-        queue.add(message.encode("utf-8"))
+        self.queue.add(message.encode("utf-8"))
 
     def _push_message_json(
         self,
-        queue: dirq.QueueSimple.QueueSimple,
         entries: typing.List[str],
         msg_type: str,
         version: str,
@@ -91,25 +89,19 @@ class SSMMessenger(caso.messenger.BaseMessenger):
             "Version": version,
             "UsageRecords": [json.loads(r) for r in entries],
         }
-        queue.add(json.dumps(message))
+        self.queue.add(json.dumps(message))
 
-    def _push_message_ip(
-        self, queue: dirq.QueueSimple.QueueSimple, entries: typing.List[str]
-    ):
+    def _push_message_ip(self, entries: typing.List[str]):
         """Push an IP message."""
-        self._push_message_json(
-            queue, entries, "APEL Public IP message", self.version_ip
-        )
+        self._push_message_json(entries, "APEL Public IP message", self.version_ip)
 
-    def _push_message_accelerator(
-        self, queue: dirq.QueueSimple.QueueSimple, entries: typing.List[str]
-    ):
+    def _push_message_accelerator(self, entries: typing.List[str]):
         """Push an accelerator message."""
         self._push_message_json(
-            queue, entries, "APEL-accelerator-message", self.version_accelerator
+            entries, "APEL-accelerator-message", self.version_accelerator
         )
 
-    def _push_message_storage(self, queue, entries):
+    def _push_message_storage(self, entries):
         """Push a storage message."""
         ns = {"xmlns:sr": "http://eu-emi.eu/namespaces/2011/02/storagerecord"}
         root = ETree.Element("sr:StorageUsageRecords", attrib=ns)
@@ -136,7 +128,7 @@ class SSMMessenger(caso.messenger.BaseMessenger):
             ETree.SubElement(sr, "sr:EndTime").text = record.measure_time.isoformat()
             capacity = str(int(record.capacity * 1073741824))  # 1 GiB = 2^30
             ETree.SubElement(sr, "sr:ResourceCapacityUsed").text = capacity
-        queue.add(ETree.tostring(root))
+        self.queue.add(ETree.tostring(root))
 
     def _push(self, entries_cloud, entries_ip, entries_accelerator, entries_storage):
         """Push all messages, dividing them into smaller chunks.
@@ -144,23 +136,21 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         This method gets lists of messages to be pushed in smaller chucks as per GGUS
         ticket 143436: https://ggus.eu/index.php?mode=ticket_info&ticket_id=143436
         """
-        queue = dirq.QueueSimple.QueueSimple(CONF.ssm.output_path)
-
         for i in range(0, len(entries_cloud), CONF.ssm.max_size):
             entries = entries_cloud[i : i + CONF.ssm.max_size]  # noqa(E203)
-            self._push_message_cloud(queue, entries)
+            self._push_message_cloud(entries)
 
         for i in range(0, len(entries_ip), CONF.ssm.max_size):
             entries = entries_ip[i : i + CONF.ssm.max_size]  # noqa(E203)
-            self._push_message_ip(queue, entries)
+            self._push_message_ip(entries)
 
         for i in range(0, len(entries_accelerator), CONF.ssm.max_size):
             entries = entries_accelerator[i : i + CONF.ssm.max_size]  # noqa(E203)
-            self._push_message_accelerator(queue, entries)
+            self._push_message_accelerator(entries)
 
         for i in range(0, len(entries_storage), CONF.ssm.max_size):
             entries = entries_storage[i : i + CONF.ssm.max_size]  # noqa(E203)
-            self._push_message_storage(queue, entries)
+            self._push_message_storage(entries)
 
     def push(self, records):
         """Push all records to SSM.
