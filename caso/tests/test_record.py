@@ -90,3 +90,18 @@ def test_cloud_record_custom_cpu(cloud_record):
     cloud_record.cpu_duration = cpu
     assert cloud_record.wall_duration == wall
     assert cloud_record.cpu_duration == cpu
+
+
+def test_ip_record(ip_record):
+    """Test that an IP record is correctly generated."""
+    assert isinstance(ip_record.measure_time, datetime.datetime)
+
+
+def test_ip_record_map_opts(ip_record, valid_ip_record):
+    """Test that an IP record is correctly generated."""
+    opts = {
+        "by_alias": True,
+        "exclude_none": True,
+    }
+
+    assert json.loads(ip_record.json(**opts)) == valid_ip_record

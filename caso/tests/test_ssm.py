@@ -53,3 +53,17 @@ def test_cloud_records_pushed(monkeypatch, cloud_record_list, expected_entries_c
 
         m.setattr(messenger, "_push", mock_push)
         messenger.push(cloud_record_list)
+
+
+def test_ip_records_pushed(monkeypatch, ip_record_list, expected_entries_ip):
+    """Test that IP records are correctly rendered."""
+
+    def mock_push(entries_cloud, entries_ip, entries_accelerator, entries_storage):
+        assert set(entries_ip) == set(expected_entries_ip)
+
+    with monkeypatch.context() as m:
+        m.setattr("caso.utils.makedirs", lambda x: None)
+        messenger = ssm.SSMMessenger()
+
+        m.setattr(messenger, "_push", mock_push)
+        messenger.push(ip_record_list)

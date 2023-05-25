@@ -109,7 +109,7 @@ class NeutronExtractor(base.BaseOpenStackExtractor):
                 elif ip_version == 6:
                     ip_counts_v6[user] += 1
 
-        for (ip_version, ip_counts) in [(4, ip_counts_v4), (6, ip_counts_v6)]:
+        for ip_version, ip_counts in [(4, ip_counts_v4), (6, ip_counts_v6)]:
             for user_id, count in ip_counts.items():
                 if count == 0:
                     continue

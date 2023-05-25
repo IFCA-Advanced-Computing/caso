@@ -114,7 +114,66 @@ valid_cloud_records_dict = [
     },
 ]
 
-# Record fixtures
+
+valid_ip_records_fields = [
+    dict(
+        uuid="e3c5aeef-37b8-4332-ad9f-9d068f156dc2",
+        measure_time=now,
+        site_name="TEST-Site",
+        user_id="a4519d7d-f60a-4908-9d63-7d9e17422188",
+        group_id="03b6a6c4-cf2b-48b9-82f1-69c52b9f30af",
+        user_dn="User 1 DN",
+        fqan="VO 1 FQAN",
+        ip_version=4,
+        public_ip_count=10,
+        compute_service="Fake Cloud Service",
+        cloud_type=cloud_type,
+    ),
+    dict(
+        uuid="5c50720e-a653-4d70-9b0e-d4388687fcbc",
+        measure_time=now,
+        site_name="TEST-Site",
+        user_id="3391a44e-3728-478d-abde-b86c25356571",
+        group_id="2dae43c4-1889-4e63-b172-d4e99381e30a",
+        user_dn="User 2 DN",
+        fqan="VO 2 FQAN",
+        ip_version=6,
+        public_ip_count=20,
+        compute_service="Fake Cloud Service",
+        cloud_type=cloud_type,
+    ),
+]
+
+valid_ip_records_dict = [
+    {
+        "CloudComputeService": "Fake Cloud Service",
+        "FQAN": "VO 1 FQAN",
+        "GlobalUserName": "User 1 DN",
+        "IPCount": 10,
+        "IPVersion": 4,
+        "LocalGroup": "03b6a6c4-cf2b-48b9-82f1-69c52b9f30af",
+        "LocalUser": "a4519d7d-f60a-4908-9d63-7d9e17422188",
+        "MeasurementTime": 1685044746,
+        "SiteName": "TEST-Site",
+        "uuid": "e3c5aeef-37b8-4332-ad9f-9d068f156dc2",
+        "CloudType": cloud_type,
+    },
+    {
+        "CloudComputeService": "Fake Cloud Service",
+        "FQAN": "VO 1 FQAN",
+        "GlobalUserName": "User 2 DN",
+        "IPCount": 20,
+        "IPVersion": 4,
+        "LocalGroup": "2dae43c4-1889-4e63-b172-d4e99381e30a",
+        "LocalUser": "3391a44e-3728-478d-abde-b86c25356571",
+        "MeasurementTime": 1685044746,
+        "SiteName": "TEST-Site",
+        "uuid": "5c50720e-a653-4d70-9b0e-d4388687fcbc",
+        "CloudType": cloud_type,
+    },
+]
+
+# Cloud Record fixtures
 
 
 @pytest.fixture(scope="module")
@@ -158,6 +217,47 @@ def another_valid_cloud_record():
 def cloud_record_list(cloud_record, another_cloud_record):
     """Get a fixture for a list of valid records."""
     return [cloud_record, another_cloud_record]
+
+
+# IP record fixtures
+
+
+@pytest.fixture(scope="module")
+def ip_record():
+    """Get a fixture for an IP record."""
+    record = caso.record.IPRecord(**valid_ip_records_fields[0])
+    return record
+
+
+@pytest.fixture(scope="module")
+def another_ip_record():
+    """Get another fixture for an IP record."""
+    record = caso.record.IPRecord(**valid_ip_records_fields[1])
+    return record
+
+
+@pytest.fixture(scope="module")
+def valid_ip_record():
+    """Get a fixture for a valid IP record as a dict."""
+    return valid_ip_records_dict[0]
+
+
+@pytest.fixture(scope="module")
+def valid_ip_records():
+    """Get a fixture for all IP records as a dict."""
+    return valid_ip_records_dict
+
+
+@pytest.fixture(scope="module")
+def another_valid_ip_record():
+    """Get another fixture for an IP record as a dict."""
+    return valid_ip_records_dict[0]
+
+
+@pytest.fixture(scope="module")
+def ip_record_list(ip_record, another_ip_record):
+    """Get a fixture for a list of IP records."""
+    return [ip_record, another_ip_record]
 
 
 # SSM entries
@@ -207,4 +307,34 @@ def expected_entries_cloud():
         "WallDuration: 432000",
     ]
 
+    return ssm_entries
+
+
+@pytest.fixture
+def expected_entries_ip():
+    """Get a fixture for all IP entries."""
+    ssm_entries = [
+        '{"SiteName": "TEST-Site", '
+        '"CloudType": "caso/4.1.0.0rc1 (OpenStack)", '
+        '"CloudComputeService": "Fake Cloud Service", '
+        '"uuid": "e3c5aeef-37b8-4332-ad9f-9d068f156dc2", '
+        '"LocalUser": "a4519d7d-f60a-4908-9d63-7d9e17422188", '
+        '"GlobalUserName": "User 1 DN", '
+        '"LocalGroup": "03b6a6c4-cf2b-48b9-82f1-69c52b9f30af", '
+        '"FQAN": "VO 1 FQAN", '
+        '"MeasurementTime": 1685044746, '
+        '"IPVersion": 4, '
+        '"IPCount": 10}',
+        '{"SiteName": "TEST-Site", '
+        '"CloudType": "caso/4.1.0.0rc1 (OpenStack)", '
+        '"CloudComputeService": "Fake Cloud Service", '
+        '"uuid": "5c50720e-a653-4d70-9b0e-d4388687fcbc", '
+        '"LocalUser": "3391a44e-3728-478d-abde-b86c25356571", '
+        '"GlobalUserName": "User 2 DN", '
+        '"LocalGroup": "2dae43c4-1889-4e63-b172-d4e99381e30a", '
+        '"FQAN": "VO 2 FQAN", '
+        '"MeasurementTime": 1685044746, '
+        '"IPVersion": 6, '
+        '"IPCount": 20}',
+    ]
     return ssm_entries
