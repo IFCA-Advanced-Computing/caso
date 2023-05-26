@@ -16,7 +16,29 @@
 
 """Test for SSM messenger."""
 
+import pytest
+
+import caso.exception
 from caso.messenger import ssm
+
+
+def test_empty_records_does_nothing(monkeypatch):
+    """Test that empty records do nothing."""
+    with monkeypatch.context() as m:
+        m.setattr("caso.utils.makedirs", lambda x: None)
+        messenger = ssm.SSMMessenger()
+
+        assert messenger.push([]) is None
+
+
+def test_weird_record_raises(monkeypatch):
+    """Test that empty records do nothing."""
+    with monkeypatch.context() as m:
+        m.setattr("caso.utils.makedirs", lambda x: None)
+        messenger = ssm.SSMMessenger()
+
+        with pytest.raises(caso.exception.CasoError):
+            messenger.push([None, "gfaga"])
 
 
 def test_cloud_records_pushed(monkeypatch, cloud_record_list, expected_entries_cloud):
