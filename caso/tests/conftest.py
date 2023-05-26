@@ -23,7 +23,7 @@ import pytest
 import caso
 import caso.record
 
-now = datetime.datetime(2023, 5, 25, 21, 59, 6, 0)
+now = datetime.datetime(2023, 5, 25, 21, 59, 6, 0, tzinfo=datetime.timezone.utc)
 cloud_type = caso.user_agent
 
 valid_cloud_records_fields = [
@@ -76,8 +76,8 @@ valid_cloud_records_dict = [
         "CpuDuration": 3456000,
         "CloudType": cloud_type,
         "Disk": 250,
-        "StartTime": 1684612746,
-        "EndTime": 1685044746,
+        "StartTime": 1684619946,
+        "EndTime": 1685051946,
         "FQAN": "VO 1 FQAN",
         "GlobalUserName": "User DN",
         "ImageId": "b39a8ed9-e15d-4b71-ada2-daf88efbac0a",
@@ -97,8 +97,8 @@ valid_cloud_records_dict = [
         "CpuDuration": 3456000,
         "CloudType": cloud_type,
         "Disk": 250,
-        "StartTime": 1684526346,
-        "EndTime": 1685044746,
+        "StartTime": 1684533546,
+        "EndTime": 1685051946,
         "FQAN": "VO 2 FQAN",
         "GlobalUserName": "User DN",
         "ImageId": "b39a8ed9-e15d-4b71-ada2-daf88efbac0a",
@@ -153,7 +153,7 @@ valid_ip_records_dict = [
         "IPVersion": 4,
         "LocalGroup": "03b6a6c4-cf2b-48b9-82f1-69c52b9f30af",
         "LocalUser": "a4519d7d-f60a-4908-9d63-7d9e17422188",
-        "MeasurementTime": 1685044746,
+        "MeasurementTime": 1685051946,
         "SiteName": "TEST-Site",
         "uuid": "e3c5aeef-37b8-4332-ad9f-9d068f156dc2",
         "CloudType": cloud_type,
@@ -166,7 +166,7 @@ valid_ip_records_dict = [
         "IPVersion": 4,
         "LocalGroup": "2dae43c4-1889-4e63-b172-d4e99381e30a",
         "LocalUser": "3391a44e-3728-478d-abde-b86c25356571",
-        "MeasurementTime": 1685044746,
+        "MeasurementTime": 1685051946,
         "SiteName": "TEST-Site",
         "uuid": "5c50720e-a653-4d70-9b0e-d4388687fcbc",
         "CloudType": cloud_type,
@@ -272,7 +272,7 @@ def expected_entries_cloud():
         "CpuCount: 8\n"
         "CpuDuration: 3456000\n"
         "Disk: 250\n"
-        "EndTime: 1685044746\n"
+        "EndTime: 1685051946\n"
         "FQAN: VO 1 FQAN\n"
         "GlobalUserName: User DN\n"
         "ImageId: b39a8ed9-e15d-4b71-ada2-daf88efbac0a\n"
@@ -282,7 +282,7 @@ def expected_entries_cloud():
         "Memory: 16\n"
         "PublicIPCount: 7\n"
         "SiteName: TEST-Site\n"
-        "StartTime: 1684612746\n"
+        "StartTime: 1684619946\n"
         "Status: started\n"
         "VMUUID: 721cf1db-0e0f-4c24-a5ea-cd75e0f303e8\n"
         "WallDuration: 432000",
@@ -291,7 +291,7 @@ def expected_entries_cloud():
         "CpuCount: 8\n"
         "CpuDuration: 3456000\n"
         "Disk: 250\n"
-        "EndTime: 1685044746\n"
+        "EndTime: 1685051946\n"
         "FQAN: VO 2 FQAN\n"
         "GlobalUserName: User DN\n"
         "ImageId: b39a8ed9-e15d-4b71-ada2-daf88efbac0a\n"
@@ -301,7 +301,7 @@ def expected_entries_cloud():
         "Memory: 16\n"
         "PublicIPCount: 7\n"
         "SiteName: TEST-Site\n"
-        "StartTime: 1684526346\n"
+        "StartTime: 1684533546\n"
         "Status: completed\n"
         "VMUUID: a53738e1-13eb-4047-800c-067d14ce3d22\n"
         "WallDuration: 432000",
@@ -317,21 +317,21 @@ def expected_message_cloud():
         "APEL-cloud-message: v0.4\n"
         "CloudComputeService: Fake Cloud Service\n"
         f"CloudType: {cloud_type}\nCpuCount: 8\nCpuDuration: 3456000\n"
-        "Disk: 250\nEndTime: 1685044746\nFQAN: VO 1 FQAN\nGlobalUserName: User DN\n"
+        "Disk: 250\nEndTime: 1685051946\nFQAN: VO 1 FQAN\nGlobalUserName: User DN\n"
         "ImageId: b39a8ed9-e15d-4b71-ada2-daf88efbac0a\n"
         "LocalGroupId: 03b6a6c4-cf2b-48b9-82f1-69c52b9f30af\n"
         "LocalUserId: a4519d7d-f60a-4908-9d63-7d9e17422188\nMachineName: VM Name 1\n"
-        "Memory: 16\nPublicIPCount: 7\nSiteName: TEST-Site\nStartTime: 1684612746\n"
+        "Memory: 16\nPublicIPCount: 7\nSiteName: TEST-Site\nStartTime: 1684619946\n"
         "Status: started\nVMUUID: 721cf1db-0e0f-4c24-a5ea-cd75e0f303e8\n"
         "WallDuration: 432000\n"
         "%%"
         "\nCloudComputeService: Fake Cloud Service\n"
         f"CloudType: {cloud_type}\nCpuCount: 8\nCpuDuration: 3456000\n"
-        "Disk: 250\nEndTime: 1685044746\nFQAN: VO 2 FQAN\nGlobalUserName: User DN\n"
+        "Disk: 250\nEndTime: 1685051946\nFQAN: VO 2 FQAN\nGlobalUserName: User DN\n"
         "ImageId: b39a8ed9-e15d-4b71-ada2-daf88efbac0a\n"
         "LocalGroupId: 03b6a6c4-cf2b-48b9-82f1-69c52b9f30af\n"
         "LocalUserId: a4519d7d-f60a-4908-9d63-7d9e17422188\nMachineName: VM Name 2\n"
-        "Memory: 16\nPublicIPCount: 7\nSiteName: TEST-Site\nStartTime: 1684526346\n"
+        "Memory: 16\nPublicIPCount: 7\nSiteName: TEST-Site\nStartTime: 1684533546\n"
         "Status: completed\nVMUUID: a53738e1-13eb-4047-800c-067d14ce3d22\n"
         "WallDuration: 432000\n"
     )
@@ -350,7 +350,7 @@ def expected_entries_ip():
         '"GlobalUserName": "User 1 DN", '
         '"LocalGroup": "03b6a6c4-cf2b-48b9-82f1-69c52b9f30af", '
         '"FQAN": "VO 1 FQAN", '
-        '"MeasurementTime": 1685044746, '
+        '"MeasurementTime": 1685051946, '
         '"IPVersion": 4, '
         '"IPCount": 10}',
         '{"SiteName": "TEST-Site", '
@@ -361,7 +361,7 @@ def expected_entries_ip():
         '"GlobalUserName": "User 2 DN", '
         '"LocalGroup": "2dae43c4-1889-4e63-b172-d4e99381e30a", '
         '"FQAN": "VO 2 FQAN", '
-        '"MeasurementTime": 1685044746, '
+        '"MeasurementTime": 1685051946, '
         '"IPVersion": 6, '
         '"IPCount": 20}',
     ]
@@ -381,7 +381,7 @@ def expected_message_ip():
         '"GlobalUserName": "User 1 DN", '
         '"LocalGroup": "03b6a6c4-cf2b-48b9-82f1-69c52b9f30af", '
         '"FQAN": "VO 1 FQAN", '
-        '"MeasurementTime": 1685044746, '
+        '"MeasurementTime": 1685051946, '
         '"IPVersion": 4, '
         '"IPCount": 10}, '
         '{"SiteName": "TEST-Site", '
@@ -392,7 +392,7 @@ def expected_message_ip():
         '"GlobalUserName": "User 2 DN", '
         '"LocalGroup": "2dae43c4-1889-4e63-b172-d4e99381e30a", '
         '"FQAN": "VO 2 FQAN", '
-        '"MeasurementTime": 1685044746, '
+        '"MeasurementTime": 1685051946, '
         '"IPVersion": 6, '
         '"IPCount": 20}'
         "]}"
