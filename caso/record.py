@@ -16,8 +16,8 @@
 
 """Module containing all the cloud accounting records."""
 
-import abc
 import datetime
+import enum
 import typing
 import uuid as m_uuid
 
@@ -29,14 +29,24 @@ from oslo_log import log
 LOG = log.getLogger(__name__)
 
 
-class _BaseRecord(pydantic.BaseModel, abc.ABC):
+class _BaseRecord(pydantic.BaseModel):
     """This is the base cASO record object."""
 
-    version: str
+    version: str = pydantic.Field(..., exclude=True)
 
     site_name: str
-    cloud_type = caso.user_agent
+    cloud_type: str = caso.user_agent
     compute_service: str
+
+
+class _ValidCloudStatus(str, enum.Enum):
+    started = "started"
+    completed = "completed"
+    error = "error"
+    paused = "paused"
+    suspended = "suspended"
+    stopped = "stopped"
+    unknown = "unknown"
 
 
 class CloudRecord(_BaseRecord):
@@ -45,7 +55,7 @@ class CloudRecord(_BaseRecord):
     This class is versioned, following the Cloud Accounting Record versions.
     """
 
-    version: str = "0.4"
+    version: str = pydantic.Field("0.4", exclude=True)
 
     uuid: m_uuid.UUID
     name: str
@@ -55,7 +65,7 @@ class CloudRecord(_BaseRecord):
     group_id: str
     fqan: str
 
-    status: str
+    status: _ValidCloudStatus
 
     image_id: typing.Optional[str]
 
@@ -156,7 +166,7 @@ class IPRecord(_BaseRecord):
     This class is versioned, following the Public IP Usage Record versions.
     """
 
-    version = "0.2"
+    version: str = pydantic.Field("0.2", exclude=True)
 
     uuid: m_uuid.UUID
 

@@ -36,18 +36,17 @@ def test_cloud_record(cloud_record):
 
 
 @pytest.mark.skip(reason="Pydantic 1 does not support computed fields")
-def test_cloud_record_map_opts(cloud_record, valid_record):
+def test_cloud_record_map_opts(cloud_record, valid_cloud_record):
     """Test a cloud record is correctly rendered."""
     opts = {
         "by_alias": True,
-        "exclude_unset": True,
         "exclude_none": True,
     }
 
-    assert json.loads(cloud_record.json(**opts)) == valid_record
+    assert json.loads(cloud_record.json(**opts)) == valid_cloud_record
 
 
-def test_cloud_record_map_opts_custom_wall_cpu(cloud_record, valid_record):
+def test_cloud_record_map_opts_custom_wall_cpu(cloud_record, valid_cloud_record):
     """Test a cloud record is correctly rendered with custom wall and cpu times."""
     wall = datetime.timedelta(days=5).total_seconds()
     cpu = wall * cloud_record.cpu_count
@@ -56,11 +55,10 @@ def test_cloud_record_map_opts_custom_wall_cpu(cloud_record, valid_record):
 
     opts = {
         "by_alias": True,
-        "exclude_unset": True,
         "exclude_none": True,
     }
 
-    assert json.loads(cloud_record.json(**opts)) == valid_record
+    assert json.loads(cloud_record.json(**opts)) == valid_cloud_record
 
 
 @pytest.mark.skip(reason="Pydantic 1 does not support computed fields")

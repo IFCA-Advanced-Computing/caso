@@ -183,7 +183,6 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         entries_storage = []
         opts = {
             "by_alias": True,
-            "exclude_unset": True,
             "exclude_none": True,
         }
         for record in records:
