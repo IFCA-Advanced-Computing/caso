@@ -17,6 +17,7 @@
 """Fixtures for cASO tests."""
 
 import datetime
+import typing
 
 import pytest
 
@@ -239,7 +240,7 @@ valid_accelerator_records_dict = [
 
 
 @pytest.fixture(scope="module")
-def cloud_record():
+def cloud_record() -> caso.record.CloudRecord:
     """Get a fixture for the CloudRecord."""
     record = caso.record.CloudRecord(**valid_cloud_records_fields[0])
     # Remove this when moving to Pydantic 2
@@ -249,7 +250,7 @@ def cloud_record():
 
 
 @pytest.fixture(scope="module")
-def another_cloud_record():
+def another_cloud_record() -> caso.record.CloudRecord:
     """Get another fixture for the CloudRecord."""
     record = caso.record.CloudRecord(**valid_cloud_records_fields[1])
     record.wall_duration = 432000
@@ -258,25 +259,27 @@ def another_cloud_record():
 
 
 @pytest.fixture(scope="module")
-def valid_cloud_record():
+def valid_cloud_record() -> dict:
     """Get a fixture for a valid record."""
     return valid_cloud_records_dict[0]
 
 
 @pytest.fixture(scope="module")
-def valid_cloud_records():
+def valid_cloud_records() -> typing.List[dict]:
     """Get a fixture for valid records as a dict."""
     return valid_cloud_records_dict
 
 
 @pytest.fixture(scope="module")
-def another_valid_cloud_record():
+def another_valid_cloud_record() -> dict:
     """Get another fixture for a valid record as a dict."""
     return valid_cloud_records_dict[0]
 
 
 @pytest.fixture(scope="module")
-def cloud_record_list(cloud_record, another_cloud_record):
+def cloud_record_list(
+    cloud_record, another_cloud_record
+) -> typing.List[caso.record.CloudRecord]:
     """Get a fixture for a list of valid records."""
     return [cloud_record, another_cloud_record]
 
@@ -285,39 +288,39 @@ def cloud_record_list(cloud_record, another_cloud_record):
 
 
 @pytest.fixture(scope="module")
-def ip_record():
+def ip_record() -> caso.record.IPRecord:
     """Get a fixture for an IP record."""
     record = caso.record.IPRecord(**valid_ip_records_fields[0])
     return record
 
 
 @pytest.fixture(scope="module")
-def another_ip_record():
+def another_ip_record() -> caso.record.IPRecord:
     """Get another fixture for an IP record."""
     record = caso.record.IPRecord(**valid_ip_records_fields[1])
     return record
 
 
 @pytest.fixture(scope="module")
-def valid_ip_record():
+def valid_ip_record() -> dict:
     """Get a fixture for a valid IP record as a dict."""
     return valid_ip_records_dict[0]
 
 
 @pytest.fixture(scope="module")
-def valid_ip_records():
+def valid_ip_records() -> typing.List[dict]:
     """Get a fixture for all IP records as a dict."""
     return valid_ip_records_dict
 
 
 @pytest.fixture(scope="module")
-def another_valid_ip_record():
+def another_valid_ip_record() -> dict:
     """Get another fixture for an IP record as a dict."""
-    return valid_ip_records_dict[0]
+    return valid_ip_records_dict[1]
 
 
 @pytest.fixture(scope="module")
-def ip_record_list(ip_record, another_ip_record):
+def ip_record_list(ip_record, another_ip_record) -> typing.List[caso.record.IPRecord]:
     """Get a fixture for a list of IP records."""
     return [ip_record, another_ip_record]
 
@@ -326,33 +329,35 @@ def ip_record_list(ip_record, another_ip_record):
 
 
 @pytest.fixture(scope="module")
-def accelerator_record():
+def accelerator_record() -> caso.record.AcceleratorRecord:
     """Get a fixture for the AcceleratorRecord."""
     record = caso.record.AcceleratorRecord(**valid_accelerator_records_fields[0])
     return record
 
 
 @pytest.fixture(scope="module")
-def another_accelerator_record():
+def another_accelerator_record() -> caso.record.AcceleratorRecord:
     """Get another fixture for the AcceleratorRecord."""
     record = caso.record.AcceleratorRecord(**valid_accelerator_records_fields[1])
     return record
 
 
 @pytest.fixture(scope="module")
-def valid_accelerator_record():
+def valid_accelerator_record() -> dict:
     """Get a fixture for a valid record."""
     return valid_accelerator_records_dict[0]
 
 
 @pytest.fixture(scope="module")
-def valid_accelerator_records():
+def valid_accelerator_records() -> typing.List[dict]:
     """Get a fixture for valid records as a dict."""
     return valid_accelerator_records_dict
 
 
 @pytest.fixture(scope="module")
-def accelerator_record_list(accelerator_record, another_accelerator_record):
+def accelerator_record_list(
+    accelerator_record, another_accelerator_record
+) -> typing.List[caso.record.AcceleratorRecord]:
     """Get a fixture for a list of Accelerator records."""
     return [accelerator_record, another_accelerator_record]
 
@@ -361,7 +366,7 @@ def accelerator_record_list(accelerator_record, another_accelerator_record):
 
 
 @pytest.fixture
-def expected_entries_cloud():
+def expected_entries_cloud() -> typing.List[str]:
     """Get a fixture for all cloud entries."""
     ssm_entries = [
         "CloudComputeService: Fake Cloud Service\n"
@@ -408,7 +413,7 @@ def expected_entries_cloud():
 
 
 @pytest.fixture
-def expected_message_cloud():
+def expected_message_cloud() -> str:
     """Get a fixture for a complete Cloud message."""
     message = (
         "APEL-cloud-message: v0.4\n"
@@ -436,7 +441,7 @@ def expected_message_cloud():
 
 
 @pytest.fixture
-def expected_entries_ip():
+def expected_entries_ip() -> typing.List[str]:
     """Get a fixture for all IP entries."""
     ssm_entries = [
         '{"SiteName": "TEST-Site", '
@@ -466,7 +471,7 @@ def expected_entries_ip():
 
 
 @pytest.fixture
-def expected_message_ip():
+def expected_message_ip() -> str:
     """Get a fixture for a complete IP message."""
     message = (
         '{"Type": "APEL Public IP message", "Version": "0.2", "UsageRecords": ['
@@ -498,7 +503,7 @@ def expected_message_ip():
 
 
 @pytest.fixture
-def expected_entries_accelerator():
+def expected_entries_accelerator() -> typing.List[str]:
     """Get a fixture for all accelerator entries."""
     ssm_entries = [
         '{"SiteName": "TEST-Site", '
@@ -533,7 +538,7 @@ def expected_entries_accelerator():
 
 
 @pytest.fixture
-def expected_message_accelerator():
+def expected_message_accelerator() -> str:
     """Get a fixture for a complete Accelerator message."""
     message = (
         '{"Type": "APEL-accelerator-message", "Version": "0.1", "UsageRecords": ['
