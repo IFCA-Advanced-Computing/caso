@@ -173,6 +173,68 @@ valid_ip_records_dict = [
     },
 ]
 
+valid_accelerator_records_fields = [
+    dict(
+        measurement_month=6,
+        measurement_year=2022,
+        uuid="99cf5d02-a573-46a1-b90d-0f7327126876",
+        fqan="VO 1 FQAN",
+        compute_service="Fake Cloud Service",
+        site_name="TEST-Site",
+        count=3,
+        available_duration=5000,
+        accelerator_type="GPU",
+        user_dn="d4e547e6f298fe34389@foobar.eu",
+        model="Foobar A200",
+    ),
+    dict(
+        measurement_month=2,
+        measurement_year=2022,
+        uuid="99cf5d02-a573-46a1-b90d-0f7327126876",
+        fqan="VO 1 FQAN",
+        compute_service="Fake Cloud Service",
+        site_name="TEST-Site",
+        count=30,
+        available_duration=5000,
+        accelerator_type="GPU",
+        user_dn="d4e547e6f298fe34389@foobar.eu",
+        model="Foobar A300",
+    ),
+]
+
+valid_accelerator_records_dict = [
+    {
+        "AccUUID": "99cf5d02-a573-46a1-b90d-0f7327126876",
+        "AssociatedRecordType": "cloud",
+        "AvailableDuration": 5000,
+        "Count": 3,
+        "FQAN": "VO 1 FQAN",
+        "GlobalUserName": "d4e547e6f298fe34389@foobar.eu",
+        "MeasurementMonth": 6,
+        "MeasurementYear": 2022,
+        "Model": "Foobar A200",
+        "SiteName": "TEST-Site",
+        "Type": "GPU",
+        "CloudType": cloud_type,
+        "CloudComputeService": "Fake Cloud Service",
+    },
+    {
+        "AccUUID": "99cf5d02-a573-46a1-b90d-0f7327126876",
+        "AssociatedRecordType": "cloud",
+        "AvailableDuration": 5000,
+        "Count": 30,
+        "FQAN": "VO 1 FQAN",
+        "GlobalUserName": "d4e547e6f298fe34389@foobar.eu",
+        "MeasurementMonth": 2,
+        "MeasurementYear": 2022,
+        "Model": "Foobar A300",
+        "SiteName": "TEST-Site",
+        "Type": "GPU",
+        "CloudType": cloud_type,
+        "CloudComputeService": "Fake Cloud Service",
+    },
+]
+
 # Cloud Record fixtures
 
 
@@ -258,6 +320,41 @@ def another_valid_ip_record():
 def ip_record_list(ip_record, another_ip_record):
     """Get a fixture for a list of IP records."""
     return [ip_record, another_ip_record]
+
+
+# Accelerator records
+
+
+@pytest.fixture(scope="module")
+def accelerator_record():
+    """Get a fixture for the AcceleratorRecord."""
+    record = caso.record.AcceleratorRecord(**valid_accelerator_records_fields[0])
+    return record
+
+
+@pytest.fixture(scope="module")
+def another_accelerator_record():
+    """Get another fixture for the AcceleratorRecord."""
+    record = caso.record.AcceleratorRecord(**valid_accelerator_records_fields[1])
+    return record
+
+
+@pytest.fixture(scope="module")
+def valid_accelerator_record():
+    """Get a fixture for a valid record."""
+    return valid_accelerator_records_dict[0]
+
+
+@pytest.fixture(scope="module")
+def valid_accelerator_records():
+    """Get a fixture for valid records as a dict."""
+    return valid_accelerator_records_dict
+
+
+@pytest.fixture(scope="module")
+def accelerator_record_list(accelerator_record, another_accelerator_record):
+    """Get a fixture for a list of Accelerator records."""
+    return [accelerator_record, another_accelerator_record]
 
 
 # SSM entries
@@ -395,6 +492,77 @@ def expected_message_ip():
         '"MeasurementTime": 1685051946, '
         '"IPVersion": 6, '
         '"IPCount": 20}'
+        "]}"
+    )
+    return message
+
+
+@pytest.fixture
+def expected_entries_accelerator():
+    """Get a fixture for all accelerator entries."""
+    ssm_entries = [
+        '{"SiteName": "TEST-Site", '
+        f'"CloudType": "{cloud_type}", '
+        '"CloudComputeService": "Fake Cloud Service", '
+        '"AccUUID": "99cf5d02-a573-46a1-b90d-0f7327126876", '
+        '"GlobalUserName": "d4e547e6f298fe34389@foobar.eu", '
+        '"FQAN": "VO 1 FQAN", '
+        '"Count": 3, '
+        '"AvailableDuration": 5000, '
+        '"MeasurementMonth": 6, '
+        '"MeasurementYear": 2022, '
+        '"AssociatedRecordType": "cloud", '
+        '"Type": "GPU", '
+        '"Model": "Foobar A200"}',
+        '{"SiteName": "TEST-Site", '
+        f'"CloudType": "{cloud_type}", '
+        '"CloudComputeService": "Fake Cloud Service", '
+        '"AccUUID": "99cf5d02-a573-46a1-b90d-0f7327126876", '
+        '"GlobalUserName": "d4e547e6f298fe34389@foobar.eu", '
+        '"FQAN": "VO 1 FQAN", '
+        '"Count": 30, '
+        '"AvailableDuration": 5000, '
+        '"MeasurementMonth": 2, '
+        '"MeasurementYear": 2022, '
+        '"AssociatedRecordType": "cloud", '
+        '"Type": "GPU", '
+        '"Model": "Foobar A300"}',
+    ]
+
+    return ssm_entries
+
+
+@pytest.fixture
+def expected_message_accelerator():
+    """Get a fixture for a complete Accelerator message."""
+    message = (
+        '{"Type": "APEL-accelerator-message", "Version": "0.1", "UsageRecords": ['
+        '{"SiteName": "TEST-Site", '
+        f'"CloudType": "{cloud_type}", '
+        '"CloudComputeService": "Fake Cloud Service", '
+        '"AccUUID": "99cf5d02-a573-46a1-b90d-0f7327126876", '
+        '"GlobalUserName": "d4e547e6f298fe34389@foobar.eu", '
+        '"FQAN": "VO 1 FQAN", '
+        '"Count": 3, '
+        '"AvailableDuration": 5000, '
+        '"MeasurementMonth": 6, '
+        '"MeasurementYear": 2022, '
+        '"AssociatedRecordType": "cloud", '
+        '"Type": "GPU", '
+        '"Model": "Foobar A200"}, '
+        '{"SiteName": "TEST-Site", '
+        f'"CloudType": "{cloud_type}", '
+        '"CloudComputeService": "Fake Cloud Service", '
+        '"AccUUID": "99cf5d02-a573-46a1-b90d-0f7327126876", '
+        '"GlobalUserName": "d4e547e6f298fe34389@foobar.eu", '
+        '"FQAN": "VO 1 FQAN", '
+        '"Count": 30, '
+        '"AvailableDuration": 5000, '
+        '"MeasurementMonth": 2, '
+        '"MeasurementYear": 2022, '
+        '"AssociatedRecordType": "cloud", '
+        '"Type": "GPU", '
+        '"Model": "Foobar A300"}'
         "]}"
     )
     return message

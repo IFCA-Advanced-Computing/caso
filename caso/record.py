@@ -214,7 +214,7 @@ class AcceleratorRecord(_BaseRecord):
 
     """
 
-    version = "0.1"
+    version: str = pydantic.Field("0.1", exclude=True)
 
     uuid: m_uuid.UUID
 
@@ -270,6 +270,8 @@ class AcceleratorRecord(_BaseRecord):
                 "benchmark": "Benchmark",
                 "accelerator_type": "Type",
                 "model": "Model",
+                "cloud_type": "CloudType",
+                "compute_service": "CloudComputeService",
             }
             return d.get(field, field)
 

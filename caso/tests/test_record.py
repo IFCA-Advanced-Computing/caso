@@ -105,3 +105,17 @@ def test_ip_record_map_opts(ip_record, valid_ip_record):
     }
 
     assert json.loads(ip_record.json(**opts)) == valid_ip_record
+
+
+def test_accelerator_record(accelerator_record):
+    """Test that an IP record is correctly generated."""
+    assert isinstance(accelerator_record.available_duration, int)
+
+
+def test_accelerator_record_map_opts(accelerator_record, valid_accelerator_record):
+    """Test that an IP record is correctly generated."""
+    opts = {
+        "by_alias": True,
+        "exclude_none": True,
+    }
+    assert json.loads(accelerator_record.json(**opts)) == valid_accelerator_record

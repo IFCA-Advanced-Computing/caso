@@ -73,6 +73,26 @@ def test_ip_records_pushed(monkeypatch, ip_record_list, expected_entries_ip):
         messenger.push(ip_record_list)
 
 
+def test_accelerator_records_pushed(
+    monkeypatch, accelerator_record_list, expected_entries_accelerator
+):
+    """Test that Accelerator records are correctly rendered."""
+
+    def mock_push(entries_cloud, entries_ip, entries_accelerator, entries_storage):
+        import pprint
+
+        pprint.pprint(entries_accelerator)
+        assert set(entries_accelerator) == set(expected_entries_accelerator)
+
+    with monkeypatch.context() as m:
+        m.setattr("caso.utils.makedirs", lambda x: None)
+        m.setattr("dirq.QueueSimple.QueueSimple", lambda x: None)
+        messenger = ssm.SSMMessenger()
+
+        m.setattr(messenger, "_push", mock_push)
+        messenger.push(accelerator_record_list)
+
+
 def test_cloud_ip_records_pushed(
     monkeypatch,
     cloud_record_list,
@@ -134,3 +154,22 @@ def test_complete_ip_message(monkeypatch, expected_entries_ip, expected_message_
 
         m.setattr(messenger.queue, "add", mock_add)
         messenger._push_message_ip(expected_entries_ip)
+
+
+def test_complete_accelerator_message(
+    monkeypatch, expected_entries_accelerator, expected_message_accelerator
+):
+    """Test a complete cloud message."""
+
+    def mock_add(message):
+        print(message)
+        print(expected_message_accelerator)
+        assert message == expected_message_accelerator
+
+    with monkeypatch.context() as m:
+        m.setattr("caso.utils.makedirs", lambda x: None)
+        m.setattr("dirq.QueueSimple.QueueSimple", lambda x: _MockQueue())
+        messenger = ssm.SSMMessenger()
+
+        m.setattr(messenger.queue, "add", mock_add)
+        messenger._push_message_accelerator(expected_entries_accelerator)
