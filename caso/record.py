@@ -289,7 +289,7 @@ class StorageRecord(_BaseRecord):
     EMI StAR
     """
 
-    version: str = "0.1"
+    version: str = pydantic.Field("0.1", exclude=True)
 
     uuid: m_uuid.UUID
     name: str
@@ -340,6 +340,7 @@ class StorageRecord(_BaseRecord):
                 "status": "Status",
                 "attached_to": "AttachedTo",
                 "attached_duration": "AttachedDuration",
+                "cloud_type": "CloudType",
                 "compute_service": "CloudComputeService",
             }
             return d.get(field, field)

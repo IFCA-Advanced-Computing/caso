@@ -236,6 +236,76 @@ valid_accelerator_records_dict = [
     },
 ]
 
+valid_storage_records_fields = [
+    dict(
+        uuid="99cf5d02-a573-46a1-b90d-0f7327126876",
+        site_name="TEST-Site",
+        name="Test Volume 1",
+        user_id="63296dcd-b652-4039-b274-aaa70f9d57e5",
+        group_id="313c6f62-e05f-4ec7-b0f2-256612db18f5",
+        fqan="VO 1 FQAN",
+        compute_service="Fake Cloud Service",
+        status="in-use",
+        active_duration=400,
+        measure_time=now,
+        start_time=now - datetime.timedelta(days=5),
+        capacity=322122547200,
+        user_dn="d4e547e6f298fe34389@foobar.eu",
+    ),
+    dict(
+        uuid="99cf5d02-a573-46a1-b90d-0f7327126876",
+        site_name="TEST-Site",
+        name="Test Volume 1",
+        user_id="63296dcd-b652-4039-b274-aaa70f9d57e5",
+        group_id="313c6f62-e05f-4ec7-b0f2-256612db18f5",
+        fqan="VO 2 FQAN",
+        compute_service="Fake Cloud Service",
+        status="in-use",
+        active_duration=400,
+        measure_time=now,
+        start_time=now - datetime.timedelta(days=6),
+        capacity=122122547200,
+        user_dn="d4e547e6f298fe34389@foobar.eu",
+    ),
+]
+
+valid_storage_records_dict = [
+    {
+        "SiteName": "TEST-Site",
+        "CloudType": cloud_type,
+        "CloudComputeService": "Fake Cloud Service",
+        "VolumeUUID": "99cf5d02-a573-46a1-b90d-0f7327126876",
+        "RecordName": "Test Volume 1",
+        "LocalUser": "63296dcd-b652-4039-b274-aaa70f9d57e5",
+        "GlobalUserName": "d4e547e6f298fe34389@foobar.eu",
+        "LocalGroup": "313c6f62-e05f-4ec7-b0f2-256612db18f5",
+        "FQAN": "VO 1 FQAN",
+        "ActiveDuration": 400,
+        "CreateTime": "2023-05-25T21:59:06+00:00",
+        "StartTime": "2023-05-20T21:59:06+00:00",
+        "Type": "Block Storage (cinder)",
+        "Status": "in-use",
+        "Capacity": 322122547200,
+    },
+    {
+        "SiteName": "TEST-Site",
+        "CloudType": cloud_type,
+        "CloudComputeService": "Fake Cloud Service",
+        "VolumeUUID": "99cf5d02-a573-46a1-b90d-0f7327126876",
+        "RecordName": "Test Volume 2",
+        "LocalUser": "63296dcd-b652-4039-b274-aaa70f9d57e5",
+        "GlobalUserName": "d4e547e6f298fe34389@foobar.eu",
+        "LocalGroup": "313c6f62-e05f-4ec7-b0f2-256612db18f5",
+        "FQAN": "VO 2 FQAN",
+        "ActiveDuration": 400,
+        "CreateTime": "2023-05-25T21:59:06+00:00",
+        "StartTime": "2023-05-20T21:59:06+00:00",
+        "Type": "Block Storage (cinder)",
+        "Status": "in-use",
+        "Capacity": 122122547200,
+    },
+]
+
 # Cloud Record fixtures
 
 
@@ -360,6 +430,43 @@ def accelerator_record_list(
 ) -> typing.List[caso.record.AcceleratorRecord]:
     """Get a fixture for a list of Accelerator records."""
     return [accelerator_record, another_accelerator_record]
+
+
+# Storage records
+
+
+@pytest.fixture(scope="module")
+def storage_record() -> caso.record.StorageRecord:
+    """Get a fixture for the StorageRecord."""
+    record = caso.record.StorageRecord(**valid_storage_records_fields[0])
+    return record
+
+
+@pytest.fixture(scope="module")
+def another_storage_record() -> caso.record.StorageRecord:
+    """Get another fixture for the StorageRecord."""
+    record = caso.record.StorageRecord(**valid_storage_records_fields[1])
+    return record
+
+
+@pytest.fixture(scope="module")
+def valid_storage_record() -> dict:
+    """Get a fixture for a valid record."""
+    return valid_storage_records_dict[0]
+
+
+@pytest.fixture(scope="module")
+def valid_storage_records() -> typing.List[dict]:
+    """Get a fixture for valid records as a dict."""
+    return valid_storage_records_dict
+
+
+@pytest.fixture(scope="module")
+def storage_record_list(
+    storage_record, another_storage_record
+) -> typing.List[caso.record.StorageRecord]:
+    """Get a fixture for a list of Storage records."""
+    return [storage_record, another_storage_record]
 
 
 # SSM entries
@@ -571,3 +678,48 @@ def expected_message_accelerator() -> str:
         "]}"
     )
     return message
+
+
+@pytest.fixture
+def expected_entries_storage(storage_record_list) -> list[caso.record.StorageRecord]:
+    """Get a fixture for all Storage entries."""
+    ssm_entries = storage_record_list.copy()
+    return ssm_entries
+
+
+@pytest.fixture
+def expected_message_storage() -> str:
+    """Get a fixture for a complete Storage message."""
+    message = (
+        '<sr:StorageUsageRecords xmlns:sr="http://eu-emi.eu/namespaces/2011/02/storagerecord">'  # noqa
+        "<sr:StorageUsageRecord>"
+        '<sr:RecordIdentity sr:createTime="2023-05-25T21:59:06+00:00" sr:recordId="99cf5d02-a573-46a1-b90d-0f7327126876" />'  # noqa
+        "<sr:StorageSystem>Fake Cloud Service</sr:StorageSystem>"
+        "<sr:Site>TEST-Site</sr:Site>"
+        "<sr:SubjectIdentity>"
+        "<sr:LocalUser>63296dcd-b652-4039-b274-aaa70f9d57e5</sr:LocalUser>"
+        "<sr:LocalGroup>313c6f62-e05f-4ec7-b0f2-256612db18f5</sr:LocalGroup>"
+        "<sr:UserIdentity>d4e547e6f298fe34389@foobar.eu</sr:UserIdentity>"
+        "<sr:Group>VO 1 FQAN</sr:Group>"
+        "</sr:SubjectIdentity>"
+        "<sr:StartTime>2023-05-20T21:59:06+00:00</sr:StartTime>"
+        "<sr:EndTime>2023-05-25T21:59:06+00:00</sr:EndTime>"
+        "<sr:ResourceCapacityUsed>345876451382054092800</sr:ResourceCapacityUsed>"
+        "</sr:StorageUsageRecord>"
+        "<sr:StorageUsageRecord>"
+        '<sr:RecordIdentity sr:createTime="2023-05-25T21:59:06+00:00" sr:recordId="99cf5d02-a573-46a1-b90d-0f7327126876" />'  # noqa
+        "<sr:StorageSystem>Fake Cloud Service</sr:StorageSystem>"
+        "<sr:Site>TEST-Site</sr:Site>"
+        "<sr:SubjectIdentity>"
+        "<sr:LocalUser>63296dcd-b652-4039-b274-aaa70f9d57e5</sr:LocalUser>"
+        "<sr:LocalGroup>313c6f62-e05f-4ec7-b0f2-256612db18f5</sr:LocalGroup>"
+        "<sr:UserIdentity>d4e547e6f298fe34389@foobar.eu</sr:UserIdentity>"
+        "<sr:Group>VO 2 FQAN</sr:Group>"
+        "</sr:SubjectIdentity>"
+        "<sr:StartTime>2023-05-19T21:59:06+00:00</sr:StartTime>"
+        "<sr:EndTime>2023-05-25T21:59:06+00:00</sr:EndTime>"
+        "<sr:ResourceCapacityUsed>131128086582054092800</sr:ResourceCapacityUsed>"
+        "</sr:StorageUsageRecord>"
+        "</sr:StorageUsageRecords>"
+    )
+    return message.encode("utf-8")
