@@ -79,9 +79,6 @@ def test_accelerator_records_pushed(
     """Test that Accelerator records are correctly rendered."""
 
     def mock_push(entries_cloud, entries_ip, entries_accelerator, entries_storage):
-        import pprint
-
-        pprint.pprint(entries_accelerator)
         assert set(entries_accelerator) == set(expected_entries_accelerator)
 
     with monkeypatch.context() as m:
@@ -160,8 +157,6 @@ def test_complete_ip_message(monkeypatch, expected_entries_ip, expected_message_
     """Test a complete cloud message."""
 
     def mock_add(message):
-        print(message)
-        print(expected_message_ip)
         assert message == expected_message_ip
 
     with monkeypatch.context() as m:
@@ -179,8 +174,6 @@ def test_complete_accelerator_message(
     """Test a complete cloud message."""
 
     def mock_add(message):
-        print(message)
-        print(expected_message_accelerator)
         assert message == expected_message_accelerator
 
     with monkeypatch.context() as m:
@@ -198,8 +191,6 @@ def test_complete_storage_message(
     """Test a complete cloud message."""
 
     def mock_add(message):
-        print(message)
-        print(expected_message_storage)
         assert message == expected_message_storage
 
     with monkeypatch.context() as m:
