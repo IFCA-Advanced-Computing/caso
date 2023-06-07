@@ -16,10 +16,15 @@
 
 """Module containing all the cloud accounting records."""
 
+import abc
 import datetime
 import enum
+import json
 import typing
 import uuid as m_uuid
+
+# We are not parsing XML so this is safe
+import xml.etree.ElementTree as ETree  # nosec
 
 import pydantic
 
@@ -29,7 +34,7 @@ from oslo_log import log
 LOG = log.getLogger(__name__)
 
 
-class _BaseRecord(pydantic.BaseModel):
+class _BaseRecord(pydantic.BaseModel, abc.ABC):
     """This is the base cASO record object."""
 
     version: str = pydantic.Field(..., exclude=True)
@@ -37,6 +42,11 @@ class _BaseRecord(pydantic.BaseModel):
     site_name: str
     cloud_type: str = caso.user_agent
     compute_service: str
+
+    @abc.abstractmethod
+    def ssm_message(self):
+        """Render record as the expected SSM message."""
+        raise NotImplementedError("Method not implemented")
 
 
 class _ValidCloudStatus(str, enum.Enum):
@@ -117,6 +127,21 @@ class CloudRecord(_BaseRecord):
         """Set the CPU duration for the record."""
         self._cpu_duration = value
 
+    def ssm_message(self):
+        """Render record as the expected SSM message."""
+        opts = {
+            "by_alias": True,
+            "exclude_none": True,
+        }
+        # NOTE(aloga): do not iter over the dictionary returned by record.dict() as this
+        # is just a dictionary representation of the object, where no serialization is
+        # done. In order to get objects correctly serialized we need to convert to JSON,
+        # then reload the model
+        serialized_record = json.loads(self.json(**opts))
+        aux = [f"{k}: {v}" for k, v in serialized_record.items()]
+        aux.sort()
+        return "\n".join(aux)
+
     class Config:
         """Config class for Pydantic."""
 
@@ -179,6 +204,14 @@ class IPRecord(_BaseRecord):
 
     ip_version: int
     public_ip_count: int
+
+    def ssm_message(self):
+        """Render record as the expected SSM message."""
+        opts = {
+            "by_alias": True,
+            "exclude_none": True,
+        }
+        return self.json(**opts)
 
     class Config:
         """Config class for Pydantic."""
@@ -247,6 +280,14 @@ class AcceleratorRecord(_BaseRecord):
     def set_active_duration(self, value: int):
         """Set the active duration for the record."""
         self._active_duration = value
+
+    def ssm_message(self):
+        """Render record as the expected SSM message."""
+        opts = {
+            "by_alias": True,
+            "exclude_none": True,
+        }
+        return self.json(**opts)
 
     class Config:
         """Config class for Pydantic."""
@@ -317,6 +358,33 @@ class StorageRecord(_BaseRecord):
         if value is not None:
             return value
         return 0
+
+    def ssm_message(self):
+        """Render record as the expected SSM message."""
+        ns = {"xmlns:sr": "http://eu-emi.eu/namespaces/2011/02/storagerecord"}
+        sr = ETree.Element("sr:StorageUsageRecord", attrib=ns)
+        ETree.SubElement(
+            sr,
+            "sr:RecordIdentity",
+            attrib={
+                "sr:createTime": self.measure_time.isoformat(),
+                "sr:recordId": str(self.uuid),
+            },
+        )
+        ETree.SubElement(sr, "sr:StorageSystem").text = self.compute_service
+        ETree.SubElement(sr, "sr:Site").text = self.site_name
+        subject = ETree.SubElement(sr, "sr:SubjectIdentity")
+        ETree.SubElement(subject, "sr:LocalUser").text = self.user_id
+        ETree.SubElement(subject, "sr:LocalGroup").text = self.group_id
+        if self.user_dn:
+            ETree.SubElement(subject, "sr:UserIdentity").text = self.user_dn
+        if self.fqan:
+            ETree.SubElement(subject, "sr:Group").text = self.fqan
+        ETree.SubElement(sr, "sr:StartTime").text = self.start_time.isoformat()
+        ETree.SubElement(sr, "sr:EndTime").text = self.measure_time.isoformat()
+        capacity = str(int(self.capacity * 1073741824))  # 1 GiB = 2^30
+        ETree.SubElement(sr, "sr:ResourceCapacityUsed").text = capacity
+        return ETree.tostring(sr)
 
     class Config:
         """Config class for Pydantic."""

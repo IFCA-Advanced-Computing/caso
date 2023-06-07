@@ -103,31 +103,14 @@ class SSMMessenger(caso.messenger.BaseMessenger):
 
     def _push_message_storage(self, entries):
         """Push a storage message."""
-        ns = {"xmlns:sr": "http://eu-emi.eu/namespaces/2011/02/storagerecord"}
-        root = ETree.Element("sr:StorageUsageRecords", attrib=ns)
+        ETree.register_namespace(
+            "sr", "http://eu-emi.eu/namespaces/2011/02/storagerecord"
+        )
+        root = ETree.Element("sr:StorageUsageRecords")
         for record in entries:
-            sr = ETree.SubElement(root, "sr:StorageUsageRecord")
-            ETree.SubElement(
-                sr,
-                "sr:RecordIdentity",
-                attrib={
-                    "sr:createTime": record.measure_time.isoformat(),
-                    "sr:recordId": str(record.uuid),
-                },
-            )
-            ETree.SubElement(sr, "sr:StorageSystem").text = record.compute_service
-            ETree.SubElement(sr, "sr:Site").text = record.site_name
-            subject = ETree.SubElement(sr, "sr:SubjectIdentity")
-            ETree.SubElement(subject, "sr:LocalUser").text = record.user_id
-            ETree.SubElement(subject, "sr:LocalGroup").text = record.group_id
-            if record.user_dn:
-                ETree.SubElement(subject, "sr:UserIdentity").text = record.user_dn
-            if record.fqan:
-                ETree.SubElement(subject, "sr:Group").text = record.fqan
-            ETree.SubElement(sr, "sr:StartTime").text = record.start_time.isoformat()
-            ETree.SubElement(sr, "sr:EndTime").text = record.measure_time.isoformat()
-            capacity = str(int(record.capacity * 1073741824))  # 1 GiB = 2^30
-            ETree.SubElement(sr, "sr:ResourceCapacityUsed").text = capacity
+            # We are not parsing XML so this is safe
+            sr = ETree.fromstring(record)  # nosec
+            root.append(sr)
         self.queue.add(ETree.tostring(root))
 
     def _push(self, entries_cloud, entries_ip, entries_accelerator, entries_storage):
@@ -171,28 +154,15 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         entries_ip = []
         entries_accelerator = []
         entries_storage = []
-        opts = {
-            "by_alias": True,
-            "exclude_none": True,
-        }
         for record in records:
             if isinstance(record, caso.record.CloudRecord):
-                aux = []
-                # NOTE(aloga): do not iter over the dictionary returned by record.dict()
-                # as this is just a dictionary representation of the object, where no
-                # serialization is done. In order to get objects correctly serialized
-                # we need to convert to JSON, then reload the model
-                serialized_record = json.loads(record.json(**opts))
-                for k, v in serialized_record.items():
-                    aux.append(f"{k}: {v}")
-                aux.sort()
-                entries_cloud.append("\n".join(aux))
+                entries_cloud.append(record.ssm_message())
             elif isinstance(record, caso.record.IPRecord):
-                entries_ip.append(record.json(**opts))
+                entries_ip.append(record.ssm_message())
             elif isinstance(record, caso.record.AcceleratorRecord):
-                entries_accelerator.append(record.json(**opts))
+                entries_accelerator.append(record.ssm_message())
             elif isinstance(record, caso.record.StorageRecord):
-                entries_storage.append(record)
+                entries_storage.append(record.ssm_message())
             else:
                 raise caso.exception.CasoError("Unexpected record format!")
 

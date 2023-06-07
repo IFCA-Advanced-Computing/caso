@@ -96,7 +96,9 @@ def test_storage_records_pushed(
     """Test that Storage records are correctly rendered."""
 
     def mock_push(entries_cloud, entries_ip, entries_accelerator, entries_storage):
-        assert entries_storage == expected_entries_storage
+        assert set([s.decode() for s in entries_storage]) == set(
+            expected_entries_storage
+        )
 
     with monkeypatch.context() as m:
         m.setattr("caso.utils.makedirs", lambda x: None)
@@ -191,7 +193,7 @@ def test_complete_storage_message(
     """Test a complete cloud message."""
 
     def mock_add(message):
-        assert message == expected_message_storage
+        assert message.decode() == expected_message_storage
 
     with monkeypatch.context() as m:
         m.setattr("caso.utils.makedirs", lambda x: None)

@@ -681,9 +681,38 @@ def expected_message_accelerator() -> str:
 
 
 @pytest.fixture
-def expected_entries_storage(storage_record_list) -> list[caso.record.StorageRecord]:
+def expected_entries_storage() -> typing.List[str]:
     """Get a fixture for all Storage entries."""
-    ssm_entries = storage_record_list.copy()
+    ssm_entries = [
+        '<sr:StorageUsageRecord xmlns:sr="http://eu-emi.eu/namespaces/2011/02/storagerecord">'  # noqa
+        '<sr:RecordIdentity sr:createTime="2023-05-25T21:59:06+00:00" sr:recordId="99cf5d02-a573-46a1-b90d-0f7327126876" />'  # noqa
+        "<sr:StorageSystem>Fake Cloud Service</sr:StorageSystem>"
+        "<sr:Site>TEST-Site</sr:Site>"
+        "<sr:SubjectIdentity>"
+        "<sr:LocalUser>63296dcd-b652-4039-b274-aaa70f9d57e5</sr:LocalUser>"
+        "<sr:LocalGroup>313c6f62-e05f-4ec7-b0f2-256612db18f5</sr:LocalGroup>"
+        "<sr:UserIdentity>d4e547e6f298fe34389@foobar.eu</sr:UserIdentity>"
+        "<sr:Group>VO 1 FQAN</sr:Group>"
+        "</sr:SubjectIdentity>"
+        "<sr:StartTime>2023-05-20T21:59:06+00:00</sr:StartTime>"
+        "<sr:EndTime>2023-05-25T21:59:06+00:00</sr:EndTime>"
+        "<sr:ResourceCapacityUsed>345876451382054092800</sr:ResourceCapacityUsed>"
+        "</sr:StorageUsageRecord>",
+        '<sr:StorageUsageRecord xmlns:sr="http://eu-emi.eu/namespaces/2011/02/storagerecord">'  # noqa
+        '<sr:RecordIdentity sr:createTime="2023-05-25T21:59:06+00:00" sr:recordId="99cf5d02-a573-46a1-b90d-0f7327126876" />'  # noqa
+        "<sr:StorageSystem>Fake Cloud Service</sr:StorageSystem>"
+        "<sr:Site>TEST-Site</sr:Site>"
+        "<sr:SubjectIdentity>"
+        "<sr:LocalUser>63296dcd-b652-4039-b274-aaa70f9d57e5</sr:LocalUser>"
+        "<sr:LocalGroup>313c6f62-e05f-4ec7-b0f2-256612db18f5</sr:LocalGroup>"
+        "<sr:UserIdentity>d4e547e6f298fe34389@foobar.eu</sr:UserIdentity>"
+        "<sr:Group>VO 2 FQAN</sr:Group>"
+        "</sr:SubjectIdentity>"
+        "<sr:StartTime>2023-05-19T21:59:06+00:00</sr:StartTime>"
+        "<sr:EndTime>2023-05-25T21:59:06+00:00</sr:EndTime>"
+        "<sr:ResourceCapacityUsed>131128086582054092800</sr:ResourceCapacityUsed>"
+        "</sr:StorageUsageRecord>",
+    ]
     return ssm_entries
 
 
@@ -722,4 +751,4 @@ def expected_message_storage() -> str:
         "</sr:StorageUsageRecord>"
         "</sr:StorageUsageRecords>"
     )
-    return message.encode("utf-8")
+    return message
