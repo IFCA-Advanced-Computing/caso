@@ -31,6 +31,9 @@ import six
 from caso import keystone_client
 from caso import loading
 
+from keystoneauth1.exceptions.catalog import EmptyCatalog
+from keystoneauth1.exceptions.http import Forbidden
+
 cli_opts = [
     cfg.ListOpt(
         "projects",
@@ -119,12 +122,20 @@ class Manager(object):
     def projects(self):
         """Get list of configured projects."""
         projects = CONF.projects
-        aux = [i.id for i in self.keystone.projects.list(tags=CONF.caso_tag)]
+        aux = []
+        try:
+            aux = [i.id for i in self.keystone.projects.list(tags=CONF.caso_tag)]
+        except Forbidden as e:
+            LOG.warning(f"Unable to get projects from Keystone, ignoring - {e}")
         return set(projects + aux)
 
-    def _get_keystone_client(self):
+    def _get_keystone_client(self, project=None, system_scope="all"):
         """Get a Keystone Client to get the projects that we will use."""
-        client = keystone_client.get_client(CONF, system_scope="all")
+        if project:
+            system_scope = None
+        client = keystone_client.get_client(
+            CONF, project=project, system_scope=system_scope
+        )
         return client
 
     def get_lastrun(self, project):
@@ -197,7 +208,16 @@ class Manager(object):
 
     def get_project_vo(self, project_id):
         """Get the VO where the project should be mapped."""
-        project = self.keystone.projects.get(project_id)
+        try:
+            project = self.keystone.projects.get(project_id)
+        except (EmptyCatalog, Forbidden):
+            # we may need scoping here, retrying
+            LOG.warning(
+                f"Scoping the keystone client to the current project {project_id}"
+            )
+            self.keystone = self._get_keystone_client(project_id)
+            project = self.keystone.projects.get(project_id)
+
         project.get()
         vo = project.to_dict().get(CONF.vo_property, None)
         if vo is None:
