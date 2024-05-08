@@ -15,10 +15,9 @@
 """Tests for the OpenStack nova extractor."""
 
 from caso.extract.openstack import nova
-from caso.extract import manager
-from caso.tests import base
 
 import unittest
+
 
 class TestCasoManager(unittest.TestCase):
     """Test case for Nova extractor."""

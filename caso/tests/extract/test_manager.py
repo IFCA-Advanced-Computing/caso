@@ -25,9 +25,9 @@ import unittest
 from unittest import mock
 
 from caso.extract import manager
-from caso.tests import base
 
 CONF = cfg.CONF
+
 
 class TestCasoManager(unittest.TestCase):
     """Test case for the cASO extractor manager."""
@@ -65,7 +65,6 @@ class TestCasoManager(unittest.TestCase):
         ret = self.manager.get_records()
         self.assertFalse(self.m_extractor.extract.called)
         self.assertEqual(ret, [])
-
 
     def test_extract(self):
         """Test that we extract records for a given project."""

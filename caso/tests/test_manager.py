@@ -14,14 +14,12 @@
 
 """Tests for `caso.manager` module."""
 
-from unittest.mock import patch 
 from oslo_concurrency.fixture import lockutils as lock_fixture
 import six
 import unittest
 from unittest import mock
 
 from caso import manager
-from caso.tests import base
 
 
 class TestCasoManager(unittest.TestCase):
@@ -48,4 +46,3 @@ class TestCasoManager(unittest.TestCase):
             p.stop()
 
         super(TestCasoManager, self).tearDown()
-
