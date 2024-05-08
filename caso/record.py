@@ -184,7 +184,10 @@ class CloudRecord(_BaseRecord):
     @property
     def end_time_epoch(self) -> typing.Optional[int]:
         """Get end time as epoch."""
-        return int(self.end_time.timestamp())
+        if self.end_time:
+            return int(self.end_time.timestamp())
+        else:
+            return 0
 
     @pydantic.computed_field()  # type: ignore[misc]
     @property

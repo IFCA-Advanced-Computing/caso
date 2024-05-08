@@ -18,6 +18,7 @@
 
 import operator
 
+import datetime
 import dateutil.parser
 from oslo_config import cfg
 from oslo_log import log
@@ -52,7 +53,8 @@ class CinderExtractor(base.BaseOpenStackExtractor):
         if vol_created < extract_from:
             vol_created = extract_from
 
-        active_duration = (extract_to - vol_created).total_seconds()
+        active_duration_delta = (extract_to - vol_created)
+        active_duration = (extract_to - vol_created - datetime.timedelta(microseconds=active_duration_delta.microseconds)).total_seconds()
 
         r = record.StorageRecord(
             uuid=volume.id,
