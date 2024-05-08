@@ -24,14 +24,14 @@ from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
 import six
-import testtools
+import unittest
 
 CONF = cfg.CONF
 
 _TRUE_VALUES = ("True", "true", "1", "yes")
 
 
-class TestCase(testtools.TestCase):
+class TestCase(unittest.TestCase):
     """Test case base class for all unit tests."""
 
     REQUIRES_LOCKING = False

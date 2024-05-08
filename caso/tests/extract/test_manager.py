@@ -19,14 +19,17 @@ import uuid
 
 import dateutil.parser
 from dateutil import tz
-import mock
+from oslo_config import cfg
 import six
+import unittest
+from unittest import mock
 
 from caso.extract import manager
 from caso.tests import base
 
+CONF = cfg.CONF
 
-class TestCasoManager(base.TestCase):
+class TestCasoManager(unittest.TestCase):
     """Test case for the cASO extractor manager."""
 
     def setUp(self):
@@ -63,6 +66,7 @@ class TestCasoManager(base.TestCase):
         self.assertFalse(self.m_extractor.extract.called)
         self.assertEqual(ret, [])
 
+
     def test_extract(self):
         """Test that we extract records for a given project."""
         self.flags(dry_run=True)
@@ -75,7 +79,7 @@ class TestCasoManager(base.TestCase):
         ret = self.manager.get_records()
         self.m_extractor.assert_called_once_with(
             "bazonk",
-            mock.ANY,
+            unittest.mock.ANY,
         )
         self.m_extractor.return_value.extract.assert_called_once_with(
             dateutil.parser.parse(extract_from).replace(tzinfo=tz.tzutc()),
@@ -102,7 +106,7 @@ class TestCasoManager(base.TestCase):
         extract_to = "2015-12-19"
         self.flags(extract_to=extract_to)
 
-        with mock.patch.object(self.manager, "get_lastrun") as m:
+        with unittest.mock.patch.object(self.manager, "get_lastrun") as m:
             m.return_value = lastrun
 
             ret = self.manager.get_records()
@@ -110,7 +114,7 @@ class TestCasoManager(base.TestCase):
             m.assert_called_once_with("bazonk")
             self.m_extractor.assert_called_once_with(
                 "bazonk",
-                mock.ANY,
+                unittest.mock.ANY,
             )
             self.m_extractor.return_value.extract.assert_called_once_with(
                 dateutil.parser.parse(lastrun).replace(tzinfo=tz.tzutc()),
@@ -126,9 +130,9 @@ class TestCasoManager(base.TestCase):
         else:
             builtins_open = "__builtin__.open"
 
-        fopen = mock.mock_open(read_data=str(expected))
-        with mock.patch("os.path.exists") as path:
-            with mock.patch(builtins_open, fopen):
+        fopen = unittest.mock.mock_open(read_data=str(expected))
+        with unittest.mock.patch("os.path.exists") as path:
+            with unittest.mock.patch(builtins_open, fopen):
                 path.return_value = True
                 self.assertEqual(expected, self.manager.get_lastrun("foo"))
 
@@ -138,9 +142,9 @@ class TestCasoManager(base.TestCase):
             builtins_open = "builtins.open"
         else:
             builtins_open = "__builtin__.open"
-        fopen = mock.mock_open(read_data="foo")
-        with mock.patch("os.path.exists") as path:
-            with mock.patch(builtins_open, fopen):
+        fopen = unittest.mock.mock_open(read_data="foo")
+        with unittest.mock.patch("os.path.exists") as path:
+            with unittest.mock.patch(builtins_open, fopen):
                 path.return_value = True
                 self.assertRaises(ValueError, self.manager.get_lastrun, "foo")
 
@@ -149,7 +153,7 @@ class TestCasoManager(base.TestCase):
         self.flags(dry_run=True)
         self.flags(projects=["bazonk"])
 
-        with mock.patch.object(self.manager, "write_lastrun") as m:
+        with unittest.mock.patch.object(self.manager, "write_lastrun") as m:
             self.manager.get_records()
             m.assert_called_once_with("bazonk")
 
@@ -161,6 +165,16 @@ class TestCasoManager(base.TestCase):
         else:
             builtins_open = "__builtin__.open"
 
-        with mock.patch(builtins_open, mock.mock_open()) as m:
+        with unittest.mock.patch(builtins_open, unittest.mock.mock_open()) as m:
             self.manager.get_records()
             m.assert_called_once_with("/var/spool/caso/lastrun.bazonk", "w")
+
+    def flags(self, **kw):
+        """Override flag variables for a test."""
+        group = kw.pop("group", None)
+        for k, v in six.iteritems(kw):
+            CONF.set_override(k, v, group)
+
+    def reset_flags(self):
+        """Reset flags."""
+        CONF.reset()
