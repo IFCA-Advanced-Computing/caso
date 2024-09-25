@@ -79,7 +79,7 @@ class CloudRecord(_BaseRecord):
 
     image_id: typing.Optional[str]
 
-    public_ip_count = 0
+    public_ip_count: int = 0
     cpu_count: int
     memory: int
     disk: int
