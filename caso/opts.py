@@ -25,6 +25,7 @@ import caso.keystone_client
 import caso.manager
 import caso.messenger.logstash
 import caso.messenger.ssm
+import caso.messenger.kafka
 
 
 def list_opts():
@@ -43,5 +44,6 @@ def list_opts():
         ("benchmark", caso.extract.openstack.nova.benchmark_opts),
         ("keystone_auth", caso.keystone_client.opts),
         ("logstash", caso.messenger.logstash.opts),
+        ("kafka", caso.messenger.kafka.opts),
         ("ssm", caso.messenger.ssm.opts),
     ]

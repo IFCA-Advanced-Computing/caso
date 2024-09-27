@@ -144,6 +144,7 @@ of every option. You should check at least the following options:
 
       * ``ssm`` for publishing APEL records.
       * ``logstash`` for publishing to Logstash.
+      * ``kafka`` for publishing to Kafka.
       * ``noop`` do nothing at all.
 
   Note that there might be other messengers available in the system if they are
@@ -200,6 +201,20 @@ messenger. Available options:
 
 * ``host`` (default: ``localhost``), host of Logstash server.
 * ``port`` (default: ``5000``), Logstash server port.
+
+``[kafka]`` section
+----------------------
+
+Options defined here configure the `kafka <https://opensearch.org/docs/latest/data-prepper/pipelines/configuration/sources/kafka/>`_
+messenger. based on `confluent-kafka <https://pypi.org/project/confluent-kafka/>`_:
+
+* ``brokers`` (default: ``localhost:9092``), endpoint of Kafka server. Port must be provided for each endpoint.
+* ``topic`` (default: ``caso``), Kafka topic.
+* ``serviceName`` (default: ``caso``), Kafka service name.
+* ``username`` (default: ``username``), Kafka username.
+* ``password`` (default: ``password``), Kafka password.
+
+Note: the connection to Kafka is Simple Authentication and Security Layer (SASL) authentication configuration enabled. SSL is also enabled. The CA certificate (base64) must be provided under `/var/private/ssl/accounting/ca.crt` of the host running cASO.
 
 Other cASO configuration options
 --------------------------------
