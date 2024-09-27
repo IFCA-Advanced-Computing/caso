@@ -197,8 +197,8 @@ class CloudRecord(_BaseRecord):
         if self._wall_duration is not None:
             duration = self._wall_duration
         elif self.end_time:
-            duration = self.end_time - self.start_time
-            duration = int(duration.total_seconds())
+            aux = self.end_time - self.start_time
+            duration = int(aux.total_seconds())
         return duration
 
     @wall_duration.setter
@@ -295,16 +295,16 @@ class IPRecord(_BaseRecord):
         """Get measurement time."""
         return self._measure_time
 
-    @pydantic.computed_field()
-    @property
-    def measure_time_epoch(self) -> int:
-        """Get measurement time as epoch."""
-        return int(self._measure_time.timestamp())
-
     @measure_time.setter
     def measure_time(self, measure_time: datetime.datetime) -> None:
         """Set measurement time."""
         self._measure_time = measure_time
+
+    @pydantic.computed_field()  # type: ignore[misc]
+    @property
+    def measure_time_epoch(self) -> int:
+        """Get measurement time as epoch."""
+        return int(self._measure_time.timestamp())
 
     def ssm_message(self):
         """Render record as the expected SSM message."""
@@ -477,32 +477,32 @@ class StorageRecord(_BaseRecord):
         """Get start time."""
         return self._start_time
 
+    @start_time.setter
+    def start_time(self, start_time: datetime.datetime) -> None:
+        """Set start time."""
+        self._start_time = start_time
+
     @pydantic.computed_field()  # type: ignore[misc]
     @property
     def start_time_epoch(self) -> int:
         """Get start time as epoch."""
         return int(self._start_time.timestamp())
 
-    @start_time.setter
-    def start_time(self, start_time: datetime.datetime) -> None:
-        """Set start time."""
-        self._start_time = start_time
-
     @property
     def measure_time(self) -> datetime.datetime:
         """Get measurement time."""
         return self._measure_time
+
+    @measure_time.setter
+    def measure_time(self, measure_time: datetime.datetime) -> None:
+        """Set measurement time."""
+        self._measure_time = measure_time
 
     @pydantic.computed_field()  # type: ignore[misc]
     @property
     def measure_time_epoch(self) -> int:
         """Get measurement time as epoch."""
         return int(self._measure_time.timestamp())
-
-    @measure_time.setter
-    def measure_time(self, measure_time: datetime.datetime) -> None:
-        """Set measurement time."""
-        self._measure_time = measure_time
 
     def ssm_message(self):
         """Render record as the expected SSM message."""
