@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    This release uses Pydantic 2 to enforce data validation. Code has been
+    thorougly tested and is supposed to work, being backwards compatible,
+    however we think it is safe to release as a major version.
