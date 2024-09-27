@@ -19,10 +19,7 @@
 import datetime
 import json
 
-import pytest
 
-
-@pytest.mark.skip(reason="Pydantic 1 does not support computed fields")
 def test_cloud_record(cloud_record):
     """Test a cloud record is correctly generated."""
     wall = datetime.timedelta(days=5).total_seconds()
@@ -33,9 +30,10 @@ def test_cloud_record(cloud_record):
 
     assert isinstance(cloud_record.start_time, datetime.datetime)
     assert isinstance(cloud_record.end_time, datetime.datetime)
+    assert isinstance(cloud_record.start_time_epoch, int)
+    assert isinstance(cloud_record.end_time_epoch, int)
 
 
-@pytest.mark.skip(reason="Pydantic 1 does not support computed fields")
 def test_cloud_record_map_opts(cloud_record, valid_cloud_record):
     """Test a cloud record is correctly rendered."""
     opts = {
@@ -43,7 +41,7 @@ def test_cloud_record_map_opts(cloud_record, valid_cloud_record):
         "exclude_none": True,
     }
 
-    assert json.loads(cloud_record.json(**opts)) == valid_cloud_record
+    assert json.loads(cloud_record.model_dump_json(**opts)) == valid_cloud_record
 
 
 def test_cloud_record_map_opts_custom_wall_cpu(cloud_record, valid_cloud_record):
@@ -58,10 +56,9 @@ def test_cloud_record_map_opts_custom_wall_cpu(cloud_record, valid_cloud_record)
         "exclude_none": True,
     }
 
-    assert json.loads(cloud_record.json(**opts)) == valid_cloud_record
+    assert json.loads(cloud_record.model_dump_json(**opts)) == valid_cloud_record
 
 
-@pytest.mark.skip(reason="Pydantic 1 does not support computed fields")
 def test_cloud_record_custom_wall(cloud_record):
     """Test a cloud record is correctly rendered with custom wall time."""
     wall = 200
@@ -82,7 +79,6 @@ def test_cloud_record_custom_wall_cpu(cloud_record):
     assert cloud_record.cpu_duration == cpu
 
 
-@pytest.mark.skip(reason="Pydantic 1 does not support computed fields")
 def test_cloud_record_custom_cpu(cloud_record):
     """Test a cloud record is correctly rendered with custom cpu time."""
     wall = datetime.timedelta(days=5).total_seconds()
@@ -104,7 +100,7 @@ def test_ip_record_map_opts(ip_record, valid_ip_record):
         "exclude_none": True,
     }
 
-    assert json.loads(ip_record.json(**opts)) == valid_ip_record
+    assert json.loads(ip_record.model_dump_json(**opts)) == valid_ip_record
 
 
 def test_accelerator_record(accelerator_record):
@@ -118,7 +114,10 @@ def test_accelerator_record_map_opts(accelerator_record, valid_accelerator_recor
         "by_alias": True,
         "exclude_none": True,
     }
-    assert json.loads(accelerator_record.json(**opts)) == valid_accelerator_record
+    assert (
+        json.loads(accelerator_record.model_dump_json(**opts))
+        == valid_accelerator_record  # noqa
+    )
 
 
 def test_storage_record(storage_record):
@@ -132,4 +131,4 @@ def test_storage_record_map_opts(storage_record, valid_storage_record):
         "by_alias": True,
         "exclude_none": True,
     }
-    assert json.loads(storage_record.json(**opts)) == valid_storage_record
+    assert json.loads(storage_record.model_dump_json(**opts)) == valid_storage_record

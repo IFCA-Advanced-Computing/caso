@@ -1,4 +1,4 @@
-sphinx>=4.0.0  # BSD
-sphinx_rtd_theme
+sphinx>=4.0.2
+sphinx_rtd_theme>=1.2.2
 
 reno>=2.5.0 # Apache-2.0

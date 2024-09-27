@@ -182,5 +182,5 @@ class SSMMessengerV04(SSMMessenger):
             "'ssm' as messenger instead in order to use the latest "
             "version."
         )
-        warnings.warn(msg, DeprecationWarning)
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
         super(SSMMessengerV04, self).__init__()

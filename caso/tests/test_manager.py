@@ -14,18 +14,16 @@
 
 """Tests for `caso.manager` module."""
 
-import mock
 from oslo_concurrency.fixture import lockutils as lock_fixture
 import six
+import unittest
+from unittest import mock
 
 from caso import manager
-from caso.tests import base
 
 
-class TestCasoManager(base.TestCase):
+class TestCasoManager(unittest.TestCase):
     """Test case for the cASO Manager."""
-
-    REQUIRES_LOCKING = True
 
     def setUp(self):
         """Set global test fixtures and mocks."""

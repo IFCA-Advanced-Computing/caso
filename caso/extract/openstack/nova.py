@@ -209,7 +209,7 @@ class NovaExtractor(base.BaseOpenStackExtractor):
             disk = flavor["disk"] + flavor["OS-FLV-EXT-DATA:ephemeral"]
         else:
             bench_name = bench_value = None
-            memory = cpu_count = disk = None
+            memory = cpu_count = disk = 0
 
         if not all([bench_name, bench_value]):
             if any([bench_name, bench_value]):

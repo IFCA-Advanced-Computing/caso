@@ -20,4 +20,4 @@ python-neutronclient>=6.7.0 # Apache-2.0
 keystoneauth1>=3.4.0 # Apache-2.0
 
 stevedore
-pydantic
+pydantic>=2.0.0
