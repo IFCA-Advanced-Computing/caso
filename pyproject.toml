@@ -1,7 +1,7 @@
 [tool.poetry]
 
 name = "caso"
-version = "4.2.0"
+version = "5.0.0"
 description = "cASO is an OpenStack Accounting extractor."
 readme = "README.md"
 license = "Apache-2.0"
