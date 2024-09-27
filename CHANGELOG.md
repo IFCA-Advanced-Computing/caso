@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.1](https://github.com/IFCA-Advanced-Computing/caso/compare/v5.0.0...v5.0.1) (2024-09-27)
+
+
+### Miscellaneous Chores
+
+* release 5.0.1 ([3cee70d](https://github.com/IFCA-Advanced-Computing/caso/commit/3cee70d1c1f7e5f4dd38f57eed8e18521bf0285a))
+
 ## [5.0.0](https://github.com/IFCA-Advanced-Computing/caso/compare/4.1.1...v5.0.0) (2024-09-27)
 
 
