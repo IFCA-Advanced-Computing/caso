@@ -178,12 +178,14 @@ class Manager(object):
                         "Using deprecated 'tenant' mapping, please "
                         "use 'projects' instead",
                         DeprecationWarning,
+                        stacklevel=2,
                     )
                 if tenants:
                     warnings.warn(
                         "Using deprecated 'tenants' mapping, please "
                         "use 'projects' instead",
                         DeprecationWarning,
+                        stacklevel=2,
                     )
                 tenants.append(tenant)
                 projects = vomap.get("projects", tenants)
