@@ -84,7 +84,6 @@ def map_cloud_fields(value: str) -> str:
         "disk": "Disk",
         "storage_record_id": "StorageRecordId",
         "image_id": "ImageId",
-        "cloud_type": "CloudType",
         "user_dn": "GlobalUserName",
         "public_ip_count": "PublicIPCount",
         "benchmark_value": "Benchmark",
