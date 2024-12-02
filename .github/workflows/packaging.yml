@@ -49,11 +49,16 @@ jobs:
       - name: Build sdist file
         run: poetry build
 
-      - name: Upload sidst to be used for other jobs
+      - name: Write release version
+        run: |
+          TAG=${{ github.ref_name }}
+          echo "VERSION=${TAG#v}" >> $GITHUB_ENV
+
+      - name: Upload sdist to be used for other jobs
         uses: actions/upload-artifact@v3
         with:
-          path: dist/caso-${{ github.ref_name }}.tar.gz
-          name: caso-${{ github.ref_name }}.tar.gz
+          path: dist/caso-${VERSION}.tar.gz
+          name: caso-${VERSION}.tar.gz
 
       - name: Update source distribution artifacts to release
         if: github.event_name == 'release'
@@ -82,15 +87,20 @@ jobs:
       
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Write release version
+        run: |
+          TAG=${{ github.ref_name }}
+          echo "VERSION=${TAG#v}" >> $GITHUB_ENV
       
       - name: Download sdist artifact
         uses: actions/download-artifact@v3
         with:
-          name: caso-${{ github.ref_name }}.tar.gz
+          name: caso-${VERSION}.tar.gz
           path: dist
 
       - name: Copy sdist to expected debian source file
-        run: cp dist/caso-${{ github.ref_name }}.tar.gz ../caso-${{ github.ref_name }}.orig.tar.gz
+        run: cp dist/caso-${VERSION}.tar.gz ../caso-${VERSION}.orig.tar.gz
 
       - name: Now build package
         run: dpkg-buildpackage -b
@@ -120,11 +130,16 @@ jobs:
         with:
           repository: IFCA/caso
           ref: ${{ github.ref_name }}
+
+      - name: Write release version
+        run: |
+          TAG=${{ github.ref_name }}
+          echo "VERSION=${TAG#v}" >> $GITHUB_ENV
       
       - name: Download sdist artifact
         uses: actions/download-artifact@v3
         with:
-          name: caso-${{ github.ref_name }}.tar.gz
+          name: caso-${VERSION}.tar.gz
           path: dist
 
       - name: debug
@@ -134,7 +149,7 @@ jobs:
         id: rpm
         uses: alvarolopez/rpmbuild@rockylinux9
         with:
-          source_file: dist/caso-${{ github.ref_name}}.tar.gz
+          source_file: dist/caso-${VERSION}.tar.gz
           spec_file: "packaging/redhat/caso.spec"
 
       - name: Update RPM artifacts to release
