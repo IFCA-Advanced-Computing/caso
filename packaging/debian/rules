@@ -7,4 +7,4 @@ export PYBUILD_NAME=caso
 	dh $@ --with python3 --buildsystem=pybuild
 
 override_dh_auto_test:
-	tox -epep8,bandit
+	tox -eflake8,bandit
