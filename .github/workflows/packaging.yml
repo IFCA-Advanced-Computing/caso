@@ -60,7 +60,7 @@ jobs:
           echo "VERSION=${TAG#v}" >> $GITHUB_ENV
 
       - name: Upload sdist to be used for other jobs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: dist/caso-${{ env.VERSION }}.tar.gz
           name: caso-${{ env.VERSION }}.tar.gz
@@ -108,7 +108,7 @@ jobs:
           echo "VERSION=${TAG#v}" >> $GITHUB_ENV
       
       - name: Download sdist artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: caso-${{ env.VERSION }}.tar.gz
           path: dist
@@ -156,7 +156,7 @@ jobs:
           echo "VERSION=${TAG#v}" >> $GITHUB_ENV
       
       - name: Download sdist artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: caso-${{ env.VERSION }}.tar.gz
           path: dist
