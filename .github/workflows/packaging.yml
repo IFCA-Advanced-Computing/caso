@@ -93,7 +93,7 @@ jobs:
         run: cp -r packaging/debian debian
 
       - name: Install Debian deps
-        run: sudo apt-get install -y dpkg-dev debhelper devscripts lintian python3-pip tox dh-python python3-all python3-all-dev python3-pbr
+        run: sudo apt-get install -y dpkg-dev debhelper devscripts lintian python3-pip tox dh-python python3-all python3-all-dev python3-pbr pybuild-plugin-pyproject
       
       - name: Install dependencies
         run: |
