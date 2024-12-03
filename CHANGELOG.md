@@ -1,5 +1,18 @@
 # Changelog
 
+## [5.1.0](https://github.com/IFCA-Advanced-Computing/caso/compare/v5.0.1...v5.1.0) (2024-12-03)
+
+
+### Features
+
+* VolumeCreationTime variable added ([9f9745e](https://github.com/IFCA-Advanced-Computing/caso/commit/9f9745ee58b046ce20688c27c0430fdad96ecec5))
+
+
+### Bug Fixes
+
+* do not assume admin privileges on keystone ([6daa0de](https://github.com/IFCA-Advanced-Computing/caso/commit/6daa0de5efc94064724a3e54019dd6f50d669dac)), closes [#124](https://github.com/IFCA-Advanced-Computing/caso/issues/124)
+* remove duplicated key in dict ([949f6bf](https://github.com/IFCA-Advanced-Computing/caso/commit/949f6bf40c9e670b79ccfd6f6294050fbafff739))
+
 ## [5.0.1](https://github.com/IFCA-Advanced-Computing/caso/compare/v5.0.0...v5.0.1) (2024-09-27)
 
 
