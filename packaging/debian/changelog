@@ -1,3 +1,27 @@
+python3-caso (5.1.1-1) stable; urgency=medium
+
+    [Alvaro Lopez Garcia]
+    * fix: remove duplicated key in dict
+    * doc: generate release notes for v5
+    * fix: solve mypy errors
+    * build: change build system to poetry
+    * fix: set explicit stacklevel on warnings
+    * doc: update doc requirements version
+    * doc: fix RTD build and update config
+    * feat!: use Pydantic 2 and move records to use computed_fields
+    * feat: include release please
+
+    [Enol Fernandez]
+    * fix: do not assume admin privileges on keystone
+
+    [Alessandro Costantini]
+    * feat: VolumeCreationTime variable added
+
+    [Aida Palacio]
+    * style: fix some flake8 style errors
+    * test: replace testtools for unittest to make tests work
+    * fix: fix some validation errors to be aligned to latest pydantic v2
+
 python3-caso (4.2.0-1) stable; urgency=medium
 
   [ Enol Fernandez ]
