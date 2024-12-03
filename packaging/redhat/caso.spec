@@ -1,17 +1,16 @@
 Name:        caso
-Version:     %{version}
 Release:     1%{?dist}
 Summary:     cASO is an OpenStack Accounting extractor
 
 License:     ASL 2.0
 URL:         https://github.com/IFCA/caso
-Source0:      https://github.com/IFCA/caso/caso-%{version}.tar.gz
 
 BuildArch: noarch
 BuildRequires: python3-devel
 BuildRequires: python3-setuptools
 BuildRequires: python3-pbr
 BuildRequires: python3-rpm-macros
+BuildRequires: pyproject-rpm-macros
 Requires: python3
 Requires: python3-oslo-config
 Requires: python3-oslo-concurrency
@@ -29,6 +28,9 @@ Requires: python3-dirq
 
 %?python_enable_dependency_generator
 
+%generate_buildrequires
+%pyproject_buildrequires
+
 %description 
 
 cASO is an OpenStack Accounting extractor to be used in the EGI.eu
@@ -39,10 +41,10 @@ Federated Cloud Infrastructure.
 %autosetup -n caso-%{version}
 
 %build
-%py3_build
+%pyproject_wheel
 
 %install
-%py3_install
+%pyproject_install
 mv %{buildroot}/usr/etc/ %{buildroot}/etc
 
 %check
