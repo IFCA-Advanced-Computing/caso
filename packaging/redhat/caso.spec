@@ -43,7 +43,6 @@ Federated Cloud Infrastructure.
 %autosetup -n caso-%{version}
 
 %build
-poetry install
 %pyproject_wheel
 
 %install
