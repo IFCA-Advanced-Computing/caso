@@ -5,5 +5,5 @@ upgrade:
     ``cASO`` user, please check the documentation.
 fixes:
   - |
-    * `#108 <https://github.com/IFCA/caso/issues/108>`. Failure getting
+    * `#108 <https://github.com/IFCA/caso/issues/108>`_. Failure getting
       accounting data when using different domains.
