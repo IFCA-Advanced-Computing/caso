@@ -224,13 +224,16 @@ class NovaExtractor(base.BaseOpenStackExtractor):
 
         floating_ips = self._count_ips_on_server(server)
 
+        # Filter out non-ascii characters for APEL compatibility.
         vm_name = server.name.encode("ascii", errors="ignore")
+        local_user_id = server.user_id.encode("ascii", errors="ignore")
+        global_username = user.encode("ascii", errors="ignore")
 
         r = record.CloudRecord(
             uuid=server.id,
             site_name=CONF.site_name,
             name=vm_name,
-            user_id=server.user_id,
+            user_id=local_user_id,
             group_id=server.tenant_id,
             fqan=self.vo,
             start_time=server_start,
@@ -238,7 +241,7 @@ class NovaExtractor(base.BaseOpenStackExtractor):
             compute_service=CONF.service_name,
             status=status,
             image_id=image_id,
-            user_dn=user,
+            user_dn=global_username,
             benchmark_type=bench_name,
             benchmark_value=bench_value,
             memory=memory,
