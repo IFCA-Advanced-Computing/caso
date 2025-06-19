@@ -37,6 +37,8 @@ opts += loading.get_auth_plugin_conf_options("password")
 def get_session(conf, project, system_scope=None):
     """Get an auth session."""
     # First try using project_id
+    if project:
+        system_scope = None
     auth_plugin = loading.load_auth_from_conf_options(
         conf, CFG_GROUP, project_id=project, system_scope=system_scope
     )

@@ -131,8 +131,6 @@ class Manager(object):
 
     def _get_keystone_client(self, project=None, system_scope="all"):
         """Get a Keystone Client to get the projects that we will use."""
-        if project:
-            system_scope = None
         client = keystone_client.get_client(
             CONF, project=project, system_scope=system_scope
         )
