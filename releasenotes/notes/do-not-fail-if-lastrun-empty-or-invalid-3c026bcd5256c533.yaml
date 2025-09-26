@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Do not fail if lastrun file is empty or invalid. This fixes an issue where
+    the lastrun file could become corrupted or empty, causing cASO to stop. 
+    Also, if the lastrun file is invalid, it will continue to run, skipping 
+    the invalid entries.

@@ -19,7 +19,6 @@
 import datetime
 import json
 import os.path
-import sys
 import warnings
 
 import dateutil.parser
@@ -148,9 +147,10 @@ class Manager(object):
             LOG.info(f"No lastrun file found, using '{date}'")
         try:
             date = dateutil.parser.parse(date)
-        except Exception:
+        except Exception as e:
             LOG.error(f"ERROR: Cannot read date from lastrun file '{lfile}'")
-            raise
+            LOG.exception(e)
+            raise e
         else:
             LOG.debug(f"Got '{date}' from lastrun file '{lfile}'")
         return date
@@ -271,7 +271,16 @@ class Manager(object):
 
             vo = self.get_project_vo(project)
 
-            extract_from = CONF.extract_from or self.get_lastrun(project)
+            try:
+                extract_from = CONF.extract_from or self.get_lastrun(project)
+            except ValueError:
+                LOG.error(
+                    f"Lastrun file for project {project} is not valid, or "
+                    "extract-from parameter is not valid. Please check the "
+                    "configuration!"
+                )
+                continue
+
             if isinstance(extract_from, six.string_types):
                 extract_from = dateutil.parser.parse(extract_from)
             if extract_from.tzinfo is None:
@@ -284,7 +293,7 @@ class Manager(object):
                     f"file for the project {project}!"
                     f"(extract-from: {extract_from})"
                 )
-                sys.exit(1)
+                continue
 
             record_count = 0
             for extractor_name, extractor_cls in self.extractors:
