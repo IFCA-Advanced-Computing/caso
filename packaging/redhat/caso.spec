@@ -1,9 +1,11 @@
 Name:        caso
+Version:     %{version}
 Release:     1%{?dist}
 Summary:     cASO is an OpenStack Accounting extractor
 
 License:     ASL 2.0
-URL:         https://github.com/IFCA/caso
+URL:         https://github.com/IFCA-Advanced-Computing/caso
+Source0:     https://github.com/IFCA-Advanced-Computing/caso/archive/v%{version}/caso-%{version}.tar.gz
 
 BuildArch: noarch
 BuildRequires: python3-devel

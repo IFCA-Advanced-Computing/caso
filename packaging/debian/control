@@ -2,7 +2,7 @@ Source: python3-caso
 Section: net
 Priority: extra
 Maintainer: Alvaro Lopez Garcia <aloga@ifca.unican.es>
-Homepage: https://github.com/IFCA/caso
+Homepage: https://github.com/IFCA-Advanced-Computing/caso
 Build-Depends:
  debhelper (>= 7.0.50),
  dh-python,
