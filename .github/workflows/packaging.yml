@@ -15,7 +15,7 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -42,7 +42,7 @@ jobs:
           python-version: 3.12
   
       - name: Get cASO repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
 
@@ -80,10 +80,10 @@ jobs:
       - build-sdist
     steps:
       - name: Get cASO repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
-      
+
       - name: Copy debian file into the correct place for the build
         run: cp -r packaging/debian debian
 
@@ -114,12 +114,6 @@ jobs:
       - name: Now build package
         run: dpkg-buildpackage -b
 
-      - name: debug
-        run: ls
-      
-      - name: debug
-        run: ls ..
-
       - name: Update DEB artifacts to release
         if: github.event_name == 'release'
         uses: AButler/upload-release-assets@v2.0
@@ -140,9 +134,8 @@ jobs:
           python-version: 3.12
 
       - name: Get cASO repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          repository: IFCA/caso
           ref: ${{ github.ref_name }}
 
       - name: Write release version
@@ -155,9 +148,6 @@ jobs:
         with:
           name: caso-${{ env.VERSION }}.tar.gz
           path: dist
-
-      - name: debug
-        run: ls
       
       - name: Build RPM package
         id: rpm
@@ -172,3 +162,4 @@ jobs:
         with:
           files: '${{ steps.rpm.outputs.rpm_dir_path }}/*/*rpm'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
