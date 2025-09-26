@@ -25,6 +25,7 @@ import unittest
 from unittest import mock
 
 from caso.extract import manager
+import caso.manager  # Import to register the spooldir option
 
 CONF = cfg.CONF
 
@@ -36,6 +37,7 @@ class TestCasoManager(unittest.TestCase):
         """Run before each test method to initialize test environment."""
         super(TestCasoManager, self).setUp()
         self.flags(extractor="mock")
+        self.flags(spooldir="/tmp/caso_test")
         self.p_extractors = mock.patch("caso.loading.get_available_extractors")
         patched = self.p_extractors.start()
         self.records = [{uuid.uuid4().hex: None}]
@@ -147,6 +149,86 @@ class TestCasoManager(unittest.TestCase):
                 path.return_value = True
                 self.assertRaises(ValueError, self.manager.get_lastrun, "foo")
 
+    def test_get_records_with_invalid_lastrun_continues(self):
+        """Test that get_records continues when lastrun file is invalid."""
+        self.flags(projects=["project1", "project2"])
+        
+        # Mock the file system operations to test exception handling path
+        with unittest.mock.patch.object(self.manager, "get_project_vo", return_value="test-vo") as m_vo:
+            with unittest.mock.patch('os.path.exists', return_value=True):
+                # One project gets invalid date, one gets valid date
+                file_contents = ["invalid-date-format", "2020-01-01 00:00:00"]
+                mock_file = unittest.mock.mock_open()
+                mock_file.return_value.read.side_effect = file_contents
+                
+                with unittest.mock.patch('builtins.open', mock_file):
+                    ret = self.manager.get_records()
+                    
+                    # Should call get_project_vo for both projects since VO lookup happens before lastrun
+                    self.assertEqual(m_vo.call_count, 2)
+                    m_vo.assert_any_call("project1")
+                    m_vo.assert_any_call("project2")
+                    
+                    # One project should succeed - doesn't matter which one for this test
+                    # The key is that get_records continues processing despite one project failing
+                    self.m_extractor.assert_called_once()
+                    args, kwargs = self.m_extractor.call_args
+                    self.assertEqual(args[1], "test-vo")  # VO should be correct
+                    self.assertIn(args[0], ["project1", "project2"])  # Should be one of the projects
+
+    def test_get_records_with_future_extract_from_continues(self):
+        """Test that get_records continues when extract_from is in the future."""
+        self.flags(projects=["project1", "project2"])
+        future_date = datetime.datetime.now(tz.tzutc()) + datetime.timedelta(days=1)
+        past_date = datetime.datetime.now(tz.tzutc()) - datetime.timedelta(days=1)
+        
+        # Mock file system operations and return dates
+        with unittest.mock.patch.object(self.manager, "get_project_vo", return_value="test-vo") as m_vo:
+            with unittest.mock.patch('os.path.exists', return_value=True):
+                # One project gets future date, one gets past date
+                file_contents = [str(future_date), str(past_date)]
+                mock_file = unittest.mock.mock_open()
+                mock_file.return_value.read.side_effect = file_contents
+                
+                with unittest.mock.patch('builtins.open', mock_file):
+                    ret = self.manager.get_records()
+                    
+                    # Should call get_project_vo for both projects since VO lookup happens before lastrun
+                    self.assertEqual(m_vo.call_count, 2)
+                    m_vo.assert_any_call("project1")
+                    m_vo.assert_any_call("project2")
+                    
+                    # One project should succeed - doesn't matter which one for this test
+                    # The key is that get_records continues processing despite one project failing
+                    self.m_extractor.assert_called_once()
+                    args, kwargs = self.m_extractor.call_args
+                    self.assertEqual(args[1], "test-vo")  # VO should be correct
+                    self.assertIn(args[0], ["project1", "project2"])  # Should be one of the projects
+
+    def test_get_lastrun_invalid_date_logs_exception(self):
+        """Test that get_lastrun properly logs exceptions when date parsing fails."""
+        if six.PY3:
+            builtins_open = "builtins.open"
+        else:
+            builtins_open = "__builtin__.open"
+        fopen = unittest.mock.mock_open(read_data="invalid-date-format")
+        
+        with unittest.mock.patch("os.path.exists") as path:
+            with unittest.mock.patch(builtins_open, fopen):
+                with unittest.mock.patch("caso.extract.manager.LOG") as mock_log:
+                    path.return_value = True
+                    
+                    with self.assertRaises(ValueError):
+                        self.manager.get_lastrun("test-project")
+                    
+                    # Verify that both error and exception were logged
+                    mock_log.error.assert_called_once()
+                    mock_log.exception.assert_called_once()
+                    
+                    # Check the error message contains the expected text
+                    error_call = mock_log.error.call_args[0][0]
+                    self.assertIn("Cannot read date from lastrun file", error_call)
+
     def test_write_lastrun_dry_run(self):
         """Test that we do not write lastrun file on dry run."""
         self.flags(dry_run=True)
@@ -166,7 +248,7 @@ class TestCasoManager(unittest.TestCase):
 
         with unittest.mock.patch(builtins_open, unittest.mock.mock_open()) as m:
             self.manager.get_records()
-            m.assert_called_once_with("/var/spool/caso/lastrun.bazonk", "w")
+            m.assert_called_once_with("/tmp/caso_test/lastrun.bazonk", "w")
 
     def flags(self, **kw):
         """Override flag variables for a test."""

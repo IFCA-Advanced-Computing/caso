@@ -31,7 +31,7 @@ CONF = cfg.CONF
 _TRUE_VALUES = ("True", "true", "1", "yes")
 
 
-class TestCase(unittest.TestCase):
+class TestCase(fixtures.TestWithFixtures, unittest.TestCase):
     """Test case base class for all unit tests."""
 
     REQUIRES_LOCKING = False
