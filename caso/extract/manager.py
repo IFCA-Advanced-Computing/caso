@@ -143,7 +143,10 @@ class Manager(object):
 
         if os.path.exists(lfile):
             with open(lfile, "r") as fd:
-                date = fd.read()
+                date = fd.read().strip()
+            if not date:
+                LOG.info(f"Lastrun file '{lfile}' is empty, using '{date}'")
+                date = "1970-01-01"
         else:
             LOG.info(f"No lastrun file found, using '{date}'")
         try:

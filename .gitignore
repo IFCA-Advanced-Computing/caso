@@ -50,4 +50,7 @@ ChangeLog
 *~
 .*.swp
 
+# Temporary test files
+test_*.py
+
 etc/caso.conf

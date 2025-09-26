@@ -24,6 +24,7 @@ import six
 import unittest
 from unittest import mock
 
+import caso.manager  # Import to register config options
 from caso.extract import manager
 
 CONF = cfg.CONF
@@ -36,6 +37,7 @@ class TestCasoManager(unittest.TestCase):
         """Run before each test method to initialize test environment."""
         super(TestCasoManager, self).setUp()
         self.flags(extractor="mock")
+        self.flags(spooldir="/var/spool/caso")
         self.p_extractors = mock.patch("caso.loading.get_available_extractors")
         patched = self.p_extractors.start()
         self.records = [{uuid.uuid4().hex: None}]
@@ -146,6 +148,34 @@ class TestCasoManager(unittest.TestCase):
             with unittest.mock.patch(builtins_open, fopen):
                 path.return_value = True
                 self.assertRaises(ValueError, self.manager.get_lastrun, "foo")
+
+    def test_lastrun_is_empty(self):
+        """Test that we handle empty lastrun files correctly."""
+        if six.PY3:
+            builtins_open = "builtins.open"
+        else:
+            builtins_open = "__builtin__.open"
+        fopen = unittest.mock.mock_open(read_data="")
+        with unittest.mock.patch("os.path.exists") as path:
+            with unittest.mock.patch(builtins_open, fopen):
+                path.return_value = True
+                expected = datetime.datetime(1970, 1, 1, 0, 0, 0)
+                result = self.manager.get_lastrun("foo")
+                self.assertEqual(expected, result)
+
+    def test_lastrun_is_whitespace_only(self):
+        """Test that we handle whitespace-only lastrun files correctly."""
+        if six.PY3:
+            builtins_open = "builtins.open"
+        else:
+            builtins_open = "__builtin__.open"
+        fopen = unittest.mock.mock_open(read_data="  \n\t  ")
+        with unittest.mock.patch("os.path.exists") as path:
+            with unittest.mock.patch(builtins_open, fopen):
+                path.return_value = True
+                expected = datetime.datetime(1970, 1, 1, 0, 0, 0)
+                result = self.manager.get_lastrun("foo")
+                self.assertEqual(expected, result)
 
     def test_write_lastrun_dry_run(self):
         """Test that we do not write lastrun file on dry run."""
