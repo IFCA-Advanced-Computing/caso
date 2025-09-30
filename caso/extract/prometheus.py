@@ -18,7 +18,7 @@
 
 import uuid
 
-from prometheus_api_client import PrometheusConnect
+import prometheus_api_client
 from oslo_config import cfg
 from oslo_log import log
 
@@ -100,7 +100,9 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
         query_range = CONF.prometheus.prometheus_query_range
         verify_ssl = CONF.prometheus.prometheus_verify_ssl
 
-        prom = PrometheusConnect(url=prom_url, disable_ssl=not verify_ssl)
+        prom = prometheus_api_client.PrometheusConnect(
+            url=prom_url, disable_ssl=not verify_ssl
+        )
 
         # factor = step_seconds / 3600 converts µW·s to µWh
         factor = step_seconds / 3600
