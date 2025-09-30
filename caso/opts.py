@@ -21,6 +21,7 @@ import itertools
 import caso.extract.base
 import caso.extract.manager
 import caso.extract.openstack.nova
+import caso.extract.prometheus
 import caso.keystone_client
 import caso.manager
 import caso.messenger.logstash
@@ -43,5 +44,6 @@ def list_opts():
         ("benchmark", caso.extract.openstack.nova.benchmark_opts),
         ("keystone_auth", caso.keystone_client.opts),
         ("logstash", caso.messenger.logstash.opts),
+        ("prometheus", caso.extract.prometheus.opts),
         ("ssm", caso.messenger.ssm.opts),
     ]
