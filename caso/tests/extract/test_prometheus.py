@@ -93,7 +93,7 @@ def mock_prometheus_result_empty():
 class TestEnergyConsumptionExtractor:
     """Test the energy consumption extractor."""
 
-    @mock.patch("caso.extract.prometheus.PrometheusConnect")
+    @mock.patch("caso.extract.prometheus.prometheus_api_client.PrometheusConnect")
     def test_extract_with_results(
         self,
         mock_prom_connect,
@@ -144,7 +144,7 @@ class TestEnergyConsumptionExtractor:
         # Verify - no VMs, no records
         assert len(records) == 0
 
-    @mock.patch("caso.extract.prometheus.PrometheusConnect")
+    @mock.patch("caso.extract.prometheus.prometheus_api_client.PrometheusConnect")
     def test_extract_with_no_energy_data(
         self,
         mock_prom_connect,
@@ -170,7 +170,7 @@ class TestEnergyConsumptionExtractor:
         assert len(records) == 0
 
     @mock.patch("caso.extract.prometheus.LOG")
-    @mock.patch("caso.extract.prometheus.PrometheusConnect")
+    @mock.patch("caso.extract.prometheus.prometheus_api_client.PrometheusConnect")
     def test_extract_with_prometheus_exception(
         self,
         mock_prom_connect,
