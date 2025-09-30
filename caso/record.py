@@ -555,3 +555,81 @@ class StorageRecord(_BaseRecord):
         populate_by_name=True,
         extra="forbid",
     )
+
+
+def map_energy_fields(field: str) -> str:
+    """Map object fields to accounting Energy Usage Record fields."""
+    d = {
+        "measurement_time_epoch": "MeasurementTime",
+        "site_name": "SiteName",
+        "cloud_type": "CloudType",
+        "user_id": "LocalUser",
+        "group_id": "LocalGroup",
+        "fqan": "FQAN",
+        "user_dn": "GlobalUserName",
+        "energy_consumption": "EnergyConsumption",
+        "energy_unit": "EnergyUnit",
+        "compute_service": "CloudComputeService",
+    }
+    return d.get(field, field)
+
+
+class EnergyRecord(_BaseRecord):
+    """The EnergyRecord class holds energy consumption information.
+
+    This class is used to report energy consumption metrics gathered from
+    external monitoring systems like Prometheus.
+    """
+
+    version: str = pydantic.Field("0.1", exclude=True)
+
+    uuid: m_uuid.UUID
+
+    user_id: typing.Optional[str]
+    user_dn: typing.Optional[str]
+    group_id: str
+    fqan: str
+
+    # Make these fields private, and deal with them as properties. This is done as  all
+    # the accounting infrastructure needs start and end times as integers, but it is
+    # easier for us to maintain them as datetime objects internally.
+    _measurement_time: datetime.datetime
+
+    energy_consumption: float
+    energy_unit: str = "kWh"
+
+    def __init__(self, measurement_time: datetime.datetime, *args, **kwargs):
+        """Initialize the record."""
+        super(EnergyRecord, self).__init__(*args, **kwargs)
+
+        self._measurement_time = measurement_time
+
+    @property
+    def measurement_time(self) -> datetime.datetime:
+        """Get measurement time."""
+        return self._measurement_time
+
+    @measurement_time.setter
+    def measurement_time(self, measurement_time: datetime.datetime) -> None:
+        """Set measurement time."""
+        self._measurement_time = measurement_time
+
+    @pydantic.computed_field()  # type: ignore[misc]
+    @property
+    def measurement_time_epoch(self) -> int:
+        """Get measurement time as epoch."""
+        return int(self._measurement_time.timestamp())
+
+    def ssm_message(self):
+        """Render record as the expected SSM message."""
+        opts = {
+            "by_alias": True,
+            "exclude_none": True,
+        }
+        return self.model_dump_json(**opts)
+
+    model_config = dict(
+        alias_generator=map_energy_fields,
+        populate_by_name=True,
+        extra="forbid",
+    )

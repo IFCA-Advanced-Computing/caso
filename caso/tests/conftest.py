@@ -757,3 +757,51 @@ def expected_message_storage() -> str:
         "</sr:StorageUsageRecords>"
     )
     return message
+
+
+# Energy record fixtures
+
+valid_energy_records_fields = [
+    dict(
+        uuid="e3c5aeef-37b8-4332-ad9f-9d068f156dc2",
+        measurement_time=now,
+        site_name="TEST-Site",
+        user_id="a4519d7d-f60a-4908-9d63-7d9e17422188",
+        group_id="03b6a6c4-cf2b-48b9-82f1-69c52b9f30af",
+        user_dn="User 1 DN",
+        fqan="VO 1 FQAN",
+        energy_consumption=125.5,
+        energy_unit="kWh",
+        compute_service="Fake Cloud Service",
+        cloud_type=cloud_type,
+    ),
+]
+
+valid_energy_records_dict = [
+    {
+        "CloudComputeService": "Fake Cloud Service",
+        "FQAN": "VO 1 FQAN",
+        "GlobalUserName": "User 1 DN",
+        "EnergyConsumption": 125.5,
+        "EnergyUnit": "kWh",
+        "LocalGroup": "03b6a6c4-cf2b-48b9-82f1-69c52b9f30af",
+        "LocalUser": "a4519d7d-f60a-4908-9d63-7d9e17422188",
+        "MeasurementTime": 1685051946,
+        "SiteName": "TEST-Site",
+        "uuid": "e3c5aeef-37b8-4332-ad9f-9d068f156dc2",
+        "CloudType": cloud_type,
+    },
+]
+
+
+@pytest.fixture()
+def energy_record() -> caso.record.EnergyRecord:
+    """Get a fixture for an Energy record."""
+    record = caso.record.EnergyRecord(**valid_energy_records_fields[0])
+    return record
+
+
+@pytest.fixture()
+def valid_energy_record() -> dict:
+    """Get a fixture for a valid Energy record as a dict."""
+    return valid_energy_records_dict[0]
