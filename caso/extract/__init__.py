@@ -19,11 +19,11 @@
 from caso.extract.openstack import CinderExtractor
 from caso.extract.openstack import NeutronExtractor
 from caso.extract.openstack import NovaExtractor
-from caso.extract.prometheus import PrometheusExtractor
+from caso.extract.prometheus import EnergyConsumptionExtractor
 
 __all__ = [
     "NovaExtractor",
     "CinderExtractor",
     "NeutronExtractor",
-    "PrometheusExtractor",
+    "EnergyConsumptionExtractor",
 ]

@@ -136,9 +136,12 @@ def test_storage_record_map_opts(storage_record, valid_storage_record):
 
 def test_energy_record(energy_record):
     """Test that an Energy record is correctly generated."""
-    assert isinstance(energy_record.measurement_time_epoch, int)
-    assert energy_record.energy_consumption == 125.5
-    assert energy_record.energy_unit == "kWh"
+    assert energy_record.energy_wh == 5.0
+    assert energy_record.work == 10.0
+    assert energy_record.efficiency == 0.5
+    assert energy_record.wall_clock_time_s == 3600
+    assert energy_record.cpu_duration_s == 1800
+    assert energy_record.status == "running"
 
 
 def test_energy_record_map_opts(energy_record, valid_energy_record):
