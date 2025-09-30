@@ -35,6 +35,7 @@ Contents:
    installation
    configuration
    configuration-file
+   prometheus-extractor
    multi-region
    usage
    troubleshooting

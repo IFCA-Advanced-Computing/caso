@@ -757,3 +757,61 @@ def expected_message_storage() -> str:
         "</sr:StorageUsageRecords>"
     )
     return message
+
+
+# Energy record fixtures
+
+valid_energy_records_fields = [
+    dict(
+        exec_unit_id="e3c5aeef-37b8-4332-ad9f-9d068f156dc2",
+        start_exec_time="2023-05-25T12:00:00Z",
+        end_exec_time="2023-05-25T18:00:00Z",
+        energy_wh=5.0,
+        work=10.0,
+        efficiency=0.5,
+        wall_clock_time_s=3600,
+        cpu_duration_s=1800,
+        suspend_duration_s=0,
+        cpu_normalization_factor=2.7,
+        exec_unit_finished=0,
+        status="running",
+        owner="VO 1 FQAN",
+        site_name="TEST-Site",
+        cloud_type=cloud_type,
+        compute_service="Fake Cloud Service",
+    ),
+]
+
+valid_energy_records_dict = [
+    {
+        "ExecUnitID": "e3c5aeef-37b8-4332-ad9f-9d068f156dc2",
+        "StartExecTime": "2023-05-25T12:00:00Z",
+        "EndExecTime": "2023-05-25T18:00:00Z",
+        "EnergyWh": 5.0,
+        "Work": 10.0,
+        "Efficiency": 0.5,
+        "WallClockTime_s": 3600,
+        "CpuDuration_s": 1800,
+        "SuspendDuration_s": 0,
+        "CPUNormalizationFactor": 2.7,
+        "ExecUnitFinished": 0,
+        "Status": "running",
+        "Owner": "VO 1 FQAN",
+        "SiteName": "TEST-Site",
+        "CloudType": cloud_type,
+        "CloudComputeService": "Fake Cloud Service",
+    },
+]
+
+
+@pytest.fixture()
+def energy_record() -> caso.record.EnergyRecord:
+    """Get a fixture for an Energy record."""
+    record = caso.record.EnergyRecord(**valid_energy_records_fields[0])
+    return record
+
+
+@pytest.fixture()
+def valid_energy_record() -> dict:
+    """Get a fixture for a valid Energy record as a dict."""
+    return valid_energy_records_dict[0]

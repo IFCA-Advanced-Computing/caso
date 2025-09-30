@@ -121,8 +121,15 @@ config file (``/etc/caso/caso.conf.sample``) includes a description
 of every option. You should check at least the following options:
 
 * ``extractor`` (default value: ``nova``), specifies which extractor to use for
-  getting the data. The following APIs are supported: ``ceilomenter`` and
-  ``nova``. Both should generate equivalent information.
+  getting the data. The following extractors are available:
+  
+      * ``nova`` - Extract VM accounting records from OpenStack Nova
+      * ``cinder`` - Extract storage accounting records from OpenStack Cinder
+      * ``neutron`` - Extract network/IP accounting records from OpenStack Neutron
+      * ``prometheus`` - Extract energy consumption metrics from Prometheus
+  
+  You can configure multiple extractors by providing a list (e.g., 
+  ``nova,cinder,prometheus``).
 * ``site_name`` (default value: ``<None>``). Name of the site as defined in
   GOCDB.
 * ``service_name`` (default value: ``$site_name``). Name of the service within
@@ -200,6 +207,33 @@ messenger. Available options:
 
 * ``host`` (default: ``localhost``), host of Logstash server.
 * ``port`` (default: ``5000``), Logstash server port.
+
+``[prometheus]`` section
+------------------------
+
+Options defined here configure the Prometheus extractor for gathering energy
+consumption metrics. This extractor uses the ``prometheus-api-client`` library
+to query a Prometheus instance and calculate energy consumption from 
+instantaneous power samples. Available options:
+
+* ``prometheus_endpoint`` (default: ``http://localhost:9090``), Prometheus
+  server endpoint URL.
+* ``prometheus_metric_name`` (default: ``prometheus_value``), Name of the 
+  Prometheus metric to query for energy consumption data.
+* ``prometheus_label_type_instance`` (default: ``scaph_process_power_microwatts``),
+  Value for the ``type_instance`` label used to filter metrics in Prometheus.
+* ``prometheus_step_seconds`` (default: ``30``), Frequency between samples in
+  the time series, in seconds. This is used to calculate energy from power samples.
+* ``prometheus_query_range`` (default: ``1h``), Time range for the Prometheus
+  query (e.g., ``1h``, ``6h``, ``24h``).
+* ``prometheus_verify_ssl`` (default: ``true``), Whether to verify SSL 
+  certificates when connecting to Prometheus.
+
+The extractor calculates energy in Watt-hours (Wh) from microwatt power samples
+using the formula: ``sum_over_time(metric{labels}[range]) * (step_seconds/3600) / 1000000``.
+
+To use the Prometheus extractor, add ``prometheus`` to the ``extractor`` option
+in the main configuration. For more details, see :doc:`prometheus-extractor`.
 
 Other cASO configuration options
 --------------------------------
