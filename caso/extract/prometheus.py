@@ -14,7 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-"""Module containing the Prometheus extractor for energy consumption metrics."""
+"""Module containing the Energy Consumption extractor for energy metrics."""
 
 import uuid
 
@@ -36,8 +36,8 @@ opts = [
     cfg.StrOpt(
         "prometheus_query",
         default="sum(rate(libvirt_domain_info_energy_consumption_joules_total"
-        '{uuid=~"{{uuid}}"}[5m])) * 300 / 3600000',
-        help="Prometheus query to retrieve energy consumption in kWh. "
+        '{uuid=~"{{uuid}}"}[5m])) * 300 / 3600',
+        help="Prometheus query to retrieve energy consumption in Wh. "
         "The query can use {{uuid}} as a template variable for the VM UUID.",
     ),
     cfg.IntOpt(
@@ -53,13 +53,24 @@ CONF.register_opts(opts, group="prometheus")
 LOG = log.getLogger(__name__)
 
 
-class PrometheusExtractor(base.BaseOpenStackExtractor):
-    """A Prometheus extractor for energy consumption metrics in cASO."""
+class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
+    """An energy consumption extractor for cASO."""
 
     def __init__(self, project, vo):
-        """Initialize a Prometheus extractor for a given project."""
-        super(PrometheusExtractor, self).__init__(project, vo)
+        """Initialize an energy consumption extractor for a given project."""
+        super(EnergyConsumptionExtractor, self).__init__(project, vo)
         self.nova = self._get_nova_client()
+        self.flavors = self._get_flavors()
+
+    def _get_flavors(self):
+        """Get flavors for the project."""
+        flavors = {}
+        try:
+            for flavor in self.nova.flavors.list(is_public=None):
+                flavors[flavor.id] = flavor.to_dict()
+        except Exception as e:
+            LOG.warning(f"Could not get flavors: {e}")
+        return flavors
 
     def _query_prometheus(self, query, timestamp=None):
         """Query Prometheus API and return results.
@@ -119,25 +130,82 @@ class PrometheusExtractor(base.BaseOpenStackExtractor):
 
         return servers
 
-    def _build_energy_record(self, vm_uuid, vm_name, energy_value, measurement_time):
+    def _build_energy_record(self, server, energy_value, extract_from, extract_to):
         """Build an energy consumption record for a VM.
 
-        :param vm_uuid: VM UUID
-        :param vm_name: VM name
-        :param energy_value: Energy consumption value in kWh
-        :param measurement_time: Time of measurement
+        :param server: Nova server object
+        :param energy_value: Energy consumption value in Wh
+        :param extract_from: Start time for extraction period
+        :param extract_to: End time for extraction period
         :returns: EnergyRecord object
         """
+        vm_uuid = str(server.id)
+        vm_status = server.status.lower()
+
+        # Get server creation time
+        import dateutil.parser
+
+        created_at = dateutil.parser.parse(server.created)
+
+        # Remove timezone info for comparison (extract_from/to are naive)
+        if created_at.tzinfo is not None:
+            created_at = created_at.replace(tzinfo=None)
+
+        # Calculate start and end times for the period
+        start_time = max(created_at, extract_from)
+        end_time = extract_to
+
+        # Calculate durations in seconds
+        duration = (end_time - start_time).total_seconds()
+        wall_clock_time_s = int(duration)
+
+        # For CPU duration, we need to multiply by vCPUs if available
+        # Get flavor info to get vCPUs
+        cpu_count = 1  # Default
+        try:
+            flavor = self.flavors.get(server.flavor.get("id"))
+            if flavor:
+                cpu_count = flavor.get("vcpus", 1)
+        except Exception:
+            pass
+
+        cpu_duration_s = wall_clock_time_s * cpu_count
+
+        # Calculate suspend duration (0 if running)
+        suspend_duration_s = 0
+        if vm_status in ["suspended", "paused"]:
+            suspend_duration_s = wall_clock_time_s
+
+        # ExecUnitFinished: 0 if running, 1 if stopped/deleted
+        exec_unit_finished = 0 if vm_status in ["active", "running"] else 1
+
+        # Calculate work (CPU time in hours)
+        work = cpu_duration_s / 3600.0
+
+        # Calculate efficiency (simple model: actual work / max possible work)
+        # Efficiency can be calculated as actual energy vs theoretical max
+        # For now, use a default value
+        efficiency = 0.5  # Placeholder
+
+        # CPU normalization factor (default to 1.0 if not available)
+        cpu_normalization_factor = 1.0
+
         r = record.EnergyRecord(
-            uuid=uuid.uuid4(),
-            measurement_time=measurement_time,
+            exec_unit_id=uuid.UUID(vm_uuid),
+            start_exec_time=start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            end_exec_time=end_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            energy_wh=energy_value,
+            work=work,
+            efficiency=efficiency,
+            wall_clock_time_s=wall_clock_time_s,
+            cpu_duration_s=cpu_duration_s,
+            suspend_duration_s=suspend_duration_s,
+            cpu_normalization_factor=cpu_normalization_factor,
+            exec_unit_finished=exec_unit_finished,
+            status=vm_status,
+            owner=self.vo,
             site_name=CONF.site_name,
-            user_id=None,
-            group_id=self.project_id,
-            user_dn=None,
-            fqan=self.vo,
-            energy_consumption=energy_value,
-            energy_unit="kWh",
+            cloud_type=self.cloud_type,
             compute_service=CONF.service_name,
         )
 
@@ -205,12 +273,12 @@ class PrometheusExtractor(base.BaseOpenStackExtractor):
                 energy_value = float(value[1])
 
                 LOG.debug(
-                    f"Creating energy record: {energy_value} kWh "
+                    f"Creating energy record: {energy_value} Wh "
                     f"for VM {vm_name} ({vm_uuid})"
                 )
 
                 energy_record = self._build_energy_record(
-                    vm_uuid, vm_name, energy_value, extract_to
+                    server, energy_value, extract_from, extract_to
                 )
                 records.append(energy_record)
 
