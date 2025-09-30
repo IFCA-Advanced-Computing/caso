@@ -560,15 +560,21 @@ class StorageRecord(_BaseRecord):
 def map_energy_fields(field: str) -> str:
     """Map object fields to accounting Energy Usage Record fields."""
     d = {
-        "measurement_time_epoch": "MeasurementTime",
+        "exec_unit_id": "ExecUnitID",
+        "start_exec_time": "StartExecTime",
+        "end_exec_time": "EndExecTime",
+        "energy_wh": "EnergyWh",
+        "work": "Work",
+        "efficiency": "Efficiency",
+        "wall_clock_time_s": "WallClockTime_s",
+        "cpu_duration_s": "CpuDuration_s",
+        "suspend_duration_s": "SuspendDuration_s",
+        "cpu_normalization_factor": "CPUNormalizationFactor",
+        "exec_unit_finished": "ExecUnitFinished",
+        "status": "Status",
+        "owner": "Owner",
         "site_name": "SiteName",
         "cloud_type": "CloudType",
-        "user_id": "LocalUser",
-        "group_id": "LocalGroup",
-        "fqan": "FQAN",
-        "user_dn": "GlobalUserName",
-        "energy_consumption": "EnergyConsumption",
-        "energy_unit": "EnergyUnit",
         "compute_service": "CloudComputeService",
     }
     return d.get(field, field)
@@ -583,42 +589,19 @@ class EnergyRecord(_BaseRecord):
 
     version: str = pydantic.Field("0.1", exclude=True)
 
-    uuid: m_uuid.UUID
-
-    user_id: typing.Optional[str]
-    user_dn: typing.Optional[str]
-    group_id: str
-    fqan: str
-
-    # Make these fields private, and deal with them as properties. This is done as  all
-    # the accounting infrastructure needs start and end times as integers, but it is
-    # easier for us to maintain them as datetime objects internally.
-    _measurement_time: datetime.datetime
-
-    energy_consumption: float
-    energy_unit: str = "kWh"
-
-    def __init__(self, measurement_time: datetime.datetime, *args, **kwargs):
-        """Initialize the record."""
-        super(EnergyRecord, self).__init__(*args, **kwargs)
-
-        self._measurement_time = measurement_time
-
-    @property
-    def measurement_time(self) -> datetime.datetime:
-        """Get measurement time."""
-        return self._measurement_time
-
-    @measurement_time.setter
-    def measurement_time(self, measurement_time: datetime.datetime) -> None:
-        """Set measurement time."""
-        self._measurement_time = measurement_time
-
-    @pydantic.computed_field()  # type: ignore[misc]
-    @property
-    def measurement_time_epoch(self) -> int:
-        """Get measurement time as epoch."""
-        return int(self._measurement_time.timestamp())
+    exec_unit_id: m_uuid.UUID
+    start_exec_time: str
+    end_exec_time: str
+    energy_wh: float
+    work: float
+    efficiency: float
+    wall_clock_time_s: int
+    cpu_duration_s: int
+    suspend_duration_s: int
+    cpu_normalization_factor: float
+    exec_unit_finished: int
+    status: str
+    owner: str
 
     def ssm_message(self):
         """Render record as the expected SSM message."""

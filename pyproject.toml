@@ -60,7 +60,7 @@ caso = "caso.opts:list_opts"
 nova = "caso.extract.openstack.nova:NovaExtractor"
 neutron = "caso.extract.openstack.neutron:NeutronExtractor"
 cinder = "caso.extract.openstack.cinder:CinderExtractor"
-prometheus = "caso.extract.prometheus:PrometheusExtractor"
+prometheus = "caso.extract.prometheus:EnergyConsumptionExtractor"
 
 
 [tool.poetry.plugins."caso.messenger"]
