@@ -212,20 +212,28 @@ messenger. Available options:
 ------------------------
 
 Options defined here configure the Prometheus extractor for gathering energy
-consumption metrics. This extractor queries a Prometheus instance to retrieve
-energy usage data. Available options:
+consumption metrics. This extractor uses the ``prometheus-api-client`` library
+to query a Prometheus instance and calculate energy consumption from 
+instantaneous power samples. Available options:
 
 * ``prometheus_endpoint`` (default: ``http://localhost:9090``), Prometheus
   server endpoint URL.
-* ``prometheus_query`` (default: 
-  ``sum(rate(node_energy_joules_total[5m])) * 300 / 3600000``), PromQL query
-  to retrieve energy consumption in kWh. This query should return energy 
-  consumption metrics that will be converted to accounting records.
-* ``prometheus_timeout`` (default: ``30``), Timeout for Prometheus API
-  requests in seconds.
+* ``prometheus_metric_name`` (default: ``prometheus_value``), Name of the 
+  Prometheus metric to query for energy consumption data.
+* ``prometheus_label_type_instance`` (default: ``scaph_process_power_microwatts``),
+  Value for the ``type_instance`` label used to filter metrics in Prometheus.
+* ``prometheus_step_seconds`` (default: ``30``), Frequency between samples in
+  the time series, in seconds. This is used to calculate energy from power samples.
+* ``prometheus_query_range`` (default: ``1h``), Time range for the Prometheus
+  query (e.g., ``1h``, ``6h``, ``24h``).
+* ``prometheus_verify_ssl`` (default: ``true``), Whether to verify SSL 
+  certificates when connecting to Prometheus.
+
+The extractor calculates energy in Watt-hours (Wh) from microwatt power samples
+using the formula: ``sum_over_time(metric{labels}[range]) * (step_seconds/3600) / 1000000``.
 
 To use the Prometheus extractor, add ``prometheus`` to the ``extractor`` option
-in the main configuration.
+in the main configuration. For more details, see :doc:`prometheus-extractor`.
 
 Other cASO configuration options
 --------------------------------
