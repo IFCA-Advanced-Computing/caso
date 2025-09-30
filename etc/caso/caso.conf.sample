@@ -407,9 +407,9 @@
 # Prometheus server endpoint URL. (string value)
 #prometheus_endpoint = http://localhost:9090
 
-# Prometheus query to retrieve energy consumption in kWh. The query should
-# return energy consumption metrics. (string value)
-#prometheus_query = sum(rate(node_energy_joules_total[5m])) * 300 / 3600000
+# Prometheus query to retrieve energy consumption in kWh. The query can use
+# {{uuid}} as a template variable for the VM UUID. (string value)
+#prometheus_query = sum(rate(libvirt_domain_info_energy_consumption_joules_total{uuid=~"{{uuid}}"}[5m])) * 300 / 3600000
 
 # Timeout for Prometheus API requests in seconds. (integer value)
 #prometheus_timeout = 30

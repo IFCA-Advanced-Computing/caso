@@ -22,7 +22,7 @@ import requests
 from oslo_config import cfg
 from oslo_log import log
 
-from caso.extract import base
+from caso.extract.openstack import base
 from caso import record
 
 CONF = cfg.CONF
@@ -35,9 +35,10 @@ opts = [
     ),
     cfg.StrOpt(
         "prometheus_query",
-        default="sum(rate(node_energy_joules_total[5m])) * 300 / 3600000",
+        default="sum(rate(libvirt_domain_info_energy_consumption_joules_total"
+        '{uuid=~"{{uuid}}"}[5m])) * 300 / 3600000',
         help="Prometheus query to retrieve energy consumption in kWh. "
-        "The query should return energy consumption metrics.",
+        "The query can use {{uuid}} as a template variable for the VM UUID.",
     ),
     cfg.IntOpt(
         "prometheus_timeout",
@@ -52,14 +53,13 @@ CONF.register_opts(opts, group="prometheus")
 LOG = log.getLogger(__name__)
 
 
-class PrometheusExtractor(base.BaseProjectExtractor):
+class PrometheusExtractor(base.BaseOpenStackExtractor):
     """A Prometheus extractor for energy consumption metrics in cASO."""
 
     def __init__(self, project, vo):
         """Initialize a Prometheus extractor for a given project."""
-        super(PrometheusExtractor, self).__init__(project)
-        self.vo = vo
-        self.project_id = project
+        super(PrometheusExtractor, self).__init__(project, vo)
+        self.nova = self._get_nova_client()
 
     def _query_prometheus(self, query, timestamp=None):
         """Query Prometheus API and return results.
@@ -95,9 +95,35 @@ class PrometheusExtractor(base.BaseProjectExtractor):
             LOG.error(f"Unexpected error querying Prometheus: {e}")
             return None
 
-    def _build_energy_record(self, energy_value, measurement_time):
-        """Build an energy consumption record.
+    def _get_servers(self, extract_from):
+        """Get all servers for a given date."""
+        servers = []
+        limit = 200
+        marker = None
+        # Use a marker and iter over results until we do not have more to get
+        while True:
+            aux = self.nova.servers.list(
+                search_opts={
+                    "changes-since": extract_from,
+                    "project_id": self.project_id,
+                    "all_tenants": True,
+                },
+                limit=limit,
+                marker=marker,
+            )
+            servers.extend(aux)
 
+            if len(aux) < limit:
+                break
+            marker = aux[-1].id
+
+        return servers
+
+    def _build_energy_record(self, vm_uuid, vm_name, energy_value, measurement_time):
+        """Build an energy consumption record for a VM.
+
+        :param vm_uuid: VM UUID
+        :param vm_name: VM name
         :param energy_value: Energy consumption value in kWh
         :param measurement_time: Time of measurement
         :returns: EnergyRecord object
@@ -121,7 +147,7 @@ class PrometheusExtractor(base.BaseProjectExtractor):
         """Extract energy consumption records from Prometheus.
 
         This method queries Prometheus for energy consumption metrics
-        in the specified time range.
+        for each VM in the project.
 
         :param extract_from: datetime.datetime object indicating the date to
                              extract records from
@@ -129,39 +155,64 @@ class PrometheusExtractor(base.BaseProjectExtractor):
                            extract records to
         :returns: A list of energy records
         """
+        # Remove timezone as Nova doesn't expect it
+        extract_from = extract_from.replace(tzinfo=None)
+        extract_to = extract_to.replace(tzinfo=None)
+
         records = []
 
-        # Query Prometheus at the extract_to timestamp
-        query = CONF.prometheus.prometheus_query
-        LOG.debug(
-            f"Querying Prometheus for project {self.project} " f"with query: {query}"
+        # Get all servers for the project
+        LOG.debug(f"Getting servers for project {self.project}")
+        servers = self._get_servers(extract_from)
+
+        LOG.info(
+            f"Found {len(servers)} VMs for project {self.project}, "
+            f"querying Prometheus for energy metrics"
         )
 
-        results = self._query_prometheus(query, extract_to)
+        # Query Prometheus for each server
+        query_template = CONF.prometheus.prometheus_query
 
-        if results is None:
-            LOG.warning(
-                f"No results returned from Prometheus for project {self.project}"
-            )
-            return records
+        for server in servers:
+            vm_uuid = str(server.id)
+            vm_name = server.name
 
-        # Process results and create records
-        for result in results:
-            value = result.get("value", [])
-
-            if len(value) < 2:
-                continue
-
-            # value is [timestamp, value_string]
-            energy_value = float(value[1])
+            # Replace template variables in the query
+            query = query_template.replace("{{uuid}}", vm_uuid)
 
             LOG.debug(
-                f"Creating energy record: {energy_value} kWh "
-                f"for project {self.project}"
+                f"Querying Prometheus for VM {vm_name} ({vm_uuid}) "
+                f"with query: {query}"
             )
 
-            energy_record = self._build_energy_record(energy_value, extract_to)
-            records.append(energy_record)
+            results = self._query_prometheus(query, extract_to)
+
+            if results is None:
+                LOG.warning(
+                    f"No results returned from Prometheus for VM "
+                    f"{vm_name} ({vm_uuid})"
+                )
+                continue
+
+            # Process results and create records
+            for result in results:
+                value = result.get("value", [])
+
+                if len(value) < 2:
+                    continue
+
+                # value is [timestamp, value_string]
+                energy_value = float(value[1])
+
+                LOG.debug(
+                    f"Creating energy record: {energy_value} kWh "
+                    f"for VM {vm_name} ({vm_uuid})"
+                )
+
+                energy_record = self._build_energy_record(
+                    vm_uuid, vm_name, energy_value, extract_to
+                )
+                records.append(energy_record)
 
         LOG.info(f"Extracted {len(records)} energy records for project {self.project}")
 
