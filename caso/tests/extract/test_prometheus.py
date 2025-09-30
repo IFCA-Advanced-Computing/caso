@@ -27,35 +27,102 @@ from caso.extract.prometheus import EnergyConsumptionExtractor
 CONF = cfg.CONF
 
 
+@pytest.fixture
+def extract_dates():
+    """Fixture for extraction date range."""
+    return {
+        "extract_from": datetime.datetime(2023, 5, 25, 0, 0, 0),
+        "extract_to": datetime.datetime(2023, 5, 25, 23, 59, 59),
+    }
+
+
+@pytest.fixture
+def mock_server():
+    """Fixture for a mock server."""
+    server = mock.Mock()
+    server.id = "e3c5aeef-37b8-4332-ad9f-9d068f156dc2"
+    server.name = "test-vm-1"
+    server.status = "ACTIVE"
+    server.created = "2023-05-25T12:00:00Z"
+    server.flavor = {"id": "flavor-1"}
+    return server
+
+
+@pytest.fixture
+def mock_flavors():
+    """Fixture for mock flavors."""
+    return {"flavor-1": {"vcpus": 2, "id": "flavor-1"}}
+
+
+@pytest.fixture
+def configured_extractor(mock_flavors):
+    """Fixture for a configured EnergyConsumptionExtractor."""
+    # Configure CONF
+    CONF.set_override("site_name", "TEST-Site")
+    CONF.set_override("service_name", "TEST-Service")
+
+    with mock.patch(
+        "caso.extract.openstack.base.BaseOpenStackExtractor.__init__",
+        return_value=None,
+    ), mock.patch(
+        "caso.extract.prometheus.EnergyConsumptionExtractor._get_flavors",
+        return_value=mock_flavors,
+    ), mock.patch(
+        "caso.extract.openstack.base.BaseOpenStackExtractor._get_nova_client"
+    ):
+        extractor = EnergyConsumptionExtractor("test-project", "test-vo")
+        extractor.project = "test-project"
+        extractor.vo = "test-vo"
+        extractor.project_id = "test-project-id"
+        extractor.cloud_type = "openstack"
+        yield extractor
+
+
+@pytest.fixture
+def prometheus_success_response():
+    """Fixture for a successful Prometheus response."""
+    response = mock.Mock()
+    response.json.return_value = {
+        "status": "success",
+        "data": {
+            "result": [
+                {
+                    "metric": {"instance": "test"},
+                    "value": [1685051946, "5.0"],
+                }
+            ]
+        },
+    }
+    response.raise_for_status = mock.Mock()
+    return response
+
+
+@pytest.fixture
+def prometheus_error_response():
+    """Fixture for a failed Prometheus response."""
+    response = mock.Mock()
+    response.json.return_value = {
+        "status": "error",
+        "error": "query failed",
+    }
+    response.raise_for_status = mock.Mock()
+    return response
+
+
 class TestEnergyConsumptionExtractor:
     """Test the energy consumption extractor."""
 
-    @mock.patch("caso.extract.prometheus.EnergyConsumptionExtractor._get_flavors")
-    @mock.patch("caso.extract.openstack.base.BaseOpenStackExtractor._get_nova_client")
-    @mock.patch("caso.extract.openstack.base.BaseOpenStackExtractor.__init__")
     @mock.patch("caso.extract.prometheus.requests.get")
     def test_extract_with_results(
-        self, mock_get, mock_base_init, mock_get_nova, mock_get_flavors
+        self,
+        mock_get,
+        configured_extractor,
+        mock_server,
+        extract_dates,
+        prometheus_success_response,
     ):
         """Test extraction with successful Prometheus query."""
-        # Configure CONF
-        CONF.set_override("site_name", "TEST-Site")
-        CONF.set_override("service_name", "TEST-Service")
-
-        # Mock the base class __init__ to do nothing
-        mock_base_init.return_value = None
-
-        # Mock flavors
-        mock_get_flavors.return_value = {"flavor-1": {"vcpus": 2, "id": "flavor-1"}}
-
-        # Mock Nova client and servers
-        mock_server1 = mock.Mock()
-        mock_server1.id = "e3c5aeef-37b8-4332-ad9f-9d068f156dc2"
-        mock_server1.name = "test-vm-1"
-        mock_server1.status = "ACTIVE"
-        mock_server1.created = "2023-05-25T12:00:00Z"
-        mock_server1.flavor = {"id": "flavor-1"}
-
+        # Create a second server
         mock_server2 = mock.Mock()
         mock_server2.id = "f4d6bedf-48c9-5f2f-b043-ebb4f9e65d73"
         mock_server2.name = "test-vm-2"
@@ -63,37 +130,18 @@ class TestEnergyConsumptionExtractor:
         mock_server2.created = "2023-05-25T12:00:00Z"
         mock_server2.flavor = {"id": "flavor-1"}
 
-        mock_nova = mock.Mock()
-        mock_nova.servers.list.return_value = [mock_server1, mock_server2]
-        mock_get_nova.return_value = mock_nova
-
-        # Create extractor and manually set required attributes
-        extractor = EnergyConsumptionExtractor("test-project", "test-vo")
-        extractor.project = "test-project"
-        extractor.vo = "test-vo"
-        extractor.project_id = "test-project-id"
-        extractor.cloud_type = "openstack"
+        # Mock Nova client with servers
+        configured_extractor.nova = mock.Mock()
+        configured_extractor.nova.servers.list.return_value = [
+            mock_server,
+            mock_server2,
+        ]
 
         # Mock Prometheus response
-        mock_response = mock.Mock()
-        mock_response.json.return_value = {
-            "status": "success",
-            "data": {
-                "result": [
-                    {
-                        "metric": {"instance": "test"},
-                        "value": [1685051946, "5.0"],
-                    }
-                ]
-            },
-        }
-        mock_response.raise_for_status = mock.Mock()
-        mock_get.return_value = mock_response
+        mock_get.return_value = prometheus_success_response
 
         # Extract records
-        extract_from = datetime.datetime(2023, 5, 25, 0, 0, 0)
-        extract_to = datetime.datetime(2023, 5, 25, 23, 59, 59)
-        records = extractor.extract(extract_from, extract_to)
+        records = configured_extractor.extract(**extract_dates)
 
         # Verify - should create 2 records (one per VM)
         assert len(records) == 2
@@ -101,133 +149,56 @@ class TestEnergyConsumptionExtractor:
         assert records[0].owner == "test-vo"
         assert records[0].status == "active"
 
-    @mock.patch("caso.extract.prometheus.EnergyConsumptionExtractor._get_flavors")
-    @mock.patch("caso.extract.openstack.base.BaseOpenStackExtractor._get_nova_client")
-    @mock.patch("caso.extract.openstack.base.BaseOpenStackExtractor.__init__")
-    def test_extract_with_no_vms(self, mock_base_init, mock_get_nova, mock_get_flavors):
+    def test_extract_with_no_vms(self, configured_extractor, extract_dates):
         """Test extraction when there are no VMs."""
-        # Configure CONF
-        CONF.set_override("site_name", "TEST-Site")
-        CONF.set_override("service_name", "TEST-Service")
-
-        # Mock the base class __init__ to do nothing
-        mock_base_init.return_value = None
-        mock_get_flavors.return_value = {}
-
         # Mock Nova client with no servers
-        mock_nova = mock.Mock()
-        mock_nova.servers.list.return_value = []
-        mock_get_nova.return_value = mock_nova
-
-        # Create extractor and manually set required attributes
-        extractor = EnergyConsumptionExtractor("test-project", "test-vo")
-        extractor.project = "test-project"
-        extractor.vo = "test-vo"
-        extractor.project_id = "test-project-id"
+        configured_extractor.nova = mock.Mock()
+        configured_extractor.nova.servers.list.return_value = []
 
         # Extract records
-        extract_from = datetime.datetime(2023, 5, 25, 0, 0, 0)
-        extract_to = datetime.datetime(2023, 5, 25, 23, 59, 59)
-        records = extractor.extract(extract_from, extract_to)
+        records = configured_extractor.extract(**extract_dates)
 
         # Verify - no VMs, no records
         assert len(records) == 0
 
-    @mock.patch("caso.extract.prometheus.EnergyConsumptionExtractor._get_flavors")
-    @mock.patch("caso.extract.openstack.base.BaseOpenStackExtractor._get_nova_client")
-    @mock.patch("caso.extract.openstack.base.BaseOpenStackExtractor.__init__")
     @mock.patch("caso.extract.prometheus.requests.get")
     def test_extract_with_failed_query(
-        self, mock_get, mock_base_init, mock_get_nova, mock_get_flavors
+        self,
+        mock_get,
+        configured_extractor,
+        mock_server,
+        extract_dates,
+        prometheus_error_response,
     ):
         """Test extraction when Prometheus query fails."""
-        # Configure CONF
-        CONF.set_override("site_name", "TEST-Site")
-        CONF.set_override("service_name", "TEST-Service")
-
-        # Mock the base class __init__ to do nothing
-        mock_base_init.return_value = None
-        mock_get_flavors.return_value = {}
-
-        # Mock Nova client and servers
-        mock_server = mock.Mock()
-        mock_server.id = "vm-uuid-1"
-        mock_server.name = "test-vm-1"
-        mock_server.status = "ACTIVE"
-        mock_server.created = "2023-05-25T12:00:00Z"
-        mock_server.flavor = {"id": "flavor-1"}
-
-        mock_nova = mock.Mock()
-        mock_nova.servers.list.return_value = [mock_server]
-        mock_get_nova.return_value = mock_nova
-
-        # Create extractor and manually set required attributes
-        extractor = EnergyConsumptionExtractor("test-project", "test-vo")
-        extractor.project = "test-project"
-        extractor.vo = "test-vo"
-        extractor.project_id = "test-project-id"
-        extractor.cloud_type = "openstack"
+        # Mock Nova client with servers
+        configured_extractor.nova = mock.Mock()
+        configured_extractor.nova.servers.list.return_value = [mock_server]
 
         # Mock Prometheus error response
-        mock_response = mock.Mock()
-        mock_response.json.return_value = {
-            "status": "error",
-            "error": "query failed",
-        }
-        mock_response.raise_for_status = mock.Mock()
-        mock_get.return_value = mock_response
+        mock_get.return_value = prometheus_error_response
 
         # Extract records
-        extract_from = datetime.datetime(2023, 5, 25, 0, 0, 0)
-        extract_to = datetime.datetime(2023, 5, 25, 23, 59, 59)
-        records = extractor.extract(extract_from, extract_to)
+        records = configured_extractor.extract(**extract_dates)
 
         # Verify - query failed, no records
         assert len(records) == 0
 
-    @mock.patch("caso.extract.prometheus.EnergyConsumptionExtractor._get_flavors")
-    @mock.patch("caso.extract.openstack.base.BaseOpenStackExtractor._get_nova_client")
-    @mock.patch("caso.extract.openstack.base.BaseOpenStackExtractor.__init__")
-    @mock.patch("caso.extract.prometheus.requests.get")
     @mock.patch("caso.extract.prometheus.LOG")
+    @mock.patch("caso.extract.prometheus.requests.get")
     def test_extract_with_request_exception(
-        self, mock_log, mock_get, mock_base_init, mock_get_nova, mock_get_flavors
+        self, mock_get, mock_log, configured_extractor, mock_server, extract_dates
     ):
         """Test extraction when request to Prometheus fails."""
-        # Configure CONF
-        CONF.set_override("site_name", "TEST-Site")
-        CONF.set_override("service_name", "TEST-Service")
-
-        # Mock the base class __init__ to do nothing
-        mock_base_init.return_value = None
-        mock_get_flavors.return_value = {}
-
-        # Mock Nova client and servers
-        mock_server = mock.Mock()
-        mock_server.id = "vm-uuid-1"
-        mock_server.name = "test-vm-1"
-        mock_server.status = "ACTIVE"
-        mock_server.created = "2023-05-25T12:00:00Z"
-        mock_server.flavor = {"id": "flavor-1"}
-
-        mock_nova = mock.Mock()
-        mock_nova.servers.list.return_value = [mock_server]
-        mock_get_nova.return_value = mock_nova
-
-        # Create extractor and manually set required attributes
-        extractor = EnergyConsumptionExtractor("test-project", "test-vo")
-        extractor.project = "test-project"
-        extractor.vo = "test-vo"
-        extractor.project_id = "test-project-id"
-        extractor.cloud_type = "openstack"
+        # Mock Nova client with servers
+        configured_extractor.nova = mock.Mock()
+        configured_extractor.nova.servers.list.return_value = [mock_server]
 
         # Mock request exception
         mock_get.side_effect = Exception("Connection error")
 
         # Extract records
-        extract_from = datetime.datetime(2023, 5, 25, 0, 0, 0)
-        extract_to = datetime.datetime(2023, 5, 25, 23, 59, 59)
-        records = extractor.extract(extract_from, extract_to)
+        records = configured_extractor.extract(**extract_dates)
 
         # Verify - exception caught, no records
         assert len(records) == 0
