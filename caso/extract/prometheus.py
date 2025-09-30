@@ -18,7 +18,7 @@
 
 import uuid
 
-import requests
+from prometheus_api_client import PrometheusConnect
 from oslo_config import cfg
 from oslo_log import log
 
@@ -34,16 +34,29 @@ opts = [
         help="Prometheus server endpoint URL.",
     ),
     cfg.StrOpt(
-        "prometheus_query",
-        default="sum(rate(libvirt_domain_info_energy_consumption_joules_total"
-        '{uuid=~"{{uuid}}"}[5m])) * 300 / 3600',
-        help="Prometheus query to retrieve energy consumption in Wh. "
-        "The query can use {{uuid}} as a template variable for the VM UUID.",
+        "prometheus_metric_name",
+        default="prometheus_value",
+        help="Name of the Prometheus metric to query for energy consumption.",
+    ),
+    cfg.StrOpt(
+        "prometheus_label_type_instance",
+        default="scaph_process_power_microwatts",
+        help="Value for the type_instance label in Prometheus queries.",
     ),
     cfg.IntOpt(
-        "prometheus_timeout",
+        "prometheus_step_seconds",
         default=30,
-        help="Timeout for Prometheus API requests in seconds.",
+        help="Frequency between samples in the time series (in seconds).",
+    ),
+    cfg.StrOpt(
+        "prometheus_query_range",
+        default="1h",
+        help="Query time range (e.g., '1h', '6h', '24h').",
+    ),
+    cfg.BoolOpt(
+        "prometheus_verify_ssl",
+        default=True,
+        help="Whether to verify SSL when connecting to Prometheus.",
     ),
 ]
 
@@ -72,39 +85,61 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
             LOG.warning(f"Could not get flavors: {e}")
         return flavors
 
-    def _query_prometheus(self, query, timestamp=None):
-        """Query Prometheus API and return results.
+    def _energy_consumed_wh(self, vm_uuid):
+        """Calculate the energy consumed (Wh) for a VM from Prometheus.
 
-        :param query: PromQL query string
-        :param timestamp: Optional timestamp for query (datetime object)
-        :returns: Query results
+        This function queries Prometheus for instantaneous power samples
+        (in microwatts) and calculates the energy consumed in Watt-hours.
+
+        :param vm_uuid: UUID of the VM to query energy for
+        :returns: Energy consumed in Watt-hours (Wh)
         """
-        endpoint = CONF.prometheus.prometheus_endpoint
-        url = f"{endpoint}/api/v1/query"
+        prom_url = CONF.prometheus.prometheus_endpoint
+        metric_name = CONF.prometheus.prometheus_metric_name
+        step_seconds = CONF.prometheus.prometheus_step_seconds
+        query_range = CONF.prometheus.prometheus_query_range
+        verify_ssl = CONF.prometheus.prometheus_verify_ssl
 
-        params = {"query": query}
-        if timestamp:
-            params["time"] = int(timestamp.timestamp())
+        prom = PrometheusConnect(url=prom_url, disable_ssl=not verify_ssl)
+
+        # factor = step_seconds / 3600 converts µW·s to µWh
+        factor = step_seconds / 3600
+
+        # Build labels for this VM
+        labels = {
+            "type_instance": CONF.prometheus.prometheus_label_type_instance,
+            "uuid": vm_uuid,
+        }
+
+        # Build label string: {key="value", ...}
+        label_selector = ",".join(f'{k}="{v}"' for k, v in labels.items())
+
+        # Construct the PromQL query
+        query = (
+            f"sum_over_time({metric_name}{{{label_selector}}}[{query_range}]) "
+            f"* {factor} / 1000000"
+        )
+
+        LOG.debug(f"Querying Prometheus for VM {vm_uuid} with query: {query}")
 
         try:
-            response = requests.get(
-                url, params=params, timeout=CONF.prometheus.prometheus_timeout
-            )
-            response.raise_for_status()
-            data = response.json()
+            # Run query
+            result = prom.custom_query(query=query)
 
-            if data.get("status") != "success":
-                error_msg = data.get("error", "Unknown error")
-                LOG.error(f"Prometheus query failed: {error_msg}")
-                return None
+            if not result:
+                LOG.debug(f"No energy data returned for VM {vm_uuid}")
+                return 0.0
 
-            return data.get("data", {}).get("result", [])
-        except requests.exceptions.RequestException as e:
-            LOG.error(f"Failed to query Prometheus: {e}")
-            return None
+            energy_wh = float(result[0]["value"][1])
+            LOG.debug(f"VM {vm_uuid} consumed {energy_wh:.4f} Wh")
+            return energy_wh
+
+        except (KeyError, IndexError, ValueError) as e:
+            LOG.warning(f"Error parsing Prometheus result for VM {vm_uuid}: {e}")
+            return 0.0
         except Exception as e:
-            LOG.error(f"Unexpected error querying Prometheus: {e}")
-            return None
+            LOG.error(f"Error querying Prometheus for VM {vm_uuid}: {e}")
+            return 0.0
 
     def _get_servers(self, extract_from):
         """Get all servers for a given date."""
@@ -239,48 +274,31 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
         )
 
         # Query Prometheus for each server
-        query_template = CONF.prometheus.prometheus_query
-
         for server in servers:
             vm_uuid = str(server.id)
             vm_name = server.name
 
-            # Replace template variables in the query
-            query = query_template.replace("{{uuid}}", vm_uuid)
+            LOG.debug(f"Querying energy consumption for VM {vm_name} ({vm_uuid})")
 
-            LOG.debug(
-                f"Querying Prometheus for VM {vm_name} ({vm_uuid}) "
-                f"with query: {query}"
-            )
+            # Get energy consumption using the new method
+            energy_value = self._energy_consumed_wh(vm_uuid)
 
-            results = self._query_prometheus(query, extract_to)
-
-            if results is None:
-                LOG.warning(
-                    f"No results returned from Prometheus for VM "
-                    f"{vm_name} ({vm_uuid})"
+            if energy_value <= 0:
+                LOG.debug(
+                    f"No energy consumption data for VM {vm_name} ({vm_uuid}), "
+                    "skipping record creation"
                 )
                 continue
 
-            # Process results and create records
-            for result in results:
-                value = result.get("value", [])
+            LOG.debug(
+                f"Creating energy record: {energy_value} Wh "
+                f"for VM {vm_name} ({vm_uuid})"
+            )
 
-                if len(value) < 2:
-                    continue
-
-                # value is [timestamp, value_string]
-                energy_value = float(value[1])
-
-                LOG.debug(
-                    f"Creating energy record: {energy_value} Wh "
-                    f"for VM {vm_name} ({vm_uuid})"
-                )
-
-                energy_record = self._build_energy_record(
-                    server, energy_value, extract_from, extract_to
-                )
-                records.append(energy_record)
+            energy_record = self._build_energy_record(
+                server, energy_value, extract_from, extract_to
+            )
+            records.append(energy_record)
 
         LOG.info(f"Extracted {len(records)} energy records for project {self.project}")
 
