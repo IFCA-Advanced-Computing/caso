@@ -132,3 +132,19 @@ def test_storage_record_map_opts(storage_record, valid_storage_record):
         "exclude_none": True,
     }
     assert json.loads(storage_record.model_dump_json(**opts)) == valid_storage_record
+
+
+def test_energy_record(energy_record):
+    """Test that an Energy record is correctly generated."""
+    assert isinstance(energy_record.measurement_time_epoch, int)
+    assert energy_record.energy_consumption == 125.5
+    assert energy_record.energy_unit == "kWh"
+
+
+def test_energy_record_map_opts(energy_record, valid_energy_record):
+    """Test that an Energy record is correctly rendered."""
+    opts = {
+        "by_alias": True,
+        "exclude_none": True,
+    }
+    assert json.loads(energy_record.model_dump_json(**opts)) == valid_energy_record
