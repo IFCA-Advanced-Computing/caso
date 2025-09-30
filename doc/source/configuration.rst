@@ -121,8 +121,15 @@ config file (``/etc/caso/caso.conf.sample``) includes a description
 of every option. You should check at least the following options:
 
 * ``extractor`` (default value: ``nova``), specifies which extractor to use for
-  getting the data. The following APIs are supported: ``ceilomenter`` and
-  ``nova``. Both should generate equivalent information.
+  getting the data. The following extractors are available:
+  
+      * ``nova`` - Extract VM accounting records from OpenStack Nova
+      * ``cinder`` - Extract storage accounting records from OpenStack Cinder
+      * ``neutron`` - Extract network/IP accounting records from OpenStack Neutron
+      * ``prometheus`` - Extract energy consumption metrics from Prometheus
+  
+  You can configure multiple extractors by providing a list (e.g., 
+  ``nova,cinder,prometheus``).
 * ``site_name`` (default value: ``<None>``). Name of the site as defined in
   GOCDB.
 * ``service_name`` (default value: ``$site_name``). Name of the service within
@@ -200,6 +207,25 @@ messenger. Available options:
 
 * ``host`` (default: ``localhost``), host of Logstash server.
 * ``port`` (default: ``5000``), Logstash server port.
+
+``[prometheus]`` section
+------------------------
+
+Options defined here configure the Prometheus extractor for gathering energy
+consumption metrics. This extractor queries a Prometheus instance to retrieve
+energy usage data. Available options:
+
+* ``prometheus_endpoint`` (default: ``http://localhost:9090``), Prometheus
+  server endpoint URL.
+* ``prometheus_query`` (default: 
+  ``sum(rate(node_energy_joules_total[5m])) * 300 / 3600000``), PromQL query
+  to retrieve energy consumption in kWh. This query should return energy 
+  consumption metrics that will be converted to accounting records.
+* ``prometheus_timeout`` (default: ``30``), Timeout for Prometheus API
+  requests in seconds.
+
+To use the Prometheus extractor, add ``prometheus`` to the ``extractor`` option
+in the main configuration.
 
 Other cASO configuration options
 --------------------------------
