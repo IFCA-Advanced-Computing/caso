@@ -4,7 +4,7 @@ This document provides information on using the Prometheus extractor to gather e
 
 ## Overview
 
-The Prometheus extractor queries a Prometheus instance to retrieve energy consumption metrics and generates `EnergyRecord` objects that can be published through cASO's messenger system.
+The Prometheus extractor queries a Prometheus instance to retrieve energy consumption metrics for each VM in the configured projects and generates `EnergyRecord` objects that can be published through cASO's messenger system.
 
 ## Configuration
 
@@ -20,38 +20,46 @@ extractor = nova,cinder,prometheus
 prometheus_endpoint = http://localhost:9090
 
 # PromQL query to retrieve energy consumption in kWh
-# This is the default query - customize it based on your Prometheus metrics
-prometheus_query = sum(rate(node_energy_joules_total[5m])) * 300 / 3600000
+# Use {{uuid}} as a template variable for the VM UUID
+prometheus_query = sum(rate(libvirt_domain_info_energy_consumption_joules_total{uuid=~"{{uuid}}"}[5m])) * 300 / 3600000
 
 # Timeout for Prometheus API requests (in seconds)
 prometheus_timeout = 30
 ```
 
+## How It Works
+
+The Prometheus extractor:
+
+1. **Scans VMs**: Retrieves the list of VMs from Nova for each configured project
+2. **Queries Per VM**: For each VM, executes a customizable Prometheus query
+3. **Template Variables**: Replaces `{{uuid}}` in the query with the actual VM UUID
+4. **Creates Records**: Generates an `EnergyRecord` for each VM with energy consumption data
+
 ## Customizing the PromQL Query
 
-The default query assumes you have a metric called `node_energy_joules_total` that tracks energy consumption in joules. The query:
-
-1. Calculates the rate of energy consumption over 5 minutes
-2. Multiplies by 300 (5 minutes in seconds) to get total joules
-3. Divides by 3,600,000 to convert from joules to kWh
-
-You should customize this query based on your specific Prometheus metrics and requirements.
+The query template can use `{{uuid}}` as a placeholder for the VM UUID. The default query assumes you have energy consumption metrics labeled with the VM UUID.
 
 ### Example Queries
 
-**For IPMI power metrics:**
+**For libvirt domain energy metrics:**
 ```promql
-sum(ipmi_power_watts) * 5 * 60 / 1000 / 3600
+sum(rate(libvirt_domain_info_energy_consumption_joules_total{uuid=~"{{uuid}}"}[5m])) * 300 / 3600000
 ```
 
-**For RAPL energy metrics:**
+**For per-VM IPMI power metrics:**
 ```promql
-sum(rate(node_rapl_package_joules_total[5m])) * 300 / 3600000
+avg_over_time(ipmi_power_watts{instance=~".*{{uuid}}.*"}[5m]) * 5 * 60 / 1000 / 3600
 ```
 
-**For Scaphandre metrics:**
+**For VM-specific RAPL energy metrics:**
 ```promql
-sum(rate(scaph_host_power_microwatts[5m])) * 300 / 1000000 / 3600
+sum(rate(node_rapl_package_joules_total{vm_uuid="{{uuid}}"}[5m])) * 300 / 3600000
+```
+
+**For Scaphandre per-process metrics:**
+```promql
+sum(rate(scaph_process_power_consumption_microwatts{exe=~".*qemu.*",cmdline=~".*{{uuid}}.*"}[5m])) * 300 / 1000000 / 3600
 ```
 
 ## Energy Record Format
@@ -85,7 +93,7 @@ The records will be serialized as JSON with field mapping according to the accou
 To test your Prometheus extractor configuration:
 
 1. Verify Prometheus is accessible from cASO
-2. Test your PromQL query directly in Prometheus
+2. Test your PromQL query directly in Prometheus UI with a sample UUID
 3. Run cASO with the `--dry-run` option to preview records without publishing
 4. Check the logs for any errors or warnings
 
@@ -102,7 +110,7 @@ messengers = ssm
 
 [prometheus]
 prometheus_endpoint = http://prometheus.example.com:9090
-prometheus_query = sum(rate(node_energy_joules_total[5m])) * 300 / 3600000
+prometheus_query = sum(rate(libvirt_domain_info_energy_consumption_joules_total{uuid=~"{{uuid}}"}[5m])) * 300 / 3600000
 prometheus_timeout = 30
 
 [ssm]
@@ -113,8 +121,9 @@ output_path = /var/spool/apel/outgoing/openstack
 
 **No records extracted:**
 - Verify Prometheus is accessible
-- Check that your query returns results in Prometheus UI
+- Check that your query returns results in Prometheus UI (replace {{uuid}} with an actual VM UUID)
 - Ensure the time range (extract_from/extract_to) covers periods with data
+- Verify VMs exist in the configured projects
 
 **Connection timeout:**
 - Increase `prometheus_timeout` value
@@ -124,4 +133,10 @@ output_path = /var/spool/apel/outgoing/openstack
 **Invalid query results:**
 - Ensure your query returns numeric values
 - Check the query format matches PromQL syntax
-- Verify the metrics exist in your Prometheus instance
+- Verify the metrics exist in your Prometheus instance for the VMs
+- Test the query with a real VM UUID in Prometheus UI
+
+**No VMs found:**
+- Verify the projects are correctly configured in cASO
+- Check that VMs exist in the OpenStack environment
+- Ensure cASO has proper credentials to query Nova
