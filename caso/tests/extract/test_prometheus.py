@@ -79,47 +79,28 @@ def configured_extractor(mock_flavors):
 
 
 @pytest.fixture
-def prometheus_success_response():
-    """Fixture for a successful Prometheus response."""
-    response = mock.Mock()
-    response.json.return_value = {
-        "status": "success",
-        "data": {
-            "result": [
-                {
-                    "metric": {"instance": "test"},
-                    "value": [1685051946, "5.0"],
-                }
-            ]
-        },
-    }
-    response.raise_for_status = mock.Mock()
-    return response
+def mock_prometheus_result_success():
+    """Fixture for a successful Prometheus API result."""
+    return [{"metric": {"uuid": "test-uuid"}, "value": [1685051946, "5.0"]}]
 
 
 @pytest.fixture
-def prometheus_error_response():
-    """Fixture for a failed Prometheus response."""
-    response = mock.Mock()
-    response.json.return_value = {
-        "status": "error",
-        "error": "query failed",
-    }
-    response.raise_for_status = mock.Mock()
-    return response
+def mock_prometheus_result_empty():
+    """Fixture for an empty Prometheus API result."""
+    return []
 
 
 class TestEnergyConsumptionExtractor:
     """Test the energy consumption extractor."""
 
-    @mock.patch("caso.extract.prometheus.requests.get")
+    @mock.patch("caso.extract.prometheus.PrometheusConnect")
     def test_extract_with_results(
         self,
-        mock_get,
+        mock_prom_connect,
         configured_extractor,
         mock_server,
         extract_dates,
-        prometheus_success_response,
+        mock_prometheus_result_success,
     ):
         """Test extraction with successful Prometheus query."""
         # Create a second server
@@ -137,8 +118,10 @@ class TestEnergyConsumptionExtractor:
             mock_server2,
         ]
 
-        # Mock Prometheus response
-        mock_get.return_value = prometheus_success_response
+        # Mock Prometheus client
+        mock_prom = mock.Mock()
+        mock_prom.custom_query.return_value = mock_prometheus_result_success
+        mock_prom_connect.return_value = mock_prom
 
         # Extract records
         records = configured_extractor.extract(**extract_dates)
@@ -161,41 +144,50 @@ class TestEnergyConsumptionExtractor:
         # Verify - no VMs, no records
         assert len(records) == 0
 
-    @mock.patch("caso.extract.prometheus.requests.get")
-    def test_extract_with_failed_query(
+    @mock.patch("caso.extract.prometheus.PrometheusConnect")
+    def test_extract_with_no_energy_data(
         self,
-        mock_get,
+        mock_prom_connect,
         configured_extractor,
         mock_server,
         extract_dates,
-        prometheus_error_response,
+        mock_prometheus_result_empty,
     ):
-        """Test extraction when Prometheus query fails."""
+        """Test extraction when Prometheus returns no energy data."""
         # Mock Nova client with servers
         configured_extractor.nova = mock.Mock()
         configured_extractor.nova.servers.list.return_value = [mock_server]
 
-        # Mock Prometheus error response
-        mock_get.return_value = prometheus_error_response
+        # Mock Prometheus client with empty result
+        mock_prom = mock.Mock()
+        mock_prom.custom_query.return_value = mock_prometheus_result_empty
+        mock_prom_connect.return_value = mock_prom
 
         # Extract records
         records = configured_extractor.extract(**extract_dates)
 
-        # Verify - query failed, no records
+        # Verify - no energy data, no records
         assert len(records) == 0
 
     @mock.patch("caso.extract.prometheus.LOG")
-    @mock.patch("caso.extract.prometheus.requests.get")
-    def test_extract_with_request_exception(
-        self, mock_get, mock_log, configured_extractor, mock_server, extract_dates
+    @mock.patch("caso.extract.prometheus.PrometheusConnect")
+    def test_extract_with_prometheus_exception(
+        self,
+        mock_prom_connect,
+        mock_log,
+        configured_extractor,
+        mock_server,
+        extract_dates,
     ):
-        """Test extraction when request to Prometheus fails."""
+        """Test extraction when Prometheus query raises an exception."""
         # Mock Nova client with servers
         configured_extractor.nova = mock.Mock()
         configured_extractor.nova.servers.list.return_value = [mock_server]
 
-        # Mock request exception
-        mock_get.side_effect = Exception("Connection error")
+        # Mock Prometheus client to raise exception
+        mock_prom = mock.Mock()
+        mock_prom.custom_query.side_effect = Exception("Connection error")
+        mock_prom_connect.return_value = mock_prom
 
         # Extract records
         records = configured_extractor.extract(**extract_dates)
