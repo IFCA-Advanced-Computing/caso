@@ -1,3 +1,4 @@
+%{!?version:%define version 5.1.0}
 Name:        caso
 Version:     %{version}
 Release:     1%{?dist}
