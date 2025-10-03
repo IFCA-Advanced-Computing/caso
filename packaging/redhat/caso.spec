@@ -65,7 +65,7 @@ mv %{buildroot}/usr/etc/ %{buildroot}/etc
 %exclude /etc/caso/caso-config-generator.conf
 
 %changelog
-* Wed Jun 06 2023 Alvaro Lopez Garcia <aloga@ifca.unican.es> 4.2.0
+* Tue Jun 06 2023 Alvaro Lopez Garcia <aloga@ifca.unican.es> 4.2.0
 - fix: use POSIX timestamps for SSM cloud records
 - Render JSON dates as timestamp integers
 - Do not render records using .dict() but usin JSON
@@ -91,7 +91,7 @@ mv %{buildroot}/usr/etc/ %{buildroot}/etc
 - Remove deprecated option
 - Update configuration file
 - Default to all OpenStack extractors
-* Thu Mar 20 2023 Alvaro Lopez Garcia <aloga@ifca.unican.es> 4.0.0
+* Mon Mar 20 2023 Alvaro Lopez Garcia <aloga@ifca.unican.es> 4.0.0
 - Remove deprecated extractor base class
 - Allow to configure more than one extractor
 - Adapt neutron extractor code to new format
