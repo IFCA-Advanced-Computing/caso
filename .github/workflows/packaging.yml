@@ -156,10 +156,33 @@ jobs:
       
       - name: Build RPM package
         id: rpm
-        uses: alvarolopez/rpmbuild@rockylinux9
-        with:
-          source_file: dist/caso-${{ env.VERSION }}.tar.gz
-          spec_file: "packaging/redhat/caso.spec"
+        run: |
+          # Create RPM build environment in Docker
+          docker run --rm \
+            -v $PWD:/workspace \
+            -w /workspace \
+            rockylinux:9 \
+            bash -c "
+              # Install build dependencies
+              dnf install -y rpm-build rpmdevtools python3-devel python3-setuptools python3-pbr python3-rpm-macros pyproject-rpm-macros
+              
+              # Set up RPM build tree
+              rpmdev-setuptree
+              
+              # Copy spec file and source
+              cp packaging/redhat/caso.spec ~/rpmbuild/SPECS/
+              cp dist/caso-${{ env.VERSION }}.tar.gz ~/rpmbuild/SOURCES/
+              
+              # Build RPM
+              rpmbuild -ba --define 'version ${{ env.VERSION }}' ~/rpmbuild/SPECS/caso.spec
+              
+              # Copy built RPMs to workspace
+              mkdir -p /workspace/rpmbuild/RPMS
+              mkdir -p /workspace/rpmbuild/SRPMS
+              cp -r ~/rpmbuild/RPMS/* /workspace/rpmbuild/RPMS/ || true
+              cp ~/rpmbuild/SRPMS/*.rpm /workspace/rpmbuild/SRPMS/ || true
+            "
+          echo "rpm_dir_path=$PWD/rpmbuild" >> $GITHUB_OUTPUT
 
       - name: Update RPM artifacts to release
         if: github.event_name == 'release'
