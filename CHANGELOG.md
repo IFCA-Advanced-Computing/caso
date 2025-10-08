@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.2.0](https://github.com/IFCA-Advanced-Computing/caso/compare/v5.1.0...v5.2.0) (2025-10-08)
+
+
+### Features
+
+* do not fail if lastrun is invalid ([74eb6bd](https://github.com/IFCA-Advanced-Computing/caso/commit/74eb6bd6df41bfc0d57683524caa2e8ca80ba021)), closes [#146](https://github.com/IFCA-Advanced-Computing/caso/issues/146)
+
+
+### Bug Fixes
+
+* Move system_scope check to the keystone_client ([75031e7](https://github.com/IFCA-Advanced-Computing/caso/commit/75031e77ab3f727388351eb60fd4d07c85c3c58c))
+
 ## [5.1.0](https://github.com/IFCA-Advanced-Computing/caso/compare/v5.0.1...v5.1.0) (2024-12-03)
 
 
