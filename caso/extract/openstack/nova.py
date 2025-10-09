@@ -227,7 +227,7 @@ class NovaExtractor(base.BaseOpenStackExtractor):
         # Filter out non-ascii characters for APEL compatibility.
         vm_name = server.name.encode("ascii", errors="ignore")
         local_user_id = server.user_id.encode("ascii", errors="ignore")
-        global_username = user.encode("ascii", errors="ignore")
+        global_username = user.encode("ascii", errors="ignore") if user else None
 
         r = record.CloudRecord(
             uuid=server.id,
