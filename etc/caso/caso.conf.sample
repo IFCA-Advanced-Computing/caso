@@ -410,8 +410,14 @@
 # Name of the Prometheus metric to query for energy consumption. (string value)
 #prometheus_metric_name = prometheus_value
 
-# Value for the type_instance label in Prometheus queries. (string value)
-#prometheus_label_type_instance = scaph_process_power_microwatts
+# Name of the label that matches the VM UUID in Prometheus metrics. (string
+# value)
+#vm_uuid_label_name = uuid
+
+# List of label filters as key:value pairs to filter the Prometheus metric
+# (e.g., 'type_instance:scaph_process_power_microwatts'). The VM UUID label
+# will be added automatically based on vm_uuid_label_name. (list value)
+#labels = type_instance:scaph_process_power_microwatts
 
 # Frequency between samples in the time series (in seconds). (integer value)
 #prometheus_step_seconds = 30

@@ -39,9 +39,16 @@ opts = [
         help="Name of the Prometheus metric to query for energy consumption.",
     ),
     cfg.StrOpt(
-        "prometheus_label_type_instance",
-        default="scaph_process_power_microwatts",
-        help="Value for the type_instance label in Prometheus queries.",
+        "vm_uuid_label_name",
+        default="uuid",
+        help="Name of the label that matches the VM UUID in Prometheus metrics.",
+    ),
+    cfg.ListOpt(
+        "labels",
+        default=["type_instance:scaph_process_power_microwatts"],
+        help="List of label filters as key:value pairs to filter the Prometheus "
+        "metric (e.g., 'type_instance:scaph_process_power_microwatts'). "
+        "The VM UUID label will be added automatically based on vm_uuid_label_name.",
     ),
     cfg.IntOpt(
         "prometheus_step_seconds",
@@ -99,6 +106,8 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
         step_seconds = CONF.prometheus.prometheus_step_seconds
         query_range = CONF.prometheus.prometheus_query_range
         verify_ssl = CONF.prometheus.prometheus_verify_ssl
+        vm_uuid_label_name = CONF.prometheus.vm_uuid_label_name
+        label_filters = CONF.prometheus.labels
 
         prom = prometheus_api_client.PrometheusConnect(
             url=prom_url, disable_ssl=not verify_ssl
@@ -107,11 +116,20 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
         # factor = step_seconds / 3600 converts µW·s to µWh
         factor = step_seconds / 3600
 
-        # Build labels for this VM
-        labels = {
-            "type_instance": CONF.prometheus.prometheus_label_type_instance,
-            "uuid": vm_uuid,
-        }
+        # Build labels dictionary from the list of "key:value" strings
+        labels = {}
+        for label_filter in label_filters:
+            if ":" in label_filter:
+                key, value = label_filter.split(":", 1)
+                labels[key.strip()] = value.strip()
+            else:
+                LOG.warning(
+                    f"Invalid label filter format '{label_filter}', "
+                    "expected 'key:value'. Skipping."
+                )
+
+        # Add the VM UUID label
+        labels[vm_uuid_label_name] = vm_uuid
 
         # Build label string: {key="value", ...}
         label_selector = ",".join(f'{k}="{v}"' for k, v in labels.items())
