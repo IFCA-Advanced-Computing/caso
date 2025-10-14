@@ -24,8 +24,11 @@ prometheus_endpoint = http://localhost:9090
 # Name of the Prometheus metric to query
 prometheus_metric_name = prometheus_value
 
-# Value for the type_instance label
-prometheus_label_type_instance = scaph_process_power_microwatts
+# Name of the label that matches the VM UUID
+vm_uuid_label_name = uuid
+
+# List of label filters as key:value pairs
+labels = type_instance:scaph_process_power_microwatts
 
 # Frequency between samples in seconds
 prometheus_step_seconds = 30
@@ -43,14 +46,16 @@ The Prometheus extractor:
 
 1. **Scans VMs**: Retrieves the list of VMs from Nova for each configured project
 2. **Queries Per VM**: For each VM, executes a Prometheus query using the configured metric name and labels
-3. **Calculates Energy**: Uses the formula `sum_over_time(metric_name{type_instance="value", uuid="vm-uuid"}[query_range]) * (step_seconds/3600) / 1000000` to convert microwatt power samples to Watt-hours
-4. **Creates Records**: Generates an `EnergyRecord` for each VM with energy consumption data and execution metrics
+3. **Builds Labels**: Combines the configured label filters with the VM UUID label (e.g., `{type_instance="scaph_process_power_microwatts", uuid="vm-uuid"}`)
+4. **Calculates Energy**: Uses the formula `sum_over_time(metric_name{labels}[query_range]) * (step_seconds/3600) / 1000000` to convert microwatt power samples to Watt-hours
+5. **Creates Records**: Generates an `EnergyRecord` for each VM with energy consumption data and execution metrics
 
 ## Configuration Parameters
 
 - **prometheus_endpoint**: URL of the Prometheus server (default: `http://localhost:9090`)
 - **prometheus_metric_name**: Name of the metric to query (default: `prometheus_value`)
-- **prometheus_label_type_instance**: Value for the `type_instance` label used to filter metrics (default: `scaph_process_power_microwatts`)
+- **vm_uuid_label_name**: Name of the label that matches the VM UUID in Prometheus metrics (default: `uuid`)
+- **labels**: List of label filters as `key:value` pairs to filter the Prometheus metric. The VM UUID label will be added automatically (default: `["type_instance:scaph_process_power_microwatts"]`)
 - **prometheus_step_seconds**: Frequency between samples in the time series, in seconds (default: `30`)
 - **prometheus_query_range**: Time range for the query (default: `1h`). Examples: `1h`, `6h`, `24h`
 - **prometheus_verify_ssl**: Whether to verify SSL certificates when connecting to Prometheus (default: `true`)
@@ -65,7 +70,8 @@ Scaphandre exports energy metrics in microwatts:
 [prometheus]
 prometheus_endpoint = http://prometheus.example.com:9090
 prometheus_metric_name = prometheus_value
-prometheus_label_type_instance = scaph_process_power_microwatts
+vm_uuid_label_name = uuid
+labels = type_instance:scaph_process_power_microwatts
 prometheus_step_seconds = 30
 prometheus_query_range = 6h
 prometheus_verify_ssl = false
@@ -79,8 +85,24 @@ If you have custom energy metrics with different labels:
 [prometheus]
 prometheus_endpoint = http://prometheus.example.com:9090
 prometheus_metric_name = my_custom_power_metric
-prometheus_label_type_instance = my_power_label_value
+vm_uuid_label_name = instance_id
+labels = environment:production,datacenter:dc1
 prometheus_step_seconds = 60
+prometheus_query_range = 1h
+prometheus_verify_ssl = true
+```
+
+### For Multiple Label Filters
+
+You can specify multiple label filters:
+
+```ini
+[prometheus]
+prometheus_endpoint = http://prometheus.example.com:9090
+prometheus_metric_name = node_power_watts
+vm_uuid_label_name = vm_uuid
+labels = type_instance:power_consumption,source:ipmi,rack:rack42
+prometheus_step_seconds = 30
 prometheus_query_range = 1h
 prometheus_verify_ssl = true
 ```
@@ -140,7 +162,8 @@ messengers = ssm
 [prometheus]
 prometheus_endpoint = http://prometheus.example.com:9090
 prometheus_metric_name = prometheus_value
-prometheus_label_type_instance = scaph_process_power_microwatts
+vm_uuid_label_name = uuid
+labels = type_instance:scaph_process_power_microwatts
 prometheus_step_seconds = 30
 prometheus_query_range = 6h
 prometheus_verify_ssl = false
@@ -156,7 +179,7 @@ output_path = /var/spool/apel/outgoing/openstack
 - Check that your metric exists in Prometheus UI
 - Ensure the metric has data for the configured time range
 - Verify VMs exist in the configured projects
-- Check that the metric has the required labels (`type_instance` and `uuid`)
+- Check that the metric has the required labels (those specified in `labels` config and the UUID label specified by `vm_uuid_label_name`)
 
 **Connection timeout:**
 - Check network connectivity to Prometheus
@@ -165,8 +188,8 @@ output_path = /var/spool/apel/outgoing/openstack
 
 **Invalid query results:**
 - Ensure your metric contains instantaneous power values in microwatts
-- Check that the metric has the `uuid` label matching VM UUIDs
-- Verify the `type_instance` label matches your configuration
+- Check that the metric has the UUID label matching VM UUIDs (configured via `vm_uuid_label_name`)
+- Verify the label filters match your configuration
 - Test the query in Prometheus UI: `sum_over_time(prometheus_value{type_instance="scaph_process_power_microwatts", uuid="<vm-uuid>"}[1h])`
 
 **No VMs found:**
