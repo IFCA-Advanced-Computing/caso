@@ -60,7 +60,9 @@ def configured_extractor(mock_flavors):
     # Configure CONF
     CONF.set_override("site_name", "TEST-Site")
     CONF.set_override("service_name", "TEST-Service")
-    CONF.set_override("prometheus_endpoint", "http://localhost:9090", group="prometheus")
+    CONF.set_override(
+        "prometheus_endpoint", "http://localhost:9090", group="prometheus"
+    )
     CONF.set_override("prometheus_metric_name", "prometheus_value", group="prometheus")
     CONF.set_override("vm_uuid_label_name", "uuid", group="prometheus")
     CONF.set_override(
@@ -71,6 +73,7 @@ def configured_extractor(mock_flavors):
     CONF.set_override("prometheus_step_seconds", 30, group="prometheus")
     CONF.set_override("prometheus_query_range", "1h", group="prometheus")
     CONF.set_override("prometheus_verify_ssl", True, group="prometheus")
+    CONF.set_override("cpu_normalization_factor", 1.0, group="prometheus")
 
     with mock.patch(
         "caso.extract.openstack.base.BaseOpenStackExtractor.__init__",

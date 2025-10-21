@@ -1,74 +1,6 @@
 [DEFAULT]
 
 #
-# From caso
-#
-
-# List of messengers that will dispatch records. valid values are
-# logstash,noop,ssm,ssmv4. You can specify more than one messenger. (list
-# value)
-#messengers = noop
-
-# Spool directory. (string value)
-#spooldir = /var/spool/caso
-
-# Directory to use for lock files. For security, the specified directory should
-# only be writable by the user running the processes that need locking.
-# Defaults to environment variable CASO_LOCK_PATH or $spooldir (string value)
-#lock_path = $spooldir
-
-# Extract records but do not push records to SSM. This will not update the last
-# run date. (boolean value)
-#dry_run = false
-
-# Site name as in GOCDB. (string value)
-#site_name = <None>
-
-# Service name within the site (string value)
-#service_name = $site_name
-
-# List of projects to extract accounting records from. You can use this option,
-# or add 'caso' tag to the project in Keystone. Please refer to the
-# documentation for more details. (list value)
-#projects =
-
-# Tag used to mark a project in Keystone to be extracted by cASO (string value)
-#caso_tag = caso
-
-# Property key used to get the VO name from the project properties.  (string
-# value)
-#vo_property = VO
-
-# DEPRECATED: File containing the VO <-> project mapping as used in Keystone-
-# VOMS. (string value)
-# This option is deprecated for removal.
-# Its value may be silently ignored in the future.
-# Reason: This option is marked for removal in the next release. Please see the
-# release notes, and migrate your current configuration to use the new project
-# mapping as soon as possible. If you already migrated your configuration,
-# please remove the JSON file to get rid of this message.
-#mapping_file = /etc/caso/voms.json
-
-# Extract record changes until this date. If it is not set, we use now. If a
-# server has ended after this date, it will be included, but the consuption
-# reported will end on this date. If no time zone is specified, UTC will be
-# used. (string value)
-#extract_to = <None>
-
-# Extract records that have changed after this date. This means that if a
-# record has started before this date, and it has changed after this date (i.e.
-# it is still running or it has ended) it will be reported.
-# If it is not set, extract records from last run. If it is set to None and
-# last run file is not present, it will extract records from the beginning of
-# time. If no time zone is specified, UTC will be used. (string value)
-#extract_from = <None>
-
-# Which extractor to use for getting the data. If you do not specify anything,
-# nova will be used. Available choices are ['cinder', 'neutron', 'nova',
-# 'prometheus'] (list value)
-#extractor = nova,cinder,neutron
-
-#
 # From oslo.config
 #
 
@@ -156,12 +88,6 @@
 # Log output to standard error. This option is ignored if log_config_append is
 # set. (boolean value)
 #use_stderr = false
-
-# DEPRECATED: Log output to Windows Event Log. (boolean value)
-# This option is deprecated for removal.
-# Its value may be silently ignored in the future.
-# Reason: Windows support is no longer maintained.
-#use_eventlog = false
 
 # (Optional) Set the 'color' key according to log levels. This option takes
 # effect only when logging to stderr or stdout is used. This option is ignored
@@ -256,179 +182,6 @@
 #fatal_deprecations = false
 
 
-[accelerator]
-
-#
-# From caso
-#
-
-# Metadata key used to retrieve the accelerator type from the flavor
-# properties. (string value)
-#type_key = Accelerator:Type
-
-# Metadata key used to retrieve the accelerator vendor from the flavor
-# properties. (string value)
-#vendor_key = Accelerator:Vendor
-
-# Metadata key used to retrieve the accelerator model from the flavor
-# properties. (string value)
-#model_key = Accelerator:Model
-
-# Metadata key used to retrieve the accelerator number from the flavor
-# properties. (string value)
-#number_key = Accelerator:Number
-
-
-[benchmark]
-
-#
-# From caso
-#
-
-# Metadata key used to retrieve the benchmark type from the flavor properties.
-# (string value)
-#name_key = accounting:benchmark_type
-
-# Metadata key used to retrieve the benchmark value from the flavor properties.
-# (string value)
-#value_key = accounting:benchmark_value
-
-
-[keystone_auth]
-
-#
-# From caso
-#
-
-# Authentication type to load (string value)
-# Deprecated group/name - [keystone_auth]/auth_plugin
-#auth_type = <None>
-
-# Config Section from which to load plugin specific options (string value)
-#auth_section = <None>
-
-# PEM encoded Certificate Authority to use when verifying HTTPs connections.
-# (string value)
-#cafile = <None>
-
-# PEM encoded client certificate cert file (string value)
-#certfile = <None>
-
-# PEM encoded client certificate key file (string value)
-#keyfile = <None>
-
-# Verify HTTPS connections. (boolean value)
-#insecure = false
-
-# Timeout value for http requests (integer value)
-#timeout = <None>
-
-# Collect per-API call timing information. (boolean value)
-#collect_timing = false
-
-# Log requests to multiple loggers. (boolean value)
-#split_loggers = false
-
-# Authentication URL (string value)
-#auth_url = <None>
-
-# Scope for system operations (string value)
-#system_scope = <None>
-
-# Domain ID to scope to (string value)
-#domain_id = <None>
-
-# Domain name to scope to (string value)
-#domain_name = <None>
-
-# Project ID to scope to (string value)
-# Deprecated group/name - [keystone_auth]/tenant_id
-#project_id = <None>
-
-# Project name to scope to (string value)
-# Deprecated group/name - [keystone_auth]/tenant_name
-#project_name = <None>
-
-# Domain ID containing project (string value)
-#project_domain_id = <None>
-
-# Domain name containing project (string value)
-#project_domain_name = <None>
-
-# ID of the trust to use as a trustee use (string value)
-#trust_id = <None>
-
-# Optional domain ID to use with v3 and v2 parameters. It will be used for both
-# the user and project domain in v3 and ignored in v2 authentication. (string
-# value)
-#default_domain_id = <None>
-
-# Optional domain name to use with v3 API and v2 parameters. It will be used
-# for both the user and project domain in v3 and ignored in v2 authentication.
-# (string value)
-#default_domain_name = <None>
-
-# User id (string value)
-#user_id = <None>
-
-# Username (string value)
-# Deprecated group/name - [keystone_auth]/user_name
-#username = <None>
-
-# User's domain id (string value)
-#user_domain_id = <None>
-
-# User's domain name (string value)
-#user_domain_name = <None>
-
-# User's password (string value)
-#password = <None>
-
-
-[logstash]
-
-#
-# From caso
-#
-
-# Logstash host to send records to. (string value)
-#host = localhost
-
-# Logstash server port. (integer value)
-#port = 5000
-
-
-[prometheus]
-
-#
-# From caso
-#
-
-# Prometheus server endpoint URL. (string value)
-#prometheus_endpoint = http://localhost:9090
-
-# Name of the Prometheus metric to query for energy consumption. (string value)
-#prometheus_metric_name = prometheus_value
-
-# Name of the label that matches the VM UUID in Prometheus metrics. (string
-# value)
-#vm_uuid_label_name = uuid
-
-# List of label filters as key:value pairs to filter the Prometheus metric
-# (e.g., 'type_instance:scaph_process_power_microwatts'). The VM UUID label
-# will be added automatically based on vm_uuid_label_name. (list value)
-#labels = type_instance:scaph_process_power_microwatts
-
-# Frequency between samples in the time series (in seconds). (integer value)
-#prometheus_step_seconds = 30
-
-# Query time range (e.g., '1h', '6h', '24h'). (string value)
-#prometheus_query_range = 1h
-
-# Whether to verify SSL when connecting to Prometheus. (boolean value)
-#prometheus_verify_ssl = true
-
-
 [sample_remote_file_source]
 # Example of using a remote_file source
 #
@@ -493,14 +246,34 @@
 #timeout = 60
 
 
-[ssm]
+[prometheus]
 
 #
-# From caso
+# From caso.extract.prometheus
 #
 
-# Directory to put the generated SSM records. (string value)
-#output_path = /var/spool/apel/outgoing/openstack
+# Prometheus server endpoint URL. (string value)
+#prometheus_endpoint = http://localhost:9090
 
-# Maximum number of records to send per message (integer value)
-#max_size = 100
+# Name of the Prometheus metric to query for energy consumption. (string value)
+#prometheus_metric_name = prometheus_value
+
+# Name of the label that matches the VM UUID in Prometheus metrics. (string value)
+#vm_uuid_label_name = uuid
+
+# List of label filters as key:value pairs to filter the Prometheus metric (e.g.,
+# 'type_instance:scaph_process_power_microwatts'). The VM UUID label will be added
+# automatically based on vm_uuid_label_name. (list value)
+#labels = type_instance:scaph_process_power_microwatts
+
+# Frequency between samples in the time series (in seconds). (integer value)
+#prometheus_step_seconds = 30
+
+# Query time range (e.g., '1h', '6h', '24h'). (string value)
+#prometheus_query_range = 1h
+
+# Whether to verify SSL when connecting to Prometheus. (boolean value)
+#prometheus_verify_ssl = true
+
+# CPU normalization factor to apply to energy measurements. (floating point value)
+#cpu_normalization_factor = 1.0
