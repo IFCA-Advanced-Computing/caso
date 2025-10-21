@@ -65,6 +65,11 @@ opts = [
         default=True,
         help="Whether to verify SSL when connecting to Prometheus.",
     ),
+    cfg.FloatOpt(
+        "cpu_normalization_factor",
+        default=1.0,
+        help="CPU normalization factor to apply to energy measurements.",
+    ),
 ]
 
 CONF.import_opt("site_name", "caso.extract.base")
@@ -189,7 +194,7 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
         """Build an energy consumption record for a VM.
 
         :param server: Nova server object
-        :param energy_value: Energy consumption value in Wh
+        :param energy_value: Energy consumption value in Wh (raw from Prometheus)
         :param extract_from: Start time for extraction period
         :param extract_to: End time for extraction period
         :returns: EnergyRecord object
@@ -234,22 +239,31 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
         # ExecUnitFinished: 0 if running, 1 if stopped/deleted
         exec_unit_finished = 0 if vm_status in ["active", "running"] else 1
 
-        # Calculate work (CPU time in hours)
-        work = cpu_duration_s / 3600.0
+        # Get CPU normalization factor from configuration
+        cpu_normalization_factor = CONF.prometheus.cpu_normalization_factor
 
-        # Calculate efficiency (simple model: actual work / max possible work)
-        # Efficiency can be calculated as actual energy vs theoretical max
-        # For now, use a default value
-        efficiency = 0.5  # Placeholder
+        # Apply CPU normalization factor to energy
+        energy_wh = energy_value * cpu_normalization_factor
 
-        # CPU normalization factor (default to 1.0 if not available)
-        cpu_normalization_factor = 1.0
+        # Calculate work: CpuDuration_s / Energy_wh
+        # Avoid division by zero
+        if energy_wh > 0:
+            work = cpu_duration_s / energy_wh
+        else:
+            work = 0.0
+
+        # Calculate efficiency: CpuDuration_s / WallClockTime_s
+        # Avoid division by zero
+        if wall_clock_time_s > 0:
+            efficiency = cpu_duration_s / wall_clock_time_s
+        else:
+            efficiency = 0.0
 
         r = record.EnergyRecord(
             exec_unit_id=uuid.UUID(vm_uuid),
             start_exec_time=start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
             end_exec_time=end_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            energy_wh=energy_value,
+            energy_wh=energy_wh,
             work=work,
             efficiency=efficiency,
             wall_clock_time_s=wall_clock_time_s,
