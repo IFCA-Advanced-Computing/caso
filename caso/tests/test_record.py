@@ -88,6 +88,13 @@ def test_cloud_record_custom_cpu(cloud_record):
     assert cloud_record.cpu_duration == cpu
 
 
+def test_cloud_record_zero_cpu(zero_cpu_cloud_record):
+    """Test a cloud record with 0 CPU time is correctly rendered."""
+    ssm_message = zero_cpu_cloud_record.ssm_message()
+    assert "CpuDuration: 1" in ssm_message
+    assert "WallDuration: 1" in ssm_message
+
+
 def test_ip_record(ip_record):
     """Test that an IP record is correctly generated."""
     assert isinstance(ip_record.measure_time, datetime.datetime)
