@@ -336,6 +336,15 @@ def valid_cloud_record() -> dict:
 
 
 @pytest.fixture()
+def zero_cpu_cloud_record() -> caso.record.CloudRecord:
+    """Get a fixture for the CloudRecord with 0 cpu and wall time."""
+    record = caso.record.CloudRecord(**valid_cloud_records_fields[0])
+    record.cpu_duration = 0
+    record.wall_duration = 0
+    return record
+
+
+@pytest.fixture()
 def valid_cloud_records() -> typing.List[dict]:
     """Get a fixture for valid records as a dict."""
     return valid_cloud_records_dict

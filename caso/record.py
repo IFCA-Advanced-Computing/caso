@@ -232,6 +232,11 @@ class CloudRecord(_BaseRecord):
         # done. In order to get objects correctly serialized we need to convert to JSON,
         # then reload the model
         serialized_record = json.loads(self.model_dump_json(**opts))
+        # CPU and Wall duration may be 0 as we are converting float to int when creating
+        # the record, here we impose at least 1 second to avoid reporting no cpu time
+        for f in ["CpuDuration", "WallDuration"]:
+            if f in serialized_record and serialized_record[f] == 0:
+                serialized_record[f] = 1
         aux = [f"{k}: {v}" for k, v in serialized_record.items()]
         aux.sort()
         return "\n".join(aux)
