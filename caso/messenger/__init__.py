@@ -143,18 +143,13 @@ class Manager(object):
         ] = {}
         for messenger_name in CONF.messengers:
             group_name = f"messenger_{messenger_name}"
+            self.messenger_record_types[messenger_name] = None
             if hasattr(CONF, group_name):
                 group = getattr(CONF, group_name)
                 if hasattr(group, "record_types"):
                     record_types = group.record_types
                     if record_types:
                         self.messenger_record_types[messenger_name] = list(record_types)
-                    else:
-                        self.messenger_record_types[messenger_name] = None
-                else:
-                    self.messenger_record_types[messenger_name] = None
-            else:
-                self.messenger_record_types[messenger_name] = None
 
     def push_to_all(self, records):
         """Push records to all the configured messengers."""
