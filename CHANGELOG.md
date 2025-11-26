@@ -1,5 +1,26 @@
 # Changelog
 
+## [5.2.1](https://github.com/IFCA-Advanced-Computing/caso/compare/v5.2.0...v5.2.1) (2025-11-26)
+
+
+### Features
+
+* Add Prometheus extractor and EnergyRecord for energy consumption metrics ([6938099](https://github.com/IFCA-Advanced-Computing/caso/commit/6938099d53d40d506b1e7e8d706f381f7da85cfb))
+* ensure CPU and Wall time is not zero ([741c448](https://github.com/IFCA-Advanced-Computing/caso/commit/741c448485e6bd79d824a33be9cafe20146d00e7))
+
+
+### Bug Fixes
+
+* correct energy record calculations and add CPU normalization factor ([53e6d38](https://github.com/IFCA-Advanced-Computing/caso/commit/53e6d38a54431895db09841c0229cfed4a61a63f))
+* Integrate energy_consumed_wh function using prometheus-api-client ([390db52](https://github.com/IFCA-Advanced-Computing/caso/commit/390db52080a877ed727102eeb985a3059e44d40f))
+* Rename to EnergyConsumptionExtractor and update EnergyRecord format ([ac35ab1](https://github.com/IFCA-Advanced-Computing/caso/commit/ac35ab12ccc35cba0c85dd43822fa76db3b583d8))
+* Update Prometheus extractor to scan VMs and support query templating ([a1c6b8c](https://github.com/IFCA-Advanced-Computing/caso/commit/a1c6b8c44b24e5b80e89d631a13f1ed254e12838))
+
+
+### Miscellaneous Chores
+
+* release 5.2.1 ([a035867](https://github.com/IFCA-Advanced-Computing/caso/commit/a035867b5e75787db17a2a30d7b64f1ebee17632))
+
 ## [5.2.0](https://github.com/IFCA-Advanced-Computing/caso/compare/v5.1.0...v5.2.0) (2025-10-08)
 
 
