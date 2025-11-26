@@ -5,7 +5,8 @@
 #
 
 # List of messengers that will dispatch records. valid values are
-# logstash,noop,ssmv4. You can specify more than one messenger. (list value)
+# logstash,noop,ssm,ssmv4. You can specify more than one messenger. (list
+# value)
 #messengers = noop
 
 # Spool directory. (string value)
@@ -18,7 +19,6 @@
 
 # Extract records but do not push records to SSM. This will not update the last
 # run date. (boolean value)
-# Deprecated group/name - [DEFAULT]/dry_run
 #dry_run = false
 
 # Site name as in GOCDB. (string value)
@@ -27,19 +27,32 @@
 # Service name within the site (string value)
 #service_name = $site_name
 
-# List of projects to extract accounting records from. (list value)
-# Deprecated group/name - [DEFAULT]/tenants
+# List of projects to extract accounting records from. You can use this option,
+# or add 'caso' tag to the project in Keystone. Please refer to the
+# documentation for more details. (list value)
 #projects =
 
-# File containing the VO <-> project mapping as used in Keystone-VOMS. (string
+# Tag used to mark a project in Keystone to be extracted by cASO (string value)
+#caso_tag = caso
+
+# Property key used to get the VO name from the project properties.  (string
 # value)
+#vo_property = VO
+
+# DEPRECATED: File containing the VO <-> project mapping as used in Keystone-
+# VOMS. (string value)
+# This option is deprecated for removal.
+# Its value may be silently ignored in the future.
+# Reason: This option is marked for removal in the next release. Please see the
+# release notes, and migrate your current configuration to use the new project
+# mapping as soon as possible. If you already migrated your configuration,
+# please remove the JSON file to get rid of this message.
 #mapping_file = /etc/caso/voms.json
 
 # Extract record changes until this date. If it is not set, we use now. If a
 # server has ended after this date, it will be included, but the consuption
 # reported will end on this date. If no time zone is specified, UTC will be
 # used. (string value)
-# Deprecated group/name - [DEFAULT]/extract_to
 #extract_to = <None>
 
 # Extract records that have changed after this date. This means that if a
@@ -48,13 +61,12 @@
 # If it is not set, extract records from last run. If it is set to None and
 # last run file is not present, it will extract records from the beginning of
 # time. If no time zone is specified, UTC will be used. (string value)
-# Deprecated group/name - [DEFAULT]/extract_from
 #extract_from = <None>
 
 # Which extractor to use for getting the data. If you do not specify anything,
-# nova will be used. Available choices are frozenset({'neutron', 'nova'}) (list
-# value)
-#extractor = nova
+# nova will be used. Available choices are ['cinder', 'neutron', 'nova',
+# 'prometheus'] (list value)
+#extractor = nova,cinder,neutron
 
 #
 # From oslo.config
@@ -111,11 +123,15 @@
 # Deprecated group/name - [DEFAULT]/logdir
 #log_dir = <None>
 
-# Uses logging handler designed to watch file system. When log file is moved or
-# removed this handler will open a new log file with specified path
+# DEPRECATED: Uses logging handler designed to watch file system. When log file
+# is moved or removed this handler will open a new log file with specified path
 # instantaneously. It makes sense only if log_file option is specified and
 # Linux platform is used. This option is ignored if log_config_append is set.
 # (boolean value)
+# This option is deprecated for removal.
+# Its value may be silently ignored in the future.
+# Reason: This function is known to have bene broken for long time, and depends
+# on the unmaintained library
 #watch_log_file = false
 
 # Use syslog for logging. Existing syslog format is DEPRECATED and will be
@@ -141,8 +157,16 @@
 # set. (boolean value)
 #use_stderr = false
 
-# Log output to Windows Event Log. (boolean value)
+# DEPRECATED: Log output to Windows Event Log. (boolean value)
+# This option is deprecated for removal.
+# Its value may be silently ignored in the future.
+# Reason: Windows support is no longer maintained.
 #use_eventlog = false
+
+# (Optional) Set the 'color' key according to log levels. This option takes
+# effect only when logging to stderr or stdout is used. This option is ignored
+# if log_config_append is set. (boolean value)
+#log_color = false
 
 # The amount of time before the log files are rotated. This option is ignored
 # unless log_rotation_type is set to "interval". (integer value)
@@ -216,10 +240,16 @@
 # Maximum number of logged messages per rate_limit_interval. (integer value)
 #rate_limit_burst = 0
 
-# Log level name used by rate limiting: CRITICAL, ERROR, INFO, WARNING, DEBUG
-# or empty string. Logs with level greater or equal to rate_limit_except_level
-# are not filtered. An empty string means that all levels are filtered. (string
-# value)
+# Log level name used by rate limiting. Logs with level greater or equal to
+# rate_limit_except_level are not filtered. An empty string means that all
+# levels are filtered. (string value)
+# Possible values:
+# CRITICAL - <No description provided>
+# ERROR - <No description provided>
+# INFO - <No description provided>
+# WARNING - <No description provided>
+# DEBUG - <No description provided>
+# '' - <No description provided>
 #rate_limit_except_level = CRITICAL
 
 # Enables or disables fatal status of deprecations. (boolean value)
@@ -234,22 +264,18 @@
 
 # Metadata key used to retrieve the accelerator type from the flavor
 # properties. (string value)
-# Deprecated group/name - [DEFAULT]/accelerator_type_key
 #type_key = Accelerator:Type
 
 # Metadata key used to retrieve the accelerator vendor from the flavor
 # properties. (string value)
-# Deprecated group/name - [DEFAULT]/accelerator_vendor_key
 #vendor_key = Accelerator:Vendor
 
 # Metadata key used to retrieve the accelerator model from the flavor
 # properties. (string value)
-# Deprecated group/name - [DEFAULT]/accelerator_model_key
 #model_key = Accelerator:Model
 
 # Metadata key used to retrieve the accelerator number from the flavor
 # properties. (string value)
-# Deprecated group/name - [DEFAULT]/accelerator_number_key
 #number_key = Accelerator:Number
 
 
@@ -261,12 +287,10 @@
 
 # Metadata key used to retrieve the benchmark type from the flavor properties.
 # (string value)
-# Deprecated group/name - [DEFAULT]/benchmark_name_key
 #name_key = accounting:benchmark_type
 
 # Metadata key used to retrieve the benchmark value from the flavor properties.
 # (string value)
-# Deprecated group/name - [DEFAULT]/benchmark_value_key
 #value_key = accounting:benchmark_value
 
 
@@ -374,6 +398,91 @@
 #port = 5000
 
 
+[messenger_logstash]
+
+#
+# From caso
+#
+
+# List of record types to publish to this messenger. Valid values are: cloud,
+# ip, accelerator, storage, energy. If empty, all record types will be
+# published. Default for logstash: all record types. (list value)
+#record_types =
+
+
+[messenger_noop]
+
+#
+# From caso
+#
+
+# List of record types to publish to this messenger. Valid values are: cloud,
+# ip, accelerator, storage, energy. If empty, all record types will be
+# published. Default for noop: all record types. (list value)
+#record_types =
+
+
+[messenger_ssm]
+
+#
+# From caso
+#
+
+# List of record types to publish to this messenger. Valid values are: cloud,
+# ip, accelerator, storage, energy. If empty, all record types will be
+# published. Default for ssm: ['cloud', 'ip', 'accelerator', 'storage']. (list
+# value)
+#record_types = cloud,ip,accelerator,storage
+
+
+[messenger_ssmv4]
+
+#
+# From caso
+#
+
+# List of record types to publish to this messenger. Valid values are: cloud,
+# ip, accelerator, storage, energy. If empty, all record types will be
+# published. Default for ssmv4: ['cloud', 'ip', 'accelerator', 'storage'].
+# (list value)
+#record_types = cloud,ip,accelerator,storage
+
+
+[prometheus]
+
+#
+# From caso
+#
+
+# Prometheus server endpoint URL. (string value)
+#prometheus_endpoint = http://localhost:9090
+
+# Name of the Prometheus metric to query for energy consumption. (string value)
+#prometheus_metric_name = prometheus_value
+
+# Name of the label that matches the VM UUID in Prometheus metrics. (string
+# value)
+#vm_uuid_label_name = uuid
+
+# List of label filters as key:value pairs to filter the Prometheus metric
+# (e.g., 'type_instance:scaph_process_power_microwatts'). The VM UUID label
+# will be added automatically based on vm_uuid_label_name. (list value)
+#labels = type_instance:scaph_process_power_microwatts
+
+# Frequency between samples in the time series (in seconds). (integer value)
+#prometheus_step_seconds = 30
+
+# Query time range (e.g., '1h', '6h', '24h'). (string value)
+#prometheus_query_range = 1h
+
+# Whether to verify SSL when connecting to Prometheus. (boolean value)
+#prometheus_verify_ssl = true
+
+# CPU normalization factor to apply to energy measurements. (floating point
+# value)
+#cpu_normalization_factor = 1.0
+
+
 [sample_remote_file_source]
 # Example of using a remote_file source
 #
@@ -432,6 +541,10 @@
 # Client side private key, in case client_cert is specified but does not
 # includes the private key. (string value)
 #client_key = <None>
+
+# Timeout is the number of seconds the request will wait for your client to
+# establish a connection to a remote machine call on the socket. (string value)
+#timeout = 60
 
 
 [ssm]
