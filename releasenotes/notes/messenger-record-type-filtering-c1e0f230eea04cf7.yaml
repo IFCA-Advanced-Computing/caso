@@ -1,0 +1,23 @@
+---
+features:
+  - |
+    Add per-messenger configuration to control which record types are published.
+    Each messenger can now be configured with a ``record_types`` option in its
+    ``[messenger_<name>]`` section to specify which record types it should receive.
+    Valid record types are: ``cloud``, ``ip``, ``accelerator``, ``storage``, and
+    ``energy``.
+  - |
+    SSM messengers (``ssm``, ``ssmv4``) now default to publishing only records
+    from the default extractors (nova, cinder, neutron): ``cloud``, ``ip``,
+    ``accelerator``, and ``storage``. Energy records from the prometheus
+    extractor are not published to SSM by default.
+  - |
+    Other messengers (``noop``, ``logstash``) default to publishing all record
+    types.
+upgrade:
+  - |
+    To publish energy records to SSM, you must now explicitly add ``energy`` to
+    the ``record_types`` list in the ``[messenger_ssm]`` section::
+
+      [messenger_ssm]
+      record_types = cloud,ip,accelerator,storage,energy
