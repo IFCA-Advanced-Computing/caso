@@ -189,5 +189,7 @@ class TestValidRecordTypes:
 
     def test_record_type_map_matches_valid_record_types(self):
         """Test that RECORD_TYPE_MAP keys match VALID_RECORD_TYPES."""
-        assert set(caso.messenger.RECORD_TYPE_MAP.keys()) == \
-            caso.messenger.VALID_RECORD_TYPES
+        assert (
+            set(caso.messenger.RECORD_TYPE_MAP.keys())
+            == caso.messenger.VALID_RECORD_TYPES
+        )
