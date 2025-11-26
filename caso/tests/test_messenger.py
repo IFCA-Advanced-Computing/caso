@@ -90,17 +90,13 @@ class TestFilterRecords:
         assert len(result) == 1
         assert isinstance(result[0], caso.record.EnergyRecord)
 
-    def test_filter_records_returns_empty_when_no_match(
-        self, cloud_record, ip_record
-    ):
+    def test_filter_records_returns_empty_when_no_match(self, cloud_record, ip_record):
         """Test that empty list is returned when no records match filter."""
         records = [cloud_record, ip_record]
         result = caso.messenger._filter_records(records, ["storage", "energy"])
         assert result == []
 
-    def test_filter_records_ignores_invalid_types(
-        self, cloud_record, ip_record
-    ):
+    def test_filter_records_ignores_invalid_types(self, cloud_record, ip_record):
         """Test that invalid record types are ignored in the filter."""
         records = [cloud_record, ip_record]
         result = caso.messenger._filter_records(records, ["invalid_type"])
@@ -112,9 +108,7 @@ class TestFilterRecords:
     ):
         """Test filtering with mix of valid and invalid types."""
         records = [cloud_record, ip_record, storage_record]
-        result = caso.messenger._filter_records(
-            records, ["cloud", "invalid_type"]
-        )
+        result = caso.messenger._filter_records(records, ["cloud", "invalid_type"])
         assert len(result) == 1
         assert isinstance(result[0], caso.record.CloudRecord)
 
