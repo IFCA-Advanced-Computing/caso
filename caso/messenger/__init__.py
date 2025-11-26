@@ -167,8 +167,10 @@ class Manager(object):
                     ext.obj.push(filtered_records)
                 else:
                     LOG.debug(
-                        f"No records to push to messenger {messenger_name} "
-                        f"after filtering for record types: {record_types}"
+                        "No records to push to messenger %s "
+                        "after filtering for record types: %s",
+                        messenger_name,
+                        record_types,
                     )
         except Exception as e:
             # Capture exception so that we can continue working
