@@ -208,6 +208,75 @@ messenger. Available options:
 * ``host`` (default: ``localhost``), host of Logstash server.
 * ``port`` (default: ``5000``), Logstash server port.
 
+Messenger record type filtering
+-------------------------------
+
+Each messenger can be configured to only receive specific record types. This allows
+you to control which types of accounting records are published to each messenger.
+
+The configuration is done via ``[messenger_<name>]`` sections, where ``<name>`` is
+the messenger name (e.g., ``ssm``, ``logstash``, ``noop``). Each section supports
+the following option:
+
+* ``record_types`` (list value). List of record types to publish to this messenger.
+  Valid values are: ``cloud``, ``ip``, ``accelerator``, ``storage``, ``energy``.
+  If empty, all record types will be published.
+
+The following record types are available:
+
+.. list-table:: Record types and their extractors
+   :header-rows: 1
+
+   * - Record Type
+     - Extractor
+     - Description
+
+   * - ``cloud``
+     - ``nova``
+     - VM/compute accounting records
+
+   * - ``ip``
+     - ``neutron``
+     - Public IP usage records
+
+   * - ``accelerator``
+     - ``nova``
+     - Accelerator (GPU) usage records
+
+   * - ``storage``
+     - ``cinder``
+     - Block storage records
+
+   * - ``energy``
+     - ``prometheus``
+     - Energy consumption records
+
+**Default behavior:**
+
+* For ``ssm`` and ``ssmv4`` messengers, the default is to publish only records from
+  the default extractors (``nova``, ``cinder``, ``neutron``), which means:
+  ``cloud``, ``ip``, ``accelerator``, ``storage``. Energy records are not published
+  by default to SSM.
+* For other messengers (``logstash``, ``noop``), all record types are published by
+  default.
+
+**Example configuration:**
+
+To publish only cloud and storage records to SSM::
+
+    [messenger_ssm]
+    record_types = cloud,storage
+
+To publish all record types including energy records to SSM::
+
+    [messenger_ssm]
+    record_types = cloud,ip,accelerator,storage,energy
+
+To publish only energy records to logstash::
+
+    [messenger_logstash]
+    record_types = energy
+
 ``[prometheus]`` section
 ------------------------
 

@@ -23,14 +23,16 @@ import caso.extract.manager
 import caso.extract.openstack.nova
 import caso.extract.prometheus
 import caso.keystone_client
+import caso.loading
 import caso.manager
+import caso.messenger
 import caso.messenger.logstash
 import caso.messenger.ssm
 
 
 def list_opts():
     """Get the list of all configured options."""
-    return [
+    opts = [
         (
             "DEFAULT",
             itertools.chain(
@@ -47,3 +49,10 @@ def list_opts():
         ("prometheus", caso.extract.prometheus.opts),
         ("ssm", caso.messenger.ssm.opts),
     ]
+
+    # Add messenger-specific record_types options for all available messengers
+    for messenger_name in caso.loading.get_available_messenger_names():
+        group_name = f"messenger_{messenger_name}"
+        opts.append((group_name, caso.messenger.get_messenger_opts(messenger_name)))
+
+    return opts
