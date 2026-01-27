@@ -39,3 +39,16 @@ Contents:
    multi-region
    usage
    troubleshooting
+
+Acknowledgements
+----------------
+
+.. image:: static/eu-co-funded.png
+   :alt: EU co-funded projects
+   :width: 150px
+
+The development of ``cASO`` has been partially funded by the European Union through the
+following projects:
+
+- `EOSC-Hub <http://eosc-hub.eu/>`_ (Horizon 2020, grant agreement 777536).
+- `GreenDIGIT <https://greendigit-project.eu/>`_ (Horizon Europe, grant agreement 101131207).
