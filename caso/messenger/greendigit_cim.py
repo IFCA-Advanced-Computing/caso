@@ -74,6 +74,9 @@ def verify_endpoint(url: str, timeout: int = 10):
     # Check SSL for HTTPS endpoints
     if parsed.scheme == "https":
         context = ssl.create_default_context()
+        # Enforce modern TLS
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
+
         try:
             with socket.create_connection((host, port), timeout=timeout) as sock:
                 with context.wrap_socket(sock, server_hostname=host) as ssock:
