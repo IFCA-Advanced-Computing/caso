@@ -34,7 +34,10 @@ opts = [
     cfg.StrOpt(
         "greendigit_cim_base_url",
         default="https://greendigit-cim.sztaki.hu",
-        help="Base URL of GreenDIGIT CIM Service. Specific endpoints will be constructed internally.",
+        help=(
+            "Base URL of GreenDIGIT CIM Service. "
+            "Specific endpoints will be constructed internally."
+        ),
     ),
 ]
 
@@ -81,6 +84,8 @@ def verify_endpoint(url: str, timeout: int = 10):
             with socket.create_connection((host, port), timeout=timeout) as sock:
                 with context.wrap_socket(sock, server_hostname=host) as ssock:
                     cert = ssock.getpeercert()
+                    if cert is None:
+                        raise ConnectionError(f"No SSL certificate presented by {host}")
                     LOG.info(
                         "SSL certificate for %s is valid. Subject: %s",
                         host,
