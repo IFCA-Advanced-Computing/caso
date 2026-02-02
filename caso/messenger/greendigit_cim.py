@@ -24,8 +24,6 @@ from oslo_config import cfg
 from oslo_log import log
 
 import caso.messenger
-from caso.record import EnergyRecord
-
 
 # ----------------------------------------------------------------------
 # Configuration options
@@ -52,12 +50,11 @@ LOG = log.getLogger(__name__)
 
 def get_token(email: str, password: str) -> str:
     """Obtain a Bearer token from GreenDIGIT CIM Service using GET method."""
-
     url = CONF.greendigit_cim.get_token_url
     headers = {"Content-Type": "application/json"}
     params = {"email": email, "password": password}
 
-    resp = requests.get(url, headers=headers, params=params)
+    resp = requests.get(url, headers=headers, params=params, timeout=60)
     resp.raise_for_status()
 
     data = resp.json()
@@ -72,12 +69,12 @@ class GreenDIGITEnergyMessenger(caso.messenger.BaseMessenger):
     """Messenger to send EnergyRecord objects to GreenDIGIT CIM Service."""
 
     def __init__(self):
+        """Initialize the GreenDIGIT CIM Messenger."""
         super(GreenDIGITEnergyMessenger, self).__init__()
         self.publish_url = CONF.greendigit_cim.publish_url
 
     def push(self, records):
         """Send a list of EnergyRecords to GreenDIGIT CIM Service."""
-
         email = os.environ.get("GREENDIGIT_CIM_EMAIL")
         password = os.environ.get("GREENDIGIT_CIM_PASSWORD")
 
@@ -99,7 +96,7 @@ class GreenDIGITEnergyMessenger(caso.messenger.BaseMessenger):
             for r in records
         ]
 
-        resp = requests.post(self.publish_url, headers=headers, json=output)
+        resp = requests.post(self.publish_url, headers=headers, json=output, timeout=60)
         resp.raise_for_status()
 
         LOG.info(
