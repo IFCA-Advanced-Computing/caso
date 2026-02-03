@@ -36,6 +36,7 @@ Contents:
    configuration
    configuration-file
    prometheus-extractor
+   greendigit_cim_messenger
    multi-region
    usage
    troubleshooting

@@ -152,6 +152,7 @@ of every option. You should check at least the following options:
       * ``ssm`` for publishing APEL records.
       * ``logstash`` for publishing to Logstash.
       * ``noop`` do nothing at all.
+      * ``greendigit_cim`` for publishing energy records to GreenDIGIT CIM Service.
 
   Note that there might be other messengers available in the system if they are
   registered into the ``caso.messenger`` entry point namespace. Please also note that
