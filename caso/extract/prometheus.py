@@ -177,7 +177,6 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
                 search_opts={
                     "changes-since": extract_from,
                     "project_id": self.project_id,
-                    "all_tenants": True,
                 },
                 limit=limit,
                 marker=marker,
