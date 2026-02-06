@@ -55,6 +55,7 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
         super(BaseOpenStackExtractor, self).__init__(project)
 
         self.keystone = self._get_keystone_client()
+        self.keystone_unscoped = self._get_keystone_client(project_scoped=False)
         self.project_id = self._get_project_id()
 
         self.vo = vo
@@ -90,10 +91,12 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
         session = keystone_client.get_session(CONF, self.project)
         return session
 
-    def _get_keystone_client(self):
+    def _get_keystone_client(self, project_scoped=True):
         """Get a Keystone Client for the configured project in the object."""
         client = keystone_client.get_client(
-            CONF, project=self.project, system_scope="all"
+            CONF,
+            project=self.project if project_scoped else None,
+            system_scope="all"
         )
         return client
 
@@ -125,7 +128,7 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
     def _get_keystone_user(self, uuid):
         """Get the Keystone username for a given uuid."""
         try:
-            user = self.keystone.users.get(user=uuid)
+            user = self.keystone_unscoped.users.get(user=uuid)
             return user.name
         except keystoneauth1.exceptions.http.Forbidden as e:
             LOG.error(f"Unauthorized to get user {uuid}")
