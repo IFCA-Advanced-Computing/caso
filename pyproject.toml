@@ -68,6 +68,7 @@ noop = "caso.messenger.noop:NoopMessenger"
 ssm = "caso.messenger.ssm:SSMMessenger"
 ssmv4 = "caso.messenger.ssm:SSMMessengerV04"
 logstash = "caso.messenger.logstash:LogstashMessenger"
+greendigit_cim = "caso.messenger.greendigit_cim:GreenDIGITEnergyMessenger"
 
 
 [tool.poetry.dependencies]
