@@ -14,16 +14,19 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-"""Module containing the Energy Consumption extractor for energy metrics."""
+"""Energy Consumption extractor for cASO."""
 
+import operator
 import uuid
+from datetime import timedelta
 
+import dateutil.parser
 import prometheus_api_client
 from oslo_config import cfg
 from oslo_log import log
 
-from caso.extract.openstack import base
 from caso import record
+from caso.extract.openstack import base
 
 CONF = cfg.CONF
 
@@ -46,19 +49,12 @@ opts = [
     cfg.ListOpt(
         "labels",
         default=["type_instance:scaph_process_power_microwatts"],
-        help="List of label filters as key:value pairs to filter the Prometheus "
-        "metric (e.g., 'type_instance:scaph_process_power_microwatts'). "
-        "The VM UUID label will be added automatically based on vm_uuid_label_name.",
+        help="List of label filters as key:value pairs to filter the metric.",
     ),
     cfg.IntOpt(
         "prometheus_step_seconds",
         default=30,
         help="Frequency between samples in the time series (in seconds).",
-    ),
-    cfg.StrOpt(
-        "prometheus_query_range",
-        default="1h",
-        help="Query time range (e.g., '1h', '6h', '24h').",
     ),
     cfg.BoolOpt(
         "prometheus_verify_ssl",
@@ -79,148 +75,129 @@ LOG = log.getLogger(__name__)
 
 
 class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
-    """An energy consumption extractor for cASO."""
+    """Extractor for VM energy consumption from Prometheus."""
 
     def __init__(self, project, vo):
-        """Initialize an energy consumption extractor for a given project."""
-        super(EnergyConsumptionExtractor, self).__init__(project, vo)
+        """Initialize the extractor with OpenStack clients and flavor information."""
+        super().__init__(project, vo)
         self.nova = self._get_nova_client()
         self.flavors = self._get_flavors()
 
     def _get_flavors(self):
-        """Get flavors for the project."""
+        """Get all flavors for the project."""
         flavors = {}
-        try:
-            for flavor in self.nova.flavors.list(is_public=None):
-                flavors[flavor.id] = flavor.to_dict()
-        except Exception as e:
-            LOG.warning(f"Could not get flavors: {e}")
+        for flavor in self.nova.flavors.list():
+            flavors[flavor.id] = flavor.to_dict()
+            flavors[flavor.id]["extra"] = flavor.get_keys()
         return flavors
 
-    def _energy_consumed_wh(self, vm_uuid):
-        """Calculate the energy consumed (Wh) for a VM from Prometheus.
+    def _get_servers(self):
+        """Get all servers for the project, paginated."""
+        servers = []
+        limit = 200
+        marker = None
 
-        This function queries Prometheus for instantaneous power samples
-        (in microwatts) and calculates the energy consumed in Watt-hours.
+        while True:
+            batch = self.nova.servers.list(limit=limit, marker=marker)
+            servers.extend(batch)
+            if len(batch) < limit:
+                break
+            marker = batch[-1].id
 
-        :param vm_uuid: UUID of the VM to query energy for
-        :returns: Energy consumed in Watt-hours (Wh)
-        """
-        prom_url = CONF.prometheus.prometheus_endpoint
-        metric_name = CONF.prometheus.prometheus_metric_name
-        step_seconds = CONF.prometheus.prometheus_step_seconds
-        query_range = CONF.prometheus.prometheus_query_range
-        verify_ssl = CONF.prometheus.prometheus_verify_ssl
-        vm_uuid_label_name = CONF.prometheus.vm_uuid_label_name
-        label_filters = CONF.prometheus.labels
+        # Sort by creation date
+        servers = sorted(servers, key=operator.attrgetter("created"))
+        return servers
 
-        prom = prometheus_api_client.PrometheusConnect(
-            url=prom_url, disable_ssl=not verify_ssl
+    def _get_prometheus_client(self):
+        """Create and return a Prometheus client based on configuration."""
+        return prometheus_api_client.PrometheusConnect(
+            url=CONF.prometheus.prometheus_endpoint,
+            disable_ssl=not CONF.prometheus.prometheus_verify_ssl,
         )
 
-        # factor = step_seconds / 3600 converts µW·s to µWh
-        factor = step_seconds / 3600
-
-        # Build labels dictionary from the list of "key:value" strings
+    def _build_label_selector(self, vm_uuid):
         labels = {}
-        for label_filter in label_filters:
+        for label_filter in CONF.prometheus.labels:
             if ":" in label_filter:
                 key, value = label_filter.split(":", 1)
                 labels[key.strip()] = value.strip()
             else:
                 LOG.warning(
-                    f"Invalid label filter format '{label_filter}', "
-                    "expected 'key:value'. Skipping."
+                    f"Invalid label filter '{label_filter}', expected 'key:value'."
                 )
+        labels[CONF.prometheus.vm_uuid_label_name] = vm_uuid
+        return ",".join(f'{k}="{v}"' for k, v in labels.items())
 
-        # Add the VM UUID label
-        labels[vm_uuid_label_name] = vm_uuid
+    def _split_time_chunks(self, start, end, step_seconds, max_points=11_000):
+        """Yield non-overlapping (chunk_start, chunk_end) tuples."""
+        while start < end:
+            remaining_steps = int((end - start).total_seconds() / step_seconds)
+            chunk_steps = min(remaining_steps, max_points)
+            chunk_end = start + timedelta(seconds=chunk_steps * step_seconds)
+            yield start, min(chunk_end, end)
+            start = chunk_end + timedelta(seconds=step_seconds)  # avoid overlapping
 
-        # Build label string: {key="value", ...}
-        label_selector = ",".join(f'{k}="{v}"' for k, v in labels.items())
+    def _energy_consumed_wh(self, vm_uuid, extract_from, extract_to):
+        """Compute energy (Wh) from Prometheus in chunks for a VM."""
+        prom = self._get_prometheus_client()
+        label_selector = self._build_label_selector(vm_uuid)
+        factor = CONF.prometheus.prometheus_step_seconds / 3600 / 1_000_000  # µW·s → Wh
+        energy_wh = 0.0
 
-        # Construct the PromQL query
-        query = (
-            f"sum_over_time({metric_name}{{{label_selector}}}[{query_range}]) "
-            f"* {factor} / 1000000"
-        )
+        query = f"{CONF.prometheus.prometheus_metric_name}{{{label_selector}}}"
 
-        LOG.debug(f"Querying Prometheus for VM {vm_uuid} with query: {query}")
-
-        try:
-            # Run query
-            result = prom.custom_query(query=query)
-
-            if not result:
-                LOG.debug(f"No energy data returned for VM {vm_uuid}")
-                return 0.0
-
-            energy_wh = float(result[0]["value"][1])
-            LOG.debug(f"VM {vm_uuid} consumed {energy_wh:.4f} Wh")
-            return energy_wh
-
-        except (KeyError, IndexError, ValueError) as e:
-            LOG.warning(f"Error parsing Prometheus result for VM {vm_uuid}: {e}")
-            return 0.0
-        except Exception as e:
-            LOG.error(f"Error querying Prometheus for VM {vm_uuid}: {e}")
-            return 0.0
-
-    def _get_servers(self, extract_from):
-        """Get all servers for a given date."""
-        servers = []
-        limit = 200
-        marker = None
-        # Use a marker and iter over results until we do not have more to get
-        while True:
-            aux = self.nova.servers.list(
-                search_opts={
-                    "changes-since": extract_from,
-                    "project_id": self.project_id,
-                },
-                limit=limit,
-                marker=marker,
+        for chunk_start, chunk_end in self._split_time_chunks(
+            extract_from, extract_to, CONF.prometheus.prometheus_step_seconds
+        ):
+            LOG.debug(
+                "Querying Prometheus chunk for VM %s [%s → %s]",
+                vm_uuid,
+                chunk_start,
+                chunk_end,
             )
-            servers.extend(aux)
 
-            if len(aux) < limit:
-                break
-            marker = aux[-1].id
+            try:
+                result = prom.custom_query_range(
+                    query=query,
+                    start_time=chunk_start,
+                    end_time=chunk_end,
+                    step=CONF.prometheus.prometheus_step_seconds,
+                )
+            except Exception as e:
+                LOG.error(
+                    "Error querying Prometheus for chunk [%s → %s]: %s",
+                    chunk_start,
+                    chunk_end,
+                    e,
+                )
+                continue
 
-        return servers
+            for series in result:
+                for _, value in series.get("values", []):
+                    energy_wh += float(value) * factor
+
+        LOG.debug(f"VM {vm_uuid} total energy consumed: {energy_wh:.4f} Wh")
+        return energy_wh
 
     def _build_energy_record(self, server, energy_value, extract_from, extract_to):
-        """Build an energy consumption record for a VM.
-
-        :param server: Nova server object
-        :param energy_value: Energy consumption value in Wh (raw from Prometheus)
-        :param extract_from: Start time for extraction period
-        :param extract_to: End time for extraction period
-        :returns: EnergyRecord object
-        """
+        """Build an EnergyRecord for a VM."""
         vm_uuid = str(server.id)
         vm_status = server.status.lower()
 
-        # Get server creation time
-        import dateutil.parser
-
         created_at = dateutil.parser.parse(server.created)
-
-        # Remove timezone info for comparison (extract_from/to are naive)
         if created_at.tzinfo is not None:
             created_at = created_at.replace(tzinfo=None)
 
-        # Calculate start and end times for the period
+        # Skip VMs created after extraction end
+        if created_at >= extract_to:
+            return None
+
         start_time = max(created_at, extract_from)
         end_time = extract_to
 
-        # Calculate durations in seconds
-        duration = (end_time - start_time).total_seconds()
-        wall_clock_time_s = int(duration)
+        wall_clock_time_s = int((end_time - start_time).total_seconds())
 
-        # For CPU duration, we need to multiply by vCPUs if available
-        # Get flavor info to get vCPUs
-        cpu_count = 1  # Default
+        cpu_count = 1
         try:
             flavor = self.flavors.get(server.flavor.get("id"))
             if flavor:
@@ -228,37 +205,35 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
         except Exception:
             pass
 
+        # Assuming CPU duration is wall clock time multiplied by number of vCPUs
+        # (this is a simplification)
         cpu_duration_s = wall_clock_time_s * cpu_count
 
-        # Calculate suspend duration (0 if running)
+        # Suspended duration (not available from OpenStack API, set to 0 for now)
         suspend_duration_s = 0
-        if vm_status in ["suspended", "paused"]:
-            suspend_duration_s = wall_clock_time_s
 
-        # ExecUnitFinished: 0 if running, 1 if stopped/deleted
-        exec_unit_finished = 0 if vm_status in ["active", "running"] else 1
+        # Exec unit finished if VM is in a terminal state (e.g., deleted),
+        # otherwise consider it still running
+        exec_unit_finished = 1 if vm_status in ["deleted"] else 0
 
-        # Get CPU normalization factor from configuration
+        # Apply CPU normalization factor to energy value
         cpu_normalization_factor = CONF.prometheus.cpu_normalization_factor
-
-        # Apply CPU normalization factor to energy
         energy_wh = energy_value * cpu_normalization_factor
 
-        # Calculate work: CpuDuration_s / Energy_wh
-        # Avoid division by zero
-        if energy_wh > 0:
-            work = cpu_duration_s / energy_wh
-        else:
-            work = 0.0
+        # Work is defined as CPU time (in seconds) per Wh of energy consumed,
+        # which gives an indication of how much CPU time
+        # was achieved for the energy consumed.
+        work = cpu_duration_s / energy_wh if energy_wh > 0 else 0.0
 
-        # Calculate efficiency: CpuDuration_s / WallClockTime_s
-        # Avoid division by zero
-        if wall_clock_time_s > 0:
-            efficiency = cpu_duration_s / wall_clock_time_s
-        else:
-            efficiency = 0.0
+        # Efficiency is defined as CPU time per second of wall clock time,
+        # normalized by the number of vCPUs (always 1 in this simplified model)
+        efficiency = (
+            cpu_duration_s / (wall_clock_time_s * cpu_count)
+            if wall_clock_time_s > 0
+            else 0.0
+        )
 
-        r = record.EnergyRecord(
+        return record.EnergyRecord(
             exec_unit_id=uuid.UUID(vm_uuid),
             start_exec_time=start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
             end_exec_time=end_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -273,66 +248,48 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
             status=vm_status,
             owner=self.vo,
             site_name=CONF.site_name,
-            cloud_type=self.cloud_type,
             compute_service=CONF.service_name,
         )
 
-        return r
-
     def extract(self, extract_from, extract_to):
-        """Extract energy consumption records from Prometheus.
+        """Extract energy consumption records for all VMs in the project.
 
-        This method queries Prometheus for energy consumption metrics
-        for each VM in the project.
-
-        :param extract_from: datetime.datetime object indicating the date to
-                             extract records from
-        :param extract_to: datetime.datetime object indicating the date to
-                           extract records to
-        :returns: A list of energy records
+        :param extract_from: Start of the extraction period (datetime)
+        :param extract_to: End of the extraction period (datetime)
+        :return: List of EnergyRecord objects with energy consumption data for each VM
         """
-        # Remove timezone as Nova doesn't expect it
         extract_from = extract_from.replace(tzinfo=None)
         extract_to = extract_to.replace(tzinfo=None)
 
         records = []
 
-        # Get all servers for the project
         LOG.debug(f"Getting servers for project {self.project}")
-        servers = self._get_servers(extract_from)
-
+        servers = self._get_servers()
         LOG.info(
-            f"Found {len(servers)} VMs for project {self.project}, "
-            f"querying Prometheus for energy metrics"
+            f"Found {len(servers)} VMs for project {self.project}, querying Prometheus"
         )
 
-        # Query Prometheus for each server
         for server in servers:
             vm_uuid = str(server.id)
             vm_name = server.name
-
             LOG.debug(f"Querying energy consumption for VM {vm_name} ({vm_uuid})")
 
-            # Get energy consumption using the new method
-            energy_value = self._energy_consumed_wh(vm_uuid)
-
+            energy_value = self._energy_consumed_wh(vm_uuid, extract_from, extract_to)
             if energy_value <= 0:
-                LOG.debug(
-                    f"No energy consumption data for VM {vm_name} ({vm_uuid}), "
-                    "skipping record creation"
-                )
+                LOG.debug(f"No energy data for VM {vm_name} ({vm_uuid}), skipping")
                 continue
-
-            LOG.debug(
-                f"Creating energy record: {energy_value} Wh "
-                f"for VM {vm_name} ({vm_uuid})"
-            )
 
             energy_record = self._build_energy_record(
                 server, energy_value, extract_from, extract_to
             )
+            if energy_record is None:
+                continue
+
+            LOG.debug(
+                f"Creating energy record: {energy_value:.4f} Wh "
+                "for VM {vm_name} ({vm_uuid})"
+            )
             records.append(energy_record)
 
         LOG.info(f"Extracted {len(records)} energy records for project {self.project}")
-
         return records

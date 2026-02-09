@@ -33,9 +33,6 @@ labels = type_instance:scaph_process_power_microwatts
 # Frequency between samples in seconds
 prometheus_step_seconds = 30
 
-# Query time range (e.g., '1h', '6h', '24h')
-prometheus_query_range = 1h
-
 # Whether to verify SSL when connecting to Prometheus
 prometheus_verify_ssl = true
 ```
@@ -57,7 +54,6 @@ The Prometheus extractor:
 - **vm_uuid_label_name**: Name of the label that matches the VM UUID in Prometheus metrics (default: `uuid`)
 - **labels**: List of label filters as `key:value` pairs to filter the Prometheus metric. The VM UUID label will be added automatically (default: `["type_instance:scaph_process_power_microwatts"]`)
 - **prometheus_step_seconds**: Frequency between samples in the time series, in seconds (default: `30`)
-- **prometheus_query_range**: Time range for the query (default: `1h`). Examples: `1h`, `6h`, `24h`
 - **prometheus_verify_ssl**: Whether to verify SSL certificates when connecting to Prometheus (default: `true`)
 
 ## Example Configurations
@@ -73,7 +69,6 @@ prometheus_metric_name = prometheus_value
 vm_uuid_label_name = uuid
 labels = type_instance:scaph_process_power_microwatts
 prometheus_step_seconds = 30
-prometheus_query_range = 6h
 prometheus_verify_ssl = false
 ```
 
@@ -88,7 +83,6 @@ prometheus_metric_name = my_custom_power_metric
 vm_uuid_label_name = instance_id
 labels = environment:production,datacenter:dc1
 prometheus_step_seconds = 60
-prometheus_query_range = 1h
 prometheus_verify_ssl = true
 ```
 
@@ -103,7 +97,6 @@ prometheus_metric_name = node_power_watts
 vm_uuid_label_name = vm_uuid
 labels = type_instance:power_consumption,source:ipmi,rack:rack42
 prometheus_step_seconds = 30
-prometheus_query_range = 1h
 prometheus_verify_ssl = true
 ```
 
@@ -165,7 +158,6 @@ prometheus_metric_name = prometheus_value
 vm_uuid_label_name = uuid
 labels = type_instance:scaph_process_power_microwatts
 prometheus_step_seconds = 30
-prometheus_query_range = 6h
 prometheus_verify_ssl = false
 
 [ssm]

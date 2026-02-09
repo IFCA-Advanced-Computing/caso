@@ -28,22 +28,21 @@ messengers = greendigit_cim
 
 [greendigit_cim]
 # Base URL of SZTAKI GreenDIGIT CIM Service.
-# Specific endpoints for authentication (/gd-kpi-api/v1/token) and publishing (/gd-kpi-api/v1/submit) 
+# Specific endpoints for authentication (/gd-cim-api/v1/token) and publishing (/gd-cim-api/v1/submit) 
 # will be constructed internally by the messenger.
-greendigit_cim_base_url = https://greendigit-cim.sztaki.hu
+base_url = https://greendigit-cim.sztaki.hu
+
+# Credentials used to obtain the bearer token
+email = user@example.org
+password = secret-password
+
+# SSL verification (recommended for production)
+verify_ssl = true
 
 [messenger_greendigit_cim]
 # Only energy records will be published to this messenger
 record_types = energy
 ```
-Environment Variables
----------------------
-
-The GreenDIGIT CIM messenger requires the following environment variables
-to be set for authentication:
-
-- `GREENDIGIT_CIM_EMAIL`: The email address used for authentication.
-- `GREENDIGIT_CIM_PASSWORD`: The password associated with the email address.
 
 How it Works
 ------------
@@ -51,9 +50,10 @@ How it Works
 The GreenDIGIT CIM messenger performs the following steps:
 
 1. **Verify Endpoints**: Checks that the authentication and publishing endpoints are reachable and that SSL certificates are valid.
-2. **Authenticate**: Uses the configured get_token_url and the credentials from environment variables to obtain a bearer token.
+2. **Authenticate**: Uses the configured base URL and the credentials provided in caso.conf
+to obtain a bearer token from `/gd-cim-api/v1/token`.
 3. **Serialize Records**: Converts `EnergyRecord` objects to JSON using field mappings consistent with cASO standards.
-4. **Publish Records**: Sends the JSON payload to `/gd-kpi-api/v1/submit` via HTTP POST with the bearer token in the Authorization header.
+4. **Publish Records**: Sends the JSON payload to `/gd-cim-api/v1/submit` via HTTP POST with the bearer token in the Authorization header.
 5. **Logging:** Records the number of published records and HTTP response status.
 
 Testing
@@ -62,7 +62,7 @@ Testing
 To test the messenger:
 
 1. Verify that the SZTAKI CIM endpoints are reachable from the host running cASO.
-2. Ensure environment variables `GREENDIGIT_CIM_EMAIL` and `GREENDIGIT_CIM_PASS` are set.
+2. EEnsure the credentials are correctly set in `caso.conf`.
 3. Run cASO in `--dry-run` mode to preview `EnergyRecord` objects without publishing.
 4. Check logs for successful publication messages or errors.
 
@@ -91,6 +91,6 @@ Technical Details
 
 - Uses bearer token authentication.
 - Records are serialized using `model_dump_json` with aliases and excluding `None` values.
-- HTTP POST to `/gd-kpi-api/submit` includes a JSON array of `EnergyRecord` objects.
+- HTTP POST to `/gd-cim-api/submit` includes a JSON array of `EnergyRecord` objects.
 - Verifies SSL and endpoint availability before publishing.
 - Logs the number of records sent and HTTP response status.
