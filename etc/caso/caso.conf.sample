@@ -472,9 +472,6 @@
 # Frequency between samples in the time series (in seconds). (integer value)
 #prometheus_step_seconds = 30
 
-# Query time range (e.g., '1h', '6h', '24h'). (string value)
-#prometheus_query_range = 1h
-
 # Whether to verify SSL when connecting to Prometheus. (boolean value)
 #prometheus_verify_ssl = true
 

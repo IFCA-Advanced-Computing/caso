@@ -294,8 +294,6 @@ instantaneous power samples. Available options:
   Value for the ``type_instance`` label used to filter metrics in Prometheus.
 * ``prometheus_step_seconds`` (default: ``30``), Frequency between samples in
   the time series, in seconds. This is used to calculate energy from power samples.
-* ``prometheus_query_range`` (default: ``1h``), Time range for the Prometheus
-  query (e.g., ``1h``, ``6h``, ``24h``).
 * ``prometheus_verify_ssl`` (default: ``true``), Whether to verify SSL 
   certificates when connecting to Prometheus.
 
