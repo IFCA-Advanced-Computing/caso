@@ -94,9 +94,7 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
     def _get_keystone_client(self, project_scoped=True):
         """Get a Keystone Client for the configured project in the object."""
         client = keystone_client.get_client(
-            CONF,
-            project=self.project if project_scoped else None,
-            system_scope="all"
+            CONF, project=self.project if project_scoped else None, system_scope="all"
         )
         return client
 

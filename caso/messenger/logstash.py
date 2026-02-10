@@ -25,7 +25,6 @@ import six
 from caso import exception
 import caso.messenger
 
-
 opts = [
     cfg.StrOpt("host", default="localhost", help="Logstash host to send records to."),
     cfg.IntOpt("port", default=5000, help="Logstash server port."),
