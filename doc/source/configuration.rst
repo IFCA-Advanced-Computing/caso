@@ -283,22 +283,27 @@ To publish only energy records to logstash::
 
 Options defined here configure the Prometheus extractor for gathering energy
 consumption metrics. This extractor uses the ``prometheus-api-client`` library
-to query a Prometheus instance and calculate energy consumption from 
+to query a Prometheus instance and calculate energy consumption from
 instantaneous power samples. Available options:
 
 * ``prometheus_endpoint`` (default: ``http://localhost:9090``), Prometheus
   server endpoint URL.
-* ``prometheus_metric_name`` (default: ``prometheus_value``), Name of the 
+* ``prometheus_metric_name`` (default: ``prometheus_value``), Name of the
   Prometheus metric to query for energy consumption data.
-* ``prometheus_label_type_instance`` (default: ``scaph_process_power_microwatts``),
-  Value for the ``type_instance`` label used to filter metrics in Prometheus.
+* ``vm_uuid_label_name`` (default: ``uuid``), Name of the label in the
+  Prometheus metric that matches the VM UUID.
+* ``labels`` (default: ``["type_instance:scaph_process_power_microwatts"]``),
+  List of label filters expressed as ``key:value`` pairs used to filter the
+  Prometheus metric. The VM UUID label will be automatically added to the query.
 * ``prometheus_step_seconds`` (default: ``30``), Frequency between samples in
   the time series, in seconds. This is used to calculate energy from power samples.
-* ``prometheus_verify_ssl`` (default: ``true``), Whether to verify SSL 
+* ``prometheus_verify_ssl`` (default: ``true``), Whether to verify SSL
   certificates when connecting to Prometheus.
 
 The extractor calculates energy in Watt-hours (Wh) from microwatt power samples
-using the formula: ``sum_over_time(metric{labels}[range]) * (step_seconds/3600) / 1000000``.
+using the formula:
+
+``sum_over_time(metric{labels}[range]) * (step_seconds/3600) / 1000000``
 
 To use the Prometheus extractor, add ``prometheus`` to the ``extractor`` option
 in the main configuration. For more details, see :doc:`prometheus-extractor`.
