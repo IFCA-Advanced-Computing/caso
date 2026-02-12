@@ -1,5 +1,40 @@
 # Changelog
 
+## [5.2.1](https://github.com/IFCA-Advanced-Computing/caso/compare/v5.2.0...v5.2.1) (2026-02-12)
+
+
+### Features
+
+* add mapping configuration between record types and messengers ([0041867](https://github.com/IFCA-Advanced-Computing/caso/commit/004186796406af7daa9da2b49a4e8d2559b66f22))
+* Add Prometheus extractor and EnergyRecord for energy consumption metrics ([6938099](https://github.com/IFCA-Advanced-Computing/caso/commit/6938099d53d40d506b1e7e8d706f381f7da85cfb))
+* ensure CPU and Wall time is not zero ([741c448](https://github.com/IFCA-Advanced-Computing/caso/commit/741c448485e6bd79d824a33be9cafe20146d00e7))
+* Implement energy record publication to CIM ([#170](https://github.com/IFCA-Advanced-Computing/caso/issues/170)) ([#171](https://github.com/IFCA-Advanced-Computing/caso/issues/171)) ([69881f7](https://github.com/IFCA-Advanced-Computing/caso/commit/69881f7bf5cb15131fca58317cacbc08a6b0ca6a))
+
+
+### Bug Fixes
+
+* correct energy record calculations and add CPU normalization factor ([53e6d38](https://github.com/IFCA-Advanced-Computing/caso/commit/53e6d38a54431895db09841c0229cfed4a61a63f))
+* do not request all tenants when listing servers ([2540db3](https://github.com/IFCA-Advanced-Computing/caso/commit/2540db3516bc5548fea82f581548dfe728b4e7df))
+* Do not use a scoped client when getting user information ([3eed5b0](https://github.com/IFCA-Advanced-Computing/caso/commit/3eed5b075f2fa8a11bae81cf42b27e4535c446ec)), closes [#173](https://github.com/IFCA-Advanced-Computing/caso/issues/173)
+* include entrypoint for greendigit_cim ([b187d51](https://github.com/IFCA-Advanced-Computing/caso/commit/b187d513310f0ed4bb07012724b187109b8d3406))
+* Integrate energy_consumed_wh function using prometheus-api-client ([390db52](https://github.com/IFCA-Advanced-Computing/caso/commit/390db52080a877ed727102eeb985a3059e44d40f))
+* remove deprecated prometheus_query_range configuration and update related documentation ([59fc0ca](https://github.com/IFCA-Advanced-Computing/caso/commit/59fc0ca6c2c2e595369139f60a5356c40e946d7b))
+* remove unnecessary blank lines in base.py and logstash.py ([d73a579](https://github.com/IFCA-Advanced-Computing/caso/commit/d73a5798cf4f312434701fc107278ff1cf6ddc63))
+* Rename to EnergyConsumptionExtractor and update EnergyRecord format ([ac35ab1](https://github.com/IFCA-Advanced-Computing/caso/commit/ac35ab12ccc35cba0c85dd43822fa76db3b583d8))
+* update documentation for Prometheus extractor and GreenDIGIT CIM messenger configuration ([e0884d9](https://github.com/IFCA-Advanced-Computing/caso/commit/e0884d9368d861b3b9923b555bdd3a59664da279))
+* Update Prometheus extractor to scan VMs and support query templating ([a1c6b8c](https://github.com/IFCA-Advanced-Computing/caso/commit/a1c6b8c44b24e5b80e89d631a13f1ed254e12838))
+
+
+### Documentation
+
+* add documentation for messenger record type filtering ([b6959a2](https://github.com/IFCA-Advanced-Computing/caso/commit/b6959a2a510f58b76510b01d34fb8f600b25d527))
+* add release notes for messenger record type filtering ([7be9c3c](https://github.com/IFCA-Advanced-Computing/caso/commit/7be9c3c8aa5d180c4e12a7ddfe1e8234827e4cec))
+
+
+### Miscellaneous Chores
+
+* release 5.2.1 ([a035867](https://github.com/IFCA-Advanced-Computing/caso/commit/a035867b5e75787db17a2a30d7b64f1ebee17632))
+
 ## [5.2.0](https://github.com/IFCA-Advanced-Computing/caso/compare/v5.1.0...v5.2.0) (2025-10-08)
 
 
