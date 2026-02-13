@@ -48,6 +48,21 @@ class _BaseRecord(pydantic.BaseModel, abc.ABC):
         """Render record as the expected SSM message."""
         raise NotImplementedError("Method not implemented")
 
+    def serialization_message(self):
+        """Render record as the expected logstash message."""
+        opts = {
+            "by_alias": True,
+            "exclude_none": True,
+        }
+        # NOTE(acostatnini): part related to the definition of the logstash message to
+        # be serialized before to send data
+        # NOTE(aloga): do not iter over the dictionary returned by record.dict() as this
+        # is just a dictionary representation of the object, where no serialization is
+        # done. In order to get objects correctly serialized we need to convert to JSON,
+        # then reload the model
+        serialized_record = json.loads(self.json(**opts))
+        return serialized_record
+
 
 class _ValidCloudStatus(str, enum.Enum):
     """This is a private class to enum valid cloud statuses."""
