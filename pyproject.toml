@@ -119,7 +119,7 @@ poetry = "^2.0.0"
 
 
 [tool.poetry.group.test-black.dependencies]
-black = "^24.8.0"
+black = ">=24.8,<27.0"
 
 
 [tool.poetry.group.test-mypy.dependencies]
