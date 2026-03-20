@@ -22,16 +22,14 @@ import os.path
 import warnings
 
 import dateutil.parser
-from dateutil import tz
-from oslo_config import cfg
-from oslo_log import log
 import six
-
-from caso import keystone_client
-from caso import loading
-
+from dateutil import tz
 from keystoneauth1.exceptions.catalog import EmptyCatalog
 from keystoneauth1.exceptions.http import Forbidden
+from oslo_config import cfg
+from oslo_log import log
+
+from caso import keystone_client, loading
 
 cli_opts = [
     cfg.ListOpt(
@@ -155,13 +153,14 @@ class Manager(object):
             LOG.debug(f"Got '{date}' from lastrun file '{lfile}'")
         return date
 
-    def write_lastrun(self, project):
+    def write_lastrun(self, project, extract_to):
         """Write a lastrun file for a given project."""
         if CONF.dry_run:
             return
         lfile = f"{self.last_run_base}.{project}"
         with open(lfile, "w") as fd:
-            fd.write(str(datetime.datetime.now(tz.tzutc())))
+            next_from = extract_to + datetime.timedelta(seconds=1)
+            fd.write(str(next_from))
 
     @property
     def voms_map(self):
@@ -326,5 +325,5 @@ class Manager(object):
                 f"project '{project}' "
                 f"({extract_from} to {extract_to})"
             )
-            self.write_lastrun(project)
+            self.write_lastrun(project, extract_to)
         return all_records
