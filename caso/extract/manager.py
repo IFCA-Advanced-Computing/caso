@@ -155,13 +155,20 @@ class Manager(object):
             LOG.debug(f"Got '{date}' from lastrun file '{lfile}'")
         return date
 
-    def write_lastrun(self, project):
-        """Write a lastrun file for a given project."""
+    def write_lastrun(self, project, extract_to):
+        """Write a lastrun file for a given project.
+
+        The `extract_to` parameter represents the timestamp of the last
+        processed record, and the next run resumes from `extract_to + 1s`
+        to avoid duplication while preserving continuity in the ingestion
+        process.
+        """
         if CONF.dry_run:
             return
         lfile = f"{self.last_run_base}.{project}"
         with open(lfile, "w") as fd:
-            fd.write(str(datetime.datetime.now(tz.tzutc())))
+            next_from = extract_to + datetime.timedelta(seconds=1)
+            fd.write(str(next_from))
 
     @property
     def voms_map(self):
@@ -326,5 +333,5 @@ class Manager(object):
                 f"project '{project}' "
                 f"({extract_from} to {extract_to})"
             )
-            self.write_lastrun(project)
+            self.write_lastrun(project, extract_to)
         return all_records

@@ -15,14 +15,14 @@
 """Tests for `caso.extract.manager` module."""
 
 import datetime
+import unittest
 import uuid
+from unittest import mock
 
 import dateutil.parser
+import six
 from dateutil import tz
 from oslo_config import cfg
-import six
-import unittest
-from unittest import mock
 
 from caso.extract import manager
 
@@ -248,7 +248,7 @@ class TestCasoManager(unittest.TestCase):
 
         with unittest.mock.patch.object(self.manager, "write_lastrun") as m:
             self.manager.get_records()
-            m.assert_called_once_with("bazonk")
+            m.assert_called_once_with("bazonk", unittest.mock.ANY)
 
     def test_write_lastrun(self):
         """Test that we actually write lastrun files."""
