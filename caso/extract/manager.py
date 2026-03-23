@@ -159,8 +159,8 @@ class Manager(object):
         """Write a lastrun file for a given project.
 
         The `extract_to` parameter represents the timestamp of the last
-        processed record, and the next run resumes from `extract_to + 1s` 
-        to avoid duplication while preserving continuity in the ingestion 
+        processed record, and the next run resumes from `extract_to + 1s`
+        to avoid duplication while preserving continuity in the ingestion
         process.
         """
         if CONF.dry_run:
