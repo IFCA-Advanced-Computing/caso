@@ -22,14 +22,16 @@ import os.path
 import warnings
 
 import dateutil.parser
-import six
 from dateutil import tz
-from keystoneauth1.exceptions.catalog import EmptyCatalog
-from keystoneauth1.exceptions.http import Forbidden
 from oslo_config import cfg
 from oslo_log import log
+import six
 
-from caso import keystone_client, loading
+from caso import keystone_client
+from caso import loading
+
+from keystoneauth1.exceptions.catalog import EmptyCatalog
+from keystoneauth1.exceptions.http import Forbidden
 
 cli_opts = [
     cfg.ListOpt(
@@ -154,7 +156,13 @@ class Manager(object):
         return date
 
     def write_lastrun(self, project, extract_to):
-        """Write a lastrun file for a given project."""
+        """Write a lastrun file for a given project.
+
+        The `extract_to` parameter represents the timestamp of the last
+        processed record, and the next run resumes from `extract_to + 1s` 
+        to avoid duplication while preserving continuity in the ingestion 
+        process.
+        """
         if CONF.dry_run:
             return
         lfile = f"{self.last_run_base}.{project}"
