@@ -93,7 +93,7 @@ prometheus-api-client = "^0.5.5"
 
 [tool.poetry.group.test.dependencies]
 poetry = "^2.0.0"
-pytest = "^8.3.3"
+pytest = ">=8.3.3,<10.0.0"
 pytest-cov = "^5.0.0"
 fixtures = "^4.1.0"
 mock = "^5.1.0"
