@@ -331,7 +331,7 @@ def map_accelerator_fields(field: str) -> str:
         "measurement_month": "MeasurementMonth",
         "measurement_year": "MeasurementYear",
         "associated_record_type": "AssociatedRecordType",
-        "uuid": "AccUUID",
+        "uuid": "AssociatedRecord",
         "user_dn": "GlobalUserName",
         "fqan": "FQAN",
         "site_name": "SiteName",

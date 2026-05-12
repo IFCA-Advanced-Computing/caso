@@ -205,7 +205,7 @@ valid_accelerator_records_fields = [
 
 valid_accelerator_records_dict = [
     {
-        "AccUUID": "99cf5d02-a573-46a1-b90d-0f7327126876",
+        "AssociatedRecord": "99cf5d02-a573-46a1-b90d-0f7327126876",
         "AssociatedRecordType": "cloud",
         "AvailableDuration": 5000,
         "ActiveDuration": 5000,
@@ -221,7 +221,7 @@ valid_accelerator_records_dict = [
         "CloudComputeService": "Fake Cloud Service",
     },
     {
-        "AccUUID": "99cf5d02-a573-46a1-b90d-0f7327126876",
+        "AssociatedRecord": "99cf5d02-a573-46a1-b90d-0f7327126876",
         "AssociatedRecordType": "cloud",
         "AvailableDuration": 5000,
         "ActiveDuration": 5000,
@@ -626,7 +626,7 @@ def expected_entries_accelerator() -> typing.List[str]:
         '{"SiteName":"TEST-Site",'
         f'"CloudType":"{cloud_type}",'
         '"CloudComputeService":"Fake Cloud Service",'
-        '"AccUUID":"99cf5d02-a573-46a1-b90d-0f7327126876",'
+        '"AssociatedRecord":"99cf5d02-a573-46a1-b90d-0f7327126876",'
         '"GlobalUserName":"d4e547e6f298fe34389@foobar.eu",'
         '"FQAN":"VO 1 FQAN",'
         '"Count":3,'
@@ -640,7 +640,7 @@ def expected_entries_accelerator() -> typing.List[str]:
         '{"SiteName":"TEST-Site",'
         f'"CloudType":"{cloud_type}",'
         '"CloudComputeService":"Fake Cloud Service",'
-        '"AccUUID":"99cf5d02-a573-46a1-b90d-0f7327126876",'
+        '"AssociatedRecord":"99cf5d02-a573-46a1-b90d-0f7327126876",'
         '"GlobalUserName":"d4e547e6f298fe34389@foobar.eu",'
         '"FQAN":"VO 1 FQAN",'
         '"Count":30,'
@@ -664,7 +664,7 @@ def expected_message_accelerator() -> str:
         '{"SiteName": "TEST-Site", '
         f'"CloudType": "{cloud_type}", '
         '"CloudComputeService": "Fake Cloud Service", '
-        '"AccUUID": "99cf5d02-a573-46a1-b90d-0f7327126876", '
+        '"AssociatedRecord": "99cf5d02-a573-46a1-b90d-0f7327126876", '
         '"GlobalUserName": "d4e547e6f298fe34389@foobar.eu", '
         '"FQAN": "VO 1 FQAN", '
         '"Count": 3, '
@@ -678,7 +678,7 @@ def expected_message_accelerator() -> str:
         '{"SiteName": "TEST-Site", '
         f'"CloudType": "{cloud_type}", '
         '"CloudComputeService": "Fake Cloud Service", '
-        '"AccUUID": "99cf5d02-a573-46a1-b90d-0f7327126876", '
+        '"AssociatedRecord": "99cf5d02-a573-46a1-b90d-0f7327126876", '
         '"GlobalUserName": "d4e547e6f298fe34389@foobar.eu", '
         '"FQAN": "VO 1 FQAN", '
         '"Count": 30, '
