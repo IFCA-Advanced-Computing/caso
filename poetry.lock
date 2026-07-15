@@ -2360,18 +2360,17 @@ test = ["coverage (>=4.0)", "eventlet (>=0.27.0)", "fixtures (>=3.0.0)", "oslote
 
 [[package]]
 name = "oslo-config"
-version = "9.8.0"
+version = "10.1.0"
 description = "Oslo Configuration API"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "oslo_config-9.8.0-py3-none-any.whl", hash = "sha256:7de0b35a103ad9c0c57572cc41d67dbca3bc26c921bf4a419594a98f8a7b79ab"},
-    {file = "oslo_config-9.8.0.tar.gz", hash = "sha256:eea8009504abee672137c58bdabdaba185f496b93c85add246e2cdcebe9d08aa"},
+    {file = "oslo_config-10.1.0-py3-none-any.whl", hash = "sha256:90505d941597be502228d15f847f1f4cc990c25f59844a07efde9a65e707bd61"},
+    {file = "oslo_config-10.1.0.tar.gz", hash = "sha256:93a68f9bd52242198b404bb07b2b81f644008044a4882eb1b5042417b9819b36"},
 ]
 
 [package.dependencies]
-debtcollector = ">=1.2.0"
 netaddr = ">=0.7.18"
 "oslo.i18n" = ">=3.15.3"
 PyYAML = ">=5.1"
@@ -2381,7 +2380,6 @@ stevedore = ">=1.20.0"
 
 [package.extras]
 rst-generator = ["rst2txt (>=1.1.0)", "sphinx (>=1.8.0)"]
-test = ["coverage (>=4.0)", "fixtures (>=3.0.0)", "mypy (>=0.720)", "oslo.log (>=3.36.0)", "oslotest (>=3.2.0)", "requests-mock (>=1.5.0)", "stestr (>=2.1.0)", "testscenarios (>=0.4)", "testtools (>=2.2.0)"]
 
 [[package]]
 name = "oslo-context"
@@ -4746,4 +4744,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "8588af24ad4f62b90d820b753df56efc1259a6a5d9a03b9eb67ba81ccbf82908"
+content-hash = "ae8349ae3b7d889c1a7183ebcc43f9f4460421204ec49c97690ec3ee661003ef"
