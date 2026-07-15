@@ -1,5 +1,18 @@
 # Changelog
 
+## [5.2.2](https://github.com/IFCA-Advanced-Computing/caso/compare/v5.2.1...v5.2.2) (2026-07-15)
+
+
+### Bug Fixes
+
+* refactor write_lastrun method to accept extract_to parameter ([d3c952e](https://github.com/IFCA-Advanced-Computing/caso/commit/d3c952ec4efa445953136574efe3dafdebad627b))
+* update write_lastrun assertion to include extract_to parameter ([3311bec](https://github.com/IFCA-Advanced-Computing/caso/commit/3311becf4cbea15bd50111cfb60b680f8c1d8d60))
+
+
+### Documentation
+
+* Update badge for Python Testing in README ([b0bb171](https://github.com/IFCA-Advanced-Computing/caso/commit/b0bb1715a92bcbf21d36c042c96f216bad864a9c))
+
 ## [5.2.1](https://github.com/IFCA-Advanced-Computing/caso/compare/v5.2.0...v5.2.1) (2026-02-12)
 
 
