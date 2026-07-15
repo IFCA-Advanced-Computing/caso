@@ -1380,14 +1380,14 @@ type = ["pygobject-stubs", "pytest-mypy", "shtab", "types-pywin32"]
 
 [[package]]
 name = "keystoneauth1"
-version = "5.12.0"
+version = "5.14.0"
 description = "Authentication Library for OpenStack Identity"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "keystoneauth1-5.12.0-py3-none-any.whl", hash = "sha256:2e514b03615e2d9162f0c07c823a61a636e6d4df38ff4a34b7511a04e8a4166a"},
-    {file = "keystoneauth1-5.12.0.tar.gz", hash = "sha256:dd113c2f3dcb418d9f761c73b8cd43a96ddfa8a612b51c576822381f39ca4ae8"},
+    {file = "keystoneauth1-5.14.0-py3-none-any.whl", hash = "sha256:f8c503a95fdd83b5b72736657e4ffbb53d4b28b01763f23013f0294ed8a0e4b9"},
+    {file = "keystoneauth1-5.14.0.tar.gz", hash = "sha256:7b942084d3db27dd285c13253cdfee10b05be0436db1c01e15dc744902197a7f"},
 ]
 
 [package.dependencies]
