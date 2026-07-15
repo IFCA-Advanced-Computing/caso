@@ -1192,14 +1192,14 @@ pydocstyle = ">=2.1"
 
 [[package]]
 name = "flake8-typing-imports"
-version = "1.16.0"
+version = "1.17.0"
 description = "flake8 plugin which checks that typing imports are properly guarded"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["test-flake8"]
 files = [
-    {file = "flake8_typing_imports-1.16.0-py2.py3-none-any.whl", hash = "sha256:269ec08f1ea000a6122752f72b17816a7dc19b5b2e7ea808ddceec25ba859bf4"},
-    {file = "flake8_typing_imports-1.16.0.tar.gz", hash = "sha256:06d84504734026bfb914bc8d172e23559784055701f8d8c4880458698e98d3ca"},
+    {file = "flake8_typing_imports-1.17.0-py2.py3-none-any.whl", hash = "sha256:4ec816ce0f4772ffd0b812a0bfd22883f699ad88dc945a67694246ca2ad50e19"},
+    {file = "flake8_typing_imports-1.17.0.tar.gz", hash = "sha256:ac7a328eca24ad5662bab58994cd1440412a5ca768cdf2d0705fbac767243ab2"},
 ]
 
 [package.dependencies]
