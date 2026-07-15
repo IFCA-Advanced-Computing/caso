@@ -106,7 +106,7 @@ flake8-bugbear = "^24.8.19"
 flake8-docstrings = "^1.7.0"
 flake8-typing-imports = "^1.15.0"
 flake8-colors = "^0.1.9"
-pep8-naming = "^0.14.1"
+pep8-naming = ">=0.14.1,<0.16.0"
 pydocstyle = "^6.3.0"
 
 
