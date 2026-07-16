@@ -1721,17 +1721,18 @@ stevedore = ">=1.20.0"
 
 [[package]]
 name = "oslo-concurrency"
-version = "6.2.0"
+version = "7.5.0"
 description = "Oslo Concurrency library"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "oslo.concurrency-6.2.0-py3-none-any.whl", hash = "sha256:fd16f5701d84d767f3d78dcf7f088654fd075f691f1983f224b0db78952dff97"},
-    {file = "oslo.concurrency-6.2.0.tar.gz", hash = "sha256:ab9d79935119e2bcb0edeb7f8587236af7844244ab87153720b8ca8437d1be02"},
+    {file = "oslo_concurrency-7.5.0-py3-none-any.whl", hash = "sha256:11dfa769f330de64cad0aca2736f75239265e571b5e17edcb23f08f29b917aef"},
+    {file = "oslo_concurrency-7.5.0.tar.gz", hash = "sha256:091ce0a27c5f347e393cf4776176389fe23c0b863ff0539d121619d0ec691367"},
 ]
 
 [package.dependencies]
+debtcollector = ">=3.0.0"
 fasteners = ">=0.7.0"
 "oslo.config" = ">=5.2.0"
 "oslo.i18n" = ">=3.15.3"
@@ -1739,8 +1740,7 @@ fasteners = ">=0.7.0"
 pbr = ">=2.0.0"
 
 [package.extras]
-eventlet = ["eventlet (>=0.27.0)"]
-test = ["coverage (>=4.0)", "eventlet (>=0.27.0)", "fixtures (>=3.0.0)", "oslotest (>=3.2.0)", "stestr (>=2.0.0)"]
+eventlet = ["eventlet (>=0.35.2)"]
 
 [[package]]
 name = "oslo-config"
@@ -3944,4 +3944,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "33d99bc496219b8e41d741be795ae750a21b7a43fa84be12c6593fad5b87c09b"
+content-hash = "6842081a35994e0f318748e07206e80219dc8729469fcdca0a496e1a984575c9"
