@@ -2449,14 +2449,14 @@ testing = ["process-tests", "pytest-xdist", "virtualenv"]
 
 [[package]]
 name = "python-cinderclient"
-version = "9.8.0"
+version = "9.9.0"
 description = "OpenStack Block Storage API Client Library"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "python_cinderclient-9.8.0-py3-none-any.whl", hash = "sha256:e82f88d1b9fd8e4a41420da5535b73bb8580084f3303ad9bcaf64f0aa5d3bae6"},
-    {file = "python_cinderclient-9.8.0.tar.gz", hash = "sha256:bd3ee9f9487c5e79957f018a6b3f2dece7059dad8f6155d83dd4b6eb9447a11d"},
+    {file = "python_cinderclient-9.9.0-py3-none-any.whl", hash = "sha256:1c7a5cb0d8202225fd8e7abc60b7cee6e23a5a2ba44f9afb0f92408330486e39"},
+    {file = "python_cinderclient-9.9.0.tar.gz", hash = "sha256:697e4d12c249f39b41ecf4fa6fcb8c38cbf2d6b2d84d6f515ed567b82dcd0bd1"},
 ]
 
 [package.dependencies]
