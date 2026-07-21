@@ -97,3 +97,13 @@ class TestNovaBuildRecord(unittest.TestCase):
 
                         # Verify the record was created with user_dn=None
                         self.assertIsNone(record.user_dn)
+
+
+class TestNovaVmStatus(unittest.TestCase):
+    """Test case for Nova VM status mapping."""
+
+    def test_vm_status_maps_password_state(self):
+        """Test that the OpenStack PASSWORD status maps to started."""
+        extractor = object.__new__(nova.NovaExtractor)
+
+        self.assertEqual("started", extractor.vm_status("PASSWORD"))
