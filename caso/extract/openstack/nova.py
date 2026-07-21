@@ -159,6 +159,10 @@ class NovaExtractor(base.BaseOpenStackExtractor):
 
         :param status: OpenStack status.
         """
+        normalized_status = status.lower()
+        if normalized_status == "password":
+            return "started"
+
         openstack_vm_statuses = {
             "active": "started",
             "build": "started",
@@ -167,7 +171,6 @@ class NovaExtractor(base.BaseOpenStackExtractor):
             "error": "error",
             "hard_reboot": "started",
             "migrating": "started",
-            "password": "started",
             "paused": "paused",
             "reboot": "started",
             "rebuild": "started",
@@ -182,7 +185,7 @@ class NovaExtractor(base.BaseOpenStackExtractor):
             "saving": "started",
             "unknown": "unknown",
         }
-        return openstack_vm_statuses.get(status.lower(), "unknown")
+        return openstack_vm_statuses.get(normalized_status, "unknown")
 
     def _build_record(self, server):
         user = self.users[server.user_id]
