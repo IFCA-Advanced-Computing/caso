@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.2.3](https://github.com/IFCA-Advanced-Computing/caso/compare/v5.2.2...v5.2.3) (2026-07-22)
+
+
+### Bug Fixes
+
+* avoid Bandit false positive in Nova status map ([ec08cab](https://github.com/IFCA-Advanced-Computing/caso/commit/ec08cabd163e0677802fe2d524f3c2cdf483f592))
+
 ## [5.2.2](https://github.com/IFCA-Advanced-Computing/caso/compare/v5.2.1...v5.2.2) (2026-07-15)
 
 
