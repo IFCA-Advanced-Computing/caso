@@ -3299,12 +3299,11 @@ version = "80.9.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.9"
-groups = ["main", "test", "test-reno"]
+groups = ["main", "test-reno"]
 files = [
     {file = "setuptools-80.9.0-py3-none-any.whl", hash = "sha256:062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922"},
     {file = "setuptools-80.9.0.tar.gz", hash = "sha256:f36b47402ecde768dbfafc46e8e4207b4360c654f1f3bb84475f0a28628fb19c"},
 ]
-markers = {test = "python_version >= \"3.12\""}
 
 [package.extras]
 check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1) ; sys_platform != \"cygwin\"", "ruff (>=0.8.0) ; sys_platform != \"cygwin\""]
@@ -3377,21 +3376,18 @@ files = [
 
 [[package]]
 name = "testtools"
-version = "2.7.2"
+version = "2.9.1"
 description = "Extensions to the Python standard library unit testing framework"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.10"
 groups = ["test"]
 files = [
-    {file = "testtools-2.7.2-py3-none-any.whl", hash = "sha256:11712e29cebbe92187c3ad47ace5c32f91e1bb7a9f1ac5e8684c2b01eaa6fd2d"},
-    {file = "testtools-2.7.2.tar.gz", hash = "sha256:5be5bbc1f0fa0f8b60aca6ceec07845d41d0c475cf445bfadb4d2c45ec397ea3"},
+    {file = "testtools-2.9.1-py3-none-any.whl", hash = "sha256:faf2d689b3614d87459f7f715fc8349a3f77a252486b104d0cfe635b44326895"},
+    {file = "testtools-2.9.1.tar.gz", hash = "sha256:39ad9eb9e1b935d6838f4b3aee4d6e72db65df5602f6feda998dbb4fe8de0b19"},
 ]
 
-[package.dependencies]
-setuptools = {version = "*", markers = "python_version >= \"3.12\""}
-
 [package.extras]
-dev = ["ruff (==0.4.8)"]
+dev = ["mypy (>=1.20.0)", "ruff (==0.15.9)", "typing-extensions ; python_version < \"3.11\""]
 test = ["testresources", "testscenarios"]
 twisted = ["fixtures", "twisted"]
 
