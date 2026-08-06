@@ -1814,17 +1814,18 @@ pbr = ">=2.0.0"
 
 [[package]]
 name = "oslo-log"
-version = "6.2.0"
+version = "8.2.0"
 description = "oslo.log library"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "oslo.log-6.2.0-py3-none-any.whl", hash = "sha256:116cb325941242cafd2f0d7797685428c041f2c2580806052b16bd2a71dc38e8"},
-    {file = "oslo.log-6.2.0.tar.gz", hash = "sha256:2b151d9c3f2b2ecc12c06d0fb7dbf2e9047afdaec3644827fa1e10b354369563"},
+    {file = "oslo_log-8.2.0-py3-none-any.whl", hash = "sha256:783dab9d4523262ec3b6403cd3a4e34b709b2db90da59b0435c5ed1a702ec1b6"},
+    {file = "oslo_log-8.2.0.tar.gz", hash = "sha256:12b3f6574429cd9675e3c70496f6e0c2e48217f5126c5ff0a0c188ac575bc970"},
 ]
 
 [package.dependencies]
+debtcollector = ">=3.0.0"
 "oslo.config" = ">=5.2.0"
 "oslo.context" = ">=2.21.0"
 "oslo.i18n" = ">=3.20.0"
@@ -1836,7 +1837,6 @@ python-dateutil = ">=2.7.0"
 [package.extras]
 fixtures = ["fixtures (>=3.0.0)"]
 systemd = ["systemd-python (>=234)"]
-test = ["coverage (>=4.5.1)", "eventlet (>=0.30.1)", "fixtures (>=3.0.0)", "oslotest (>=3.3.0)", "stestr (>=2.0.0)", "testtools (>=2.3.0)"]
 
 [[package]]
 name = "oslo-serialization"
@@ -3956,4 +3956,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "6842081a35994e0f318748e07206e80219dc8729469fcdca0a496e1a984575c9"
+content-hash = "eaf13e7d5a82bdc6f3cf288827fffc6b24c0aeff69a6f3a360879f8b15d22aa1"
