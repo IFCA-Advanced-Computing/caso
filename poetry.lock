@@ -1683,22 +1683,6 @@ requestsexceptions = ">=1.2.0"
 typing-extensions = ">=4.12.0"
 
 [[package]]
-name = "os-client-config"
-version = "2.3.0"
-description = "OpenStack Client Configuation Library"
-optional = false
-python-versions = ">=3.10"
-groups = ["main"]
-files = [
-    {file = "os_client_config-2.3.0-py3-none-any.whl", hash = "sha256:bac8486bbafc0dd92704c29d5581d65030912804e8e675d13bc43b76ce051c82"},
-    {file = "os_client_config-2.3.0.tar.gz", hash = "sha256:e16a260f2fd500af14f157b9b7b7d69292ce83b0f8a461ec68ce6a8a42967cbd"},
-]
-
-[package.dependencies]
-openstacksdk = ">=0.13.0"
-pbr = ">=2.0.0,<2.1.0 || >2.1.0"
-
-[[package]]
 name = "os-service-types"
 version = "1.8.0"
 description = "Python library for consuming OpenStack sevice-types-authority data"
@@ -2548,14 +2532,14 @@ stevedore = ">=1.20.0"
 
 [[package]]
 name = "python-neutronclient"
-version = "11.6.0"
+version = "13.0.0"
 description = "CLI and Client Library for OpenStack Networking"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "python_neutronclient-11.6.0-py3-none-any.whl", hash = "sha256:df37f80a61ed0fb068551a120bb26ead0cefefdf101bf59693c556f4a2828229"},
-    {file = "python_neutronclient-11.6.0.tar.gz", hash = "sha256:3c6958088d18c8676a10abf9d94b8dbf1a984741cbb988554f216880797e072f"},
+    {file = "python_neutronclient-13.0.0-py3-none-any.whl", hash = "sha256:b1a64ef5f274a1fdbf5acf96b981847ed31ec8ada022e137a5953efa91bf4af9"},
+    {file = "python_neutronclient-13.0.0.tar.gz", hash = "sha256:c5fd856adf3dc02cc5f31f9a76f4591d50af48cdfaad25b6e99b1291b543f95a"},
 ]
 
 [package.dependencies]
@@ -2564,7 +2548,6 @@ debtcollector = ">=1.2.0"
 keystoneauth1 = ">=3.8.0"
 netaddr = ">=0.7.18"
 openstacksdk = ">=1.5.0"
-os-client-config = ">=1.28.0"
 osc-lib = ">=1.12.0"
 "oslo.i18n" = ">=3.15.3"
 "oslo.log" = ">=3.36.0"
@@ -3956,4 +3939,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "6842081a35994e0f318748e07206e80219dc8729469fcdca0a496e1a984575c9"
+content-hash = "e0e70c6e28bf565fb7b80b1002992e5416c882677e482f3a074be4b6c5c56266"
