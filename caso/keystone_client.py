@@ -33,12 +33,27 @@ opts += loading.get_auth_common_conf_options()
 opts += loading.get_session_conf_options()
 opts += loading.get_auth_plugin_conf_options("password")
 
+opts = [
+    cfg.StrOpt(
+        "system_scope",
+        default="all",
+        help="If set, use the specified system scope for "
+        "keystone clients when there is no specific project "
+        "in use. If not set, do not set any system scope.",
+    )
+]
+CONF.register_opts(opts)
 
-def get_session(conf, project, system_scope=None):
+
+def get_session(conf, project):
     """Get an auth session."""
     # First try using project_id
-    if project:
-        system_scope = None
+    # application credentials must not be scoped at all
+    system_scope = None
+    if conf[CFG_GROUP].auth_type == "v3applicationcredential":
+        project = None
+    elif not project:
+        system_scope = CONF.system_scope
     auth_plugin = loading.load_auth_from_conf_options(
         conf, CFG_GROUP, project_id=project, system_scope=system_scope
     )
@@ -54,7 +69,7 @@ def get_session(conf, project, system_scope=None):
     return sess
 
 
-def get_client(conf, project=None, system_scope=None):
+def get_client(conf, project=None):
     """Return a client for Keystone."""
-    sess = get_session(conf, project, system_scope)
+    sess = get_session(conf, project)
     return ks_client_v3.Client(session=sess, interface="public")

@@ -128,11 +128,9 @@ class Manager(object):
             LOG.warning(f"Unable to get projects from Keystone, ignoring - {e}")
         return set(projects + aux)
 
-    def _get_keystone_client(self, project=None, system_scope="all"):
+    def _get_keystone_client(self, project=None):
         """Get a Keystone Client to get the projects that we will use."""
-        client = keystone_client.get_client(
-            CONF, project=project, system_scope=system_scope
-        )
+        client = keystone_client.get_client(CONF, project=project)
         return client
 
     def get_lastrun(self, project):

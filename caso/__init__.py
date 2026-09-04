@@ -37,4 +37,4 @@ def extract_version() -> str:
     return importlib.metadata.version(__package__ or __name__.split(".", maxsplit=1)[0])
 
 
-user_agent = f"caso/{__version__} (OpenStack)"
+user_agent = f"CAcct caso/{__version__} (OpenStack)"
