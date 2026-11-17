@@ -287,7 +287,7 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
 
             LOG.debug(
                 f"Creating energy record: {energy_value:.4f} Wh "
-                "for VM {vm_name} ({vm_uuid})"
+                f"for VM {vm_name} ({vm_uuid})"
             )
             records.append(energy_record)
 
