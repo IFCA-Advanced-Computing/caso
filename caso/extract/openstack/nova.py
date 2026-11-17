@@ -16,8 +16,6 @@
 
 """Module containing the OpenStack Compute (Nova) record extractor."""
 
-import operator
-
 import dateutil.parser
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY
@@ -263,11 +261,11 @@ class NovaExtractor(base.BaseOpenStackExtractor):
 
     @staticmethod
     def _get_server_end(server):
-        server_end = server.__getattr__("OS-SRV-USG:terminated_at")
+        server_end = getattr(server, "OS-SRV-USG:terminated_at")
         if server_end is None:
             # If the server has no end_time, and no launched_at, we should use
             # server.created as the end time (i.e. VM has not started at all)
-            if server.__getattr__("OS-SRV-USG:launched_at") is None:
+            if getattr(server, "OS-SRV-USG:launched_at") is None:
                 server_end = server.created
             # Then, if a server is deleted, stuck in task_status deleting, and
             # the end time is None, we have to return the updated time as the
@@ -280,33 +278,15 @@ class NovaExtractor(base.BaseOpenStackExtractor):
         return server_end
 
     def _get_servers(self, extract_from):
-        servers = []
-        limit = 200
-        marker = None
-        # Use a marker and iter over results until we do not have more to get
-        while True:
-            aux = self.nova.servers.list(
-                search_opts={"changes-since": extract_from}, limit=limit, marker=marker
-            )
-            servers.extend(aux)
-
-            if len(aux) < limit:
-                break
-            marker = aux[-1].id
-
-        servers = sorted(servers, key=operator.attrgetter("created"))
-        return servers
+        return self._list_paginated(
+            self.nova.servers.list,
+            "created",
+            search_opts={"changes-since": extract_from},
+        )
 
     def _get_images(self):
         images = {image.id: image for image in self.glance.images.list()}
         return images
-
-    def _get_flavors(self):
-        flavors = {}
-        for flavor in self.nova.flavors.list():
-            flavors[flavor.id] = flavor.to_dict()
-            flavors[flavor.id]["extra"] = flavor.get_keys()
-        return flavors
 
     def _get_usages(self, start, end):
         aux = self.nova.usage.get(self.project_id, start, end)
