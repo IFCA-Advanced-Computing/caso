@@ -135,19 +135,13 @@ class Manager(object):
             LOG.error(e)
             raise e
 
-        # Build mapping of messenger name to allowed record types
+        # Build mapping of messenger name to allowed record types (None means all)
         self.messenger_record_types: typing.Dict[
             str, typing.Optional[typing.List[str]]
-        ] = {}
-        for messenger_name in CONF.messengers:
-            group_name = f"messenger_{messenger_name}"
-            self.messenger_record_types[messenger_name] = None
-            if hasattr(CONF, group_name):
-                group = getattr(CONF, group_name)
-                if hasattr(group, "record_types"):
-                    record_types = group.record_types
-                    if record_types:
-                        self.messenger_record_types[messenger_name] = list(record_types)
+        ] = {
+            name: list(CONF[f"messenger_{name}"].record_types) or None
+            for name in CONF.messengers
+        }
 
     def push_to_all(self, records):
         """Push records to all the configured messengers.
