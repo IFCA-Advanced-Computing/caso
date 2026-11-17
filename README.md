@@ -1,18 +1,18 @@
 
 
-<img src="https://github.com/IFCA/caso/raw/master/doc/source/static/caso.png" width="300">
+<img src="https://github.com/IFCA-Advanced-Computing/caso/raw/master/doc/source/static/caso.png" width="300">
 
-[![Python Testing](https://img.shields.io/github/actions/workflow/status/IFCA/caso/python-test.yml)](https://github.com/IFCA/caso/actions/workflows/python-test.yml)
+[![Python Testing](https://img.shields.io/github/actions/workflow/status/IFCA-Advanced-Computing/caso/python-test.yml)](https://github.com/IFCA-Advanced-Computing/caso/actions/workflows/python-test.yml)
 [![PyPI](https://img.shields.io/pypi/v/caso.svg)](https://pypi.python.org/pypi/caso)
 [![Python versions](https://img.shields.io/pypi/pyversions/caso.svg)](https://pypi.python.org/pypi/caso)
 
 cASO is an OpenStack Accounting extractor.
 
 * Free software: Apache license
-* Source: https://github.com/IFCA/caso
-* Bugs: https://github.com/IFCA/caso/issues
+* Source: https://github.com/IFCA-Advanced-Computing/caso
+* Bugs: https://github.com/IFCA-Advanced-Computing/caso/issues
 
-<img src="https://github.com/IFCA/caso/raw/master/doc/source/static/caso-diagram.png" width="500">
+<img src="https://github.com/IFCA-Advanced-Computing/caso/raw/master/doc/source/static/caso-diagram.png" width="500">
 
 Documentation (the source is in ``doc/source/``) is online at
 [caso documentation](https://caso.readthedocs.org/en/latest/).
