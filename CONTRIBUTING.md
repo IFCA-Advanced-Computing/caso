@@ -134,9 +134,9 @@ Before you submit a pull request, check that it meets these guidelines:
    is not a hard requirement, but we try to avoid to merge pull requests that
    contain a set of commits with the functionality implemented and a set of
    other small fixes.
-4. The pull request should work for Python 3.7 onwards on GitHub Actions.
-5. Check https://travis-ci.com/github/IFCA/caso/pull_requests to ensure the tests pass
-   for all supported Python versions and platforms.
+4. The pull request should work for all the supported Python versions (3.10
+   onwards). Check the GitHub Actions results in the pull request to ensure the
+   tests pass for all of them.
 
 ### Coding Standards
 
