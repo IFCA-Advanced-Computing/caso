@@ -16,6 +16,8 @@
 
 """Module managing the loading of extractors and managers."""
 
+import importlib.metadata
+
 import stevedore
 
 from caso import exception
@@ -25,8 +27,9 @@ MESSENGER_NAMESPACE = "caso.messenger"
 
 
 def _get_names(what):
-    mgr = stevedore.ExtensionManager(namespace=what)
-    return frozenset(mgr.names())
+    # NOTE: read the names from the entry points metadata instead of using a
+    # stevedore ExtensionManager, as the latter imports all the plugins.
+    return frozenset(ep.name for ep in importlib.metadata.entry_points(group=what))
 
 
 def _get(what):
