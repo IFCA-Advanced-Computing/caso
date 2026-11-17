@@ -16,9 +16,7 @@
 
 """Generic utility functions for cASO."""
 
-import errno
 import os
-import os.path
 
 
 def makedirs(path):
@@ -28,11 +26,4 @@ def makedirs(path):
 
     :param path: Directory to create
     """
-    try:
-        os.makedirs(path)
-    except OSError as exc:
-        if exc.errno == errno.EEXIST:
-            if not os.path.isdir(path):
-                raise
-        else:
-            raise
+    os.makedirs(path, exist_ok=True)
