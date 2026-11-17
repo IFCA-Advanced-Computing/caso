@@ -252,31 +252,6 @@ class NovaExtractor(base.BaseOpenStackExtractor):
         )
         return r
 
-    @staticmethod
-    def _get_server_start(server):
-        # We use created, as the start_time may change upon certain actions!
-        server_start = dateutil.parser.parse(server.created)
-        server_start = server_start.replace(tzinfo=None)
-        return server_start
-
-    @staticmethod
-    def _get_server_end(server):
-        server_end = getattr(server, "OS-SRV-USG:terminated_at")
-        if server_end is None:
-            # If the server has no end_time, and no launched_at, we should use
-            # server.created as the end time (i.e. VM has not started at all)
-            if getattr(server, "OS-SRV-USG:launched_at") is None:
-                server_end = server.created
-            # Then, if a server is deleted, stuck in task_status deleting, and
-            # the end time is None, we have to return the updated time as the
-            # end date, otherwise these server will never be completed.
-            elif server.status == "DELETED":
-                server_end = server.updated
-        if server_end:
-            server_end = dateutil.parser.parse(server_end)
-            server_end = server_end.replace(tzinfo=None)
-        return server_end
-
     def _get_servers(self, extract_from):
         return self._list_paginated(
             self.nova.servers.list,
