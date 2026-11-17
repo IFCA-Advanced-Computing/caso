@@ -11,8 +11,8 @@ authors = [
     "Aida Palacio Hoz <aidaph@ifca.unican.es>",
 ]
 
-homepage = "http://github.com/IFCA/caso"
-repository = "http://github.com/IFCA/caso"
+homepage = "https://github.com/IFCA-Advanced-Computing/caso"
+repository = "https://github.com/IFCA-Advanced-Computing/caso"
 documentation = "https://caso.readthedocs.io/"
 
 classifiers = [
@@ -38,7 +38,7 @@ include = [
 
 
 [tool.poetry.urls]
-"Bug Tracker" = "https://github.com/IFCA/caso/issues"
+"Bug Tracker" = "https://github.com/IFCA-Advanced-Computing/caso/issues"
 
 
 [tool.poetry.scripts]

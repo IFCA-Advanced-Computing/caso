@@ -9,7 +9,7 @@ You can contribute in many ways:
 
 ### Report Bugs
 
-Report bugs at https://github.com/IFCA/caso/issues.
+Report bugs at https://github.com/IFCA-Advanced-Computing/caso/issues.
 
 If you are reporting a bug, please include:
 
@@ -53,7 +53,7 @@ watching the files for changes, recompiling as you save.
 
 The best way to send feedback is to file an issue at the follwing URL:
 
-    https://github.com/IFCA/caso/issues
+    https://github.com/IFCA-Advanced-Computing/caso/issues
 
 If you are proposing a feature:
 
