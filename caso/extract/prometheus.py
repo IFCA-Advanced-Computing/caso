@@ -18,9 +18,9 @@
 
 import functools
 import uuid
-from datetime import timedelta
+from datetime import timedelta, timezone
 
-import prometheus_api_client
+import requests
 from oslo_config import cfg
 from oslo_log import log
 
@@ -103,11 +103,29 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
         return self._get_prometheus_client()
 
     def _get_prometheus_client(self):
-        """Create and return a Prometheus client based on configuration."""
-        return prometheus_api_client.PrometheusConnect(
-            url=CONF.prometheus.prometheus_endpoint,
-            disable_ssl=not CONF.prometheus.prometheus_verify_ssl,
+        """Create and return an HTTP session based on configuration."""
+        session = requests.Session()
+        session.verify = CONF.prometheus.prometheus_verify_ssl
+        return session
+
+    def _query_range(self, query, start, end, step):
+        """Run a range query against the Prometheus HTTP API.
+
+        :param start: naive datetime in UTC.
+        :param end: naive datetime in UTC.
+        :returns: the list of series (the "result" of the query).
+        """
+        response = self._prometheus.get(
+            f"{CONF.prometheus.prometheus_endpoint.rstrip('/')}/api/v1/query_range",
+            params={
+                "query": query,
+                "start": round(start.replace(tzinfo=timezone.utc).timestamp()),
+                "end": round(end.replace(tzinfo=timezone.utc).timestamp()),
+                "step": step,
+            },
         )
+        response.raise_for_status()
+        return response.json()["data"]["result"]
 
     def _build_label_selector(self, vm_uuid):
         labels = {}
@@ -133,7 +151,6 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
 
     def _energy_consumed_wh(self, vm_uuid, extract_from, extract_to):
         """Compute energy (Wh) from Prometheus in chunks for a VM."""
-        prom = self._prometheus
         label_selector = self._build_label_selector(vm_uuid)
         factor = CONF.prometheus.prometheus_step_seconds / 3600 / 1_000_000  # µW·s → Wh
         energy_wh = 0.0
@@ -151,11 +168,11 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
             )
 
             try:
-                result = prom.custom_query_range(
-                    query=query,
-                    start_time=chunk_start,
-                    end_time=chunk_end,
-                    step=CONF.prometheus.prometheus_step_seconds,
+                result = self._query_range(
+                    query,
+                    chunk_start,
+                    chunk_end,
+                    CONF.prometheus.prometheus_step_seconds,
                 )
             except Exception as e:
                 LOG.error(
