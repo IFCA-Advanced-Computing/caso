@@ -26,9 +26,8 @@ from oslo_config import cfg
 from caso.extract import manager
 
 CONF = cfg.CONF
-CONF.register_opts(
-    [cfg.StrOpt("spooldir", default="/var/spool/caso", help="Spool directory.")]
-)
+CONF.import_opt("spooldir", "caso.manager")
+CONF.import_opt("dry_run", "caso.manager")
 
 
 class TestCasoManager(unittest.TestCase):
