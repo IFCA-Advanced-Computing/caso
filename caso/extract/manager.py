@@ -179,37 +179,34 @@ class Manager(object):
         if not os.path.exists(CONF.mapping_file):
             return {}
 
-        try:
-            mapping = json.loads(open(CONF.mapping_file).read())
-        except ValueError:
-            # FIXME(aloga): raise a proper exception here
-            raise
-        else:
-            self._voms_map = {}
-            for vo, vomap in six.iteritems(mapping):
-                tenant = vomap.get("tenant", None)
-                tenants = vomap.get("tenants", [])
-                if tenant is not None:
-                    warnings.warn(
-                        "Using deprecated 'tenant' mapping, please "
-                        "use 'projects' instead",
-                        DeprecationWarning,
-                        stacklevel=2,
-                    )
-                if tenants:
-                    warnings.warn(
-                        "Using deprecated 'tenants' mapping, please "
-                        "use 'projects' instead",
-                        DeprecationWarning,
-                        stacklevel=2,
-                    )
+        with open(CONF.mapping_file) as fd:
+            mapping = json.load(fd)
+
+        self._voms_map = {}
+        for vo, vomap in mapping.items():
+            tenant = vomap.get("tenant", None)
+            tenants = list(vomap.get("tenants", []))
+            if tenant is not None:
+                warnings.warn(
+                    "Using deprecated 'tenant' mapping, please "
+                    "use 'projects' instead",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
                 tenants.append(tenant)
-                projects = vomap.get("projects", tenants)
-                if not projects:
-                    LOG.warning(f"No project mapping found for VO {vo}")
-                for project in projects:
-                    self._voms_map[project] = vo
-            return self._voms_map
+            if tenants:
+                warnings.warn(
+                    "Using deprecated 'tenants' mapping, please "
+                    "use 'projects' instead",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+            projects = vomap.get("projects", tenants)
+            if not projects:
+                LOG.warning(f"No project mapping found for VO {vo}")
+            for project in projects:
+                self._voms_map[project] = vo
+        return self._voms_map
 
     def get_project_vo(self, project_id):
         """Get the VO where the project should be mapped."""

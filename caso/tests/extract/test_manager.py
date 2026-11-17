@@ -271,3 +271,21 @@ class TestCasoManager(unittest.TestCase):
     def reset_flags(self):
         """Reset flags."""
         CONF.reset()
+
+
+def test_voms_map_ignores_missing_deprecated_tenant(tmp_path):
+    """A VO without the deprecated 'tenant' key must not map 'None'."""
+    mapping = tmp_path / "voms.json"
+    mapping.write_text(
+        '{"vo1": {"projects": ["p1", "p2"]}, "vo2": {"tenants": ["p3"]}}'
+    )
+    CONF.set_override("mapping_file", str(mapping))
+    try:
+        with mock.patch("caso.extract.manager.Manager._get_keystone_client"):
+            with mock.patch("caso.loading.get_available_extractors"):
+                CONF.set_override("extractor", [])
+                mgr = manager.Manager()
+            assert mgr.voms_map == {"p1": "vo1", "p2": "vo1", "p3": "vo2"}
+    finally:
+        CONF.clear_override("mapping_file")
+        CONF.clear_override("extractor")
