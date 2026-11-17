@@ -36,16 +36,24 @@ def extract_dates():
     }
 
 
+def _server(uuid, name, created="2023-05-25T12:00:00Z", terminated=None):
+    """Return a mocked OpenStack server."""
+    server = mock.Mock()
+    server.id = uuid
+    server.name = name
+    server.status = "DELETED" if terminated else "ACTIVE"
+    server.created = created
+    server.updated = terminated or created
+    server.flavor = {"id": "flavor-1"}
+    setattr(server, "OS-SRV-USG:launched_at", created)
+    setattr(server, "OS-SRV-USG:terminated_at", terminated)
+    return server
+
+
 @pytest.fixture
 def mock_server():
     """Return a mocked OpenStack server."""
-    server = mock.Mock()
-    server.id = "e3c5aeef-37b8-4332-ad9f-9d068f156dc2"
-    server.name = "test-vm-1"
-    server.status = "ACTIVE"
-    server.created = "2023-05-25T12:00:00Z"
-    server.flavor = {"id": "flavor-1"}
-    return server
+    return _server("e3c5aeef-37b8-4332-ad9f-9d068f156dc2", "test-vm-1")
 
 
 @pytest.fixture
@@ -122,12 +130,7 @@ class TestEnergyConsumptionExtractor:
         mock_prometheus_result_success,
     ):
         """Test extraction when Prometheus returns energy data."""
-        mock_server2 = mock.Mock()
-        mock_server2.id = "f4d6bedf-48c9-5f2f-b043-ebb4f9e65d73"
-        mock_server2.name = "test-vm-2"
-        mock_server2.status = "ACTIVE"
-        mock_server2.created = "2023-05-25T12:00:00Z"
-        mock_server2.flavor = {"id": "flavor-1"}
+        mock_server2 = _server("f4d6bedf-48c9-5f2f-b043-ebb4f9e65d73", "test-vm-2")
 
         configured_extractor.nova = mock.Mock()
         configured_extractor.nova.servers.list.return_value = [
@@ -198,3 +201,80 @@ class TestEnergyConsumptionExtractor:
 
         assert len(records) == 0
         mock_log.error.assert_called()
+
+
+class TestServerSelection:
+    """Tests for the selection of servers and their accounting period."""
+
+    def test_get_servers_includes_changed_servers(self, configured_extractor):
+        """Deleted servers listed with changes-since must also be accounted."""
+        current = _server("e3c5aeef-37b8-4332-ad9f-9d068f156dc2", "current")
+        deleted = _server(
+            "f4d6bedf-48c9-5f2f-b043-ebb4f9e65d73",
+            "deleted",
+            created="2023-05-20T00:00:00Z",
+            terminated="2023-05-25T06:00:00Z",
+        )
+        configured_extractor.nova = mock.Mock()
+        configured_extractor.nova.servers.list.side_effect = [
+            [current],
+            [current, deleted],
+        ]
+        extract_from = datetime.datetime(2023, 5, 25)
+
+        servers = configured_extractor._get_servers(extract_from)
+
+        assert [s.name for s in servers] == ["deleted", "current"]
+        configured_extractor.nova.servers.list.assert_called_with(
+            limit=200, marker=None, search_opts={"changes-since": extract_from}
+        )
+
+    def test_server_period(self, configured_extractor, extract_dates):
+        """The period must be limited to the server lifetime."""
+        running = _server("e3c5aeef-37b8-4332-ad9f-9d068f156dc2", "running")
+        ended = _server(
+            "f4d6bedf-48c9-5f2f-b043-ebb4f9e65d73",
+            "ended",
+            created="2023-05-20T00:00:00Z",
+            terminated="2023-05-25T06:00:00Z",
+        )
+        gone = _server(
+            "a1d6bedf-48c9-5f2f-b043-ebb4f9e65d73",
+            "gone",
+            created="2023-05-20T00:00:00Z",
+            terminated="2023-05-21T00:00:00Z",
+        )
+
+        assert configured_extractor._get_server_period(running, **extract_dates) == (
+            datetime.datetime(2023, 5, 25, 12),
+            extract_dates["extract_to"],
+            False,
+        )
+        assert configured_extractor._get_server_period(ended, **extract_dates) == (
+            extract_dates["extract_from"],
+            datetime.datetime(2023, 5, 25, 6),
+            True,
+        )
+        assert configured_extractor._get_server_period(gone, **extract_dates) is None
+
+    @mock.patch("caso.extract.prometheus.prometheus_api_client.PrometheusConnect")
+    def test_prometheus_client_is_reused(
+        self,
+        mock_prom_connect,
+        configured_extractor,
+        extract_dates,
+        mock_prometheus_result_success,
+    ):
+        """A single Prometheus client must be used for all the VMs."""
+        configured_extractor.nova = mock.Mock()
+        configured_extractor.nova.servers.list.return_value = [
+            _server("e3c5aeef-37b8-4332-ad9f-9d068f156dc2", "vm1"),
+            _server("f4d6bedf-48c9-5f2f-b043-ebb4f9e65d73", "vm2"),
+        ]
+        prom = mock_prom_connect.return_value
+        prom.custom_query_range.return_value = mock_prometheus_result_success
+
+        records = configured_extractor.extract(**extract_dates)
+
+        assert len(records) == 2
+        mock_prom_connect.assert_called_once()

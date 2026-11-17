@@ -16,10 +16,10 @@
 
 """Energy Consumption extractor for cASO."""
 
+import functools
 import uuid
 from datetime import timedelta
 
-import dateutil.parser
 import prometheus_api_client
 from oslo_config import cfg
 from oslo_log import log
@@ -82,9 +82,25 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
         self.nova = self._get_nova_client()
         self.flavors = self._get_flavors()
 
-    def _get_servers(self):
-        """Get all servers for the project, paginated."""
-        return self._list_paginated(self.nova.servers.list, "created")
+    def _get_servers(self, extract_from):
+        """Get all the servers that may have run during the extraction period.
+
+        This includes the servers that currently exist, and the servers that
+        changed (e.g. were deleted) after the start of the period.
+        """
+        servers = {}
+        for search_opts in (None, {"changes-since": extract_from}):
+            kwargs = {"search_opts": search_opts} if search_opts else {}
+            for server in self._list_paginated(
+                self.nova.servers.list, "created", **kwargs
+            ):
+                servers[server.id] = server
+        return sorted(servers.values(), key=lambda s: s.created)
+
+    @functools.cached_property
+    def _prometheus(self):
+        """Prometheus client, shared for all the queries of the extractor."""
+        return self._get_prometheus_client()
 
     def _get_prometheus_client(self):
         """Create and return a Prometheus client based on configuration."""
@@ -117,7 +133,7 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
 
     def _energy_consumed_wh(self, vm_uuid, extract_from, extract_to):
         """Compute energy (Wh) from Prometheus in chunks for a VM."""
-        prom = self._get_prometheus_client()
+        prom = self._prometheus
         label_selector = self._build_label_selector(vm_uuid)
         factor = CONF.prometheus.prometheus_step_seconds / 3600 / 1_000_000  # µW·s → Wh
         energy_wh = 0.0
@@ -157,31 +173,34 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
         LOG.debug(f"VM {vm_uuid} total energy consumed: {energy_wh:.4f} Wh")
         return energy_wh
 
-    def _build_energy_record(self, server, energy_value, extract_from, extract_to):
+    def _get_server_period(self, server, extract_from, extract_to):
+        """Get the period of the extraction in which a server was running.
+
+        :returns: a (start, end, finished) tuple, or None if the server did not
+                  run during the extraction period.
+        """
+        created_at = self._get_server_start(server)
+        ended_at = self._get_server_end(server)
+
+        if created_at >= extract_to or (ended_at and ended_at <= extract_from):
+            return None
+
+        start = max(created_at, extract_from)
+        finished = ended_at is not None and ended_at <= extract_to
+        end = ended_at if finished else extract_to
+        return start, end, finished
+
+    def _build_energy_record(self, server, energy_value, start, end, finished):
         """Build an EnergyRecord for a VM."""
         vm_uuid = str(server.id)
         vm_status = server.status.lower()
 
-        created_at = dateutil.parser.parse(server.created)
-        if created_at.tzinfo is not None:
-            created_at = created_at.replace(tzinfo=None)
-
-        # Skip VMs created after extraction end
-        if created_at >= extract_to:
-            return None
-
-        start_time = max(created_at, extract_from)
-        end_time = extract_to
-
-        wall_clock_time_s = int((end_time - start_time).total_seconds())
+        wall_clock_time_s = int((end - start).total_seconds())
 
         cpu_count = 1
-        try:
-            flavor = self.flavors.get(server.flavor.get("id"))
-            if flavor:
-                cpu_count = flavor.get("vcpus", 1)
-        except Exception:
-            pass
+        flavor = self.flavors.get(server.flavor.get("id"))
+        if flavor:
+            cpu_count = flavor.get("vcpus", 1)
 
         # Assuming CPU duration is wall clock time multiplied by number of vCPUs
         # (this is a simplification)
@@ -189,10 +208,6 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
 
         # Suspended duration (not available from OpenStack API, set to 0 for now)
         suspend_duration_s = 0
-
-        # Exec unit finished if VM is in a terminal state (e.g., deleted),
-        # otherwise consider it still running
-        exec_unit_finished = 1 if vm_status in ["deleted"] else 0
 
         # Apply CPU normalization factor to energy value
         cpu_normalization_factor = CONF.prometheus.cpu_normalization_factor
@@ -205,16 +220,12 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
 
         # Efficiency is defined as CPU time per second of wall clock time,
         # normalized by the number of vCPUs (always 1 in this simplified model)
-        efficiency = (
-            cpu_duration_s / (wall_clock_time_s * cpu_count)
-            if wall_clock_time_s > 0
-            else 0.0
-        )
+        efficiency = 1.0 if wall_clock_time_s > 0 else 0.0
 
         return record.EnergyRecord(
             exec_unit_id=uuid.UUID(vm_uuid),
-            start_exec_time=start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            end_exec_time=end_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            start_exec_time=start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            end_exec_time=end.strftime("%Y-%m-%dT%H:%M:%SZ"),
             energy_wh=energy_wh,
             work=work,
             efficiency=efficiency,
@@ -222,7 +233,7 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
             cpu_duration_s=cpu_duration_s,
             suspend_duration_s=suspend_duration_s,
             cpu_normalization_factor=cpu_normalization_factor,
-            exec_unit_finished=exec_unit_finished,
+            exec_unit_finished=int(finished),
             status=vm_status,
             owner=self.vo,
             site_name=CONF.site_name,
@@ -242,7 +253,7 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
         records = []
 
         LOG.debug(f"Getting servers for project {self.project}")
-        servers = self._get_servers()
+        servers = self._get_servers(extract_from)
         LOG.info(
             f"Found {len(servers)} VMs for project {self.project}, querying Prometheus"
         )
@@ -250,24 +261,26 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
         for server in servers:
             vm_uuid = str(server.id)
             vm_name = server.name
-            LOG.debug(f"Querying energy consumption for VM {vm_name} ({vm_uuid})")
 
-            energy_value = self._energy_consumed_wh(vm_uuid, extract_from, extract_to)
+            period = self._get_server_period(server, extract_from, extract_to)
+            if period is None:
+                LOG.debug(f"VM {vm_name} ({vm_uuid}) did not run in period, skipping")
+                continue
+            start, end, finished = period
+
+            LOG.debug(f"Querying energy consumption for VM {vm_name} ({vm_uuid})")
+            energy_value = self._energy_consumed_wh(vm_uuid, start, end)
             if energy_value <= 0:
                 LOG.debug(f"No energy data for VM {vm_name} ({vm_uuid}), skipping")
-                continue
-
-            energy_record = self._build_energy_record(
-                server, energy_value, extract_from, extract_to
-            )
-            if energy_record is None:
                 continue
 
             LOG.debug(
                 f"Creating energy record: {energy_value:.4f} Wh "
                 f"for VM {vm_name} ({vm_uuid})"
             )
-            records.append(energy_record)
+            records.append(
+                self._build_energy_record(server, energy_value, start, end, finished)
+            )
 
         LOG.info(f"Extracted {len(records)} energy records for project {self.project}")
         return records
