@@ -414,8 +414,7 @@ class NovaExtractor(base.BaseOpenStackExtractor):
                     if record.status == "completed":
                         record.status = self.vm_status("active")
 
-                cput = wall * usage["vcpus"]
-                record.cpu_duration = cput
+                    record.cpu_duration = wall * usage["vcpus"]
 
                 self.records[server.id] = record
 
