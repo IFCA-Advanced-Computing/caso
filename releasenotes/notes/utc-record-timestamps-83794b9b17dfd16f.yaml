@@ -1,0 +1,21 @@
+---
+upgrade:
+  - |
+    Record timestamps are now always rendered in UTC, regardless of the time
+    zone of the host running cASO. Sites running cASO on a host whose time zone
+    is not UTC will see corrected ``StartTime`` and ``EndTime`` values in the
+    cloud records published after upgrading (running VMs are republished with
+    the corrected values). VMs starting or ending close to a month boundary may
+    therefore be accounted in a different month. Sites running cASO in UTC are
+    not affected.
+  - |
+    Timestamps in storage (StAR) records now include the UTC offset
+    (e.g. ``2023-05-25T21:59:06+00:00``).
+fixes:
+  - |
+    Naive datetimes coming from the OpenStack APIs (which are in UTC) were
+    converted to epochs as if they were in the local time zone of the host, so
+    on hosts not running in UTC the start and end times of cloud records were
+    shifted by the local UTC offset. Moreover, the measurement time was taken
+    in local time, so the ``EndTime`` and ``createTime`` of storage records
+    were rendered in local time while ``StartTime`` was in UTC.

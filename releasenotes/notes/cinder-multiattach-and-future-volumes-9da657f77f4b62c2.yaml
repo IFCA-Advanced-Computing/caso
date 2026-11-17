@@ -1,0 +1,13 @@
+---
+fixes:
+  - |
+    Volumes created after the end of the extraction period are not reported
+    anymore, as they produced storage records with a negative active duration.
+  - |
+    Multi-attach volumes now report all the servers they are attached to
+    (``AttachedTo`` is a comma separated list of server IDs in that case),
+    and the attached duration since the earliest attachment. Previously only
+    the first attachment was taken into account.
+  - |
+    Volumes in the ``in-use`` state without attachment details do not make the
+    Cinder extractor fail anymore.

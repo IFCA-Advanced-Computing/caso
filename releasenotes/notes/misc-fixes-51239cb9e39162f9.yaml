@@ -1,0 +1,19 @@
+---
+fixes:
+  - |
+    The Nova extractor could fail, dropping all the records of a project, or
+    report a wrong CPU duration for servers that are only returned by the
+    usages API and ended within the extraction period.
+  - |
+    The ``logstash`` messenger was not working since records were migrated to
+    Pydantic models. It now sends one JSON document per record, using the same
+    field names as the accounting records.
+  - |
+    An error in one messenger does not prevent records from being pushed to
+    the rest of the configured messengers anymore.
+  - |
+    A VO mapping file entry without the deprecated ``tenant`` key does not map
+    a ``None`` project to the VO anymore.
+other:
+  - |
+    The ``six`` library is not required anymore.
