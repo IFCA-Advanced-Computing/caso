@@ -20,7 +20,6 @@ import socket
 
 from oslo_config import cfg
 from oslo_log import log
-import six
 
 from caso import exception
 import caso.messenger
@@ -39,29 +38,22 @@ LOG = log.getLogger(__name__)
 class LogstashMessenger(caso.messenger.BaseMessenger):
     """Format and send records to a logstash host."""
 
-    def __init__(self, host=CONF.logstash.host, port=CONF.logstash.port):
+    def __init__(self, host=None, port=None):
         """Get a logstash messenger for a given host and port."""
         super(LogstashMessenger, self).__init__()
-        self.host = CONF.logstash.host
-        self.port = CONF.logstash.port
-
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.host = host or CONF.logstash.host
+        self.port = port or CONF.logstash.port
 
     def push(self, records):
         """Push records to logstash using tcp."""
         try:
-            self.sock.connect((self.host, self.port))
-            for _, record in six.iteritems(records):
-                self.sock.sendall(record.as_json() + "\n")
+            with socket.create_connection((self.host, self.port)) as sock:
+                for record in records:
+                    msg = record.model_dump_json(by_alias=True, exclude_none=True)
+                    sock.sendall(f"{msg}\n".encode("utf-8"))
         except socket.error as e:
             raise exception.LogstashConnectionError(
                 host=self.host, port=self.port, exception=e
             )
         else:
-            LOG.info(
-                "Sent {} records to logstash {}:{}".format(
-                    len(records), self.host, self.port
-                )
-            )
-        finally:
-            self.sock.close()
+            LOG.info(f"Sent {len(records)} records to logstash {self.host}:{self.port}")
