@@ -14,14 +14,14 @@ cASO is an OpenStack Accounting extractor.
 
 <img src="https://github.com/IFCA-Advanced-Computing/caso/raw/master/doc/source/static/caso-diagram.png" width="500">
 
-Documentation (the source is in ``doc/source/``) is online at
+Documentation (the source is in `doc/source/`) is online at
 [caso documentation](https://caso.readthedocs.org/en/latest/).
 
 ## Acknowledgement
 
-<img src="https://raw.githubusercontent.com/IFCA-Advanced-Computing/caso/refs/heads/fix-logos/doc/source/static/eu-co-funded.png" height="48">
+<img src="https://github.com/IFCA-Advanced-Computing/caso/raw/master/doc/source/static/eu-co-funded.png" height="48">
 
-This work is has received funding from European Union through the following projects:
+This work has received funding from the European Union through the following projects:
 
  - [EOSC-hub project](http://eosc-hub.eu/) (Horizon 2020) under grant number 777536.
  - [GreenDIGIT](https://greendigit-project.eu/) (Horizon Europe) under grant number 101131207.
