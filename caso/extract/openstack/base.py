@@ -17,6 +17,8 @@
 """Module containing the base class for all OpenStack extractors."""
 
 import datetime
+import functools
+import operator
 
 import cinderclient.v3.client
 import glanceclient.client
@@ -65,8 +67,8 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
                 self._users = {}
                 self.parent = parent
 
-            def get(self, key, default):
-                return self[key]
+            def get(self, key, default=None):
+                return self[key] or default
 
             def keys(self):
                 return self._users.keys()
@@ -86,10 +88,14 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
         # will build this aftewards
         self.users = Users(self)
 
+    @functools.cached_property
+    def _keystone_session(self):
+        """Keystone session for the project, shared by all the service clients."""
+        return keystone_client.get_session(CONF, self.project)
+
     def _get_keystone_session(self):
         """Get a Keystone session for the configured project in the object."""
-        session = keystone_client.get_session(CONF, self.project)
-        return session
+        return self._keystone_session
 
     def _get_keystone_client(self, project_scoped=True):
         """Get a Keystone Client for the configured project in the object."""
@@ -118,6 +124,36 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
         region_name = CONF.region_name
         session = self._get_keystone_session()
         return novaclient.client.Client(2, session=session, region_name=region_name)
+
+    def _get_flavors(self):
+        """Get all the flavors (including extra specs) indexed by their ID."""
+        flavors = {}
+        for flavor in self.nova.flavors.list():
+            flavors[flavor.id] = flavor.to_dict()
+            flavors[flavor.id]["extra"] = flavor.get_keys()
+        return flavors
+
+    @staticmethod
+    def _list_paginated(list_method, sort_attr, limit=200, **kwargs):
+        """Get all the resources from a paginated OpenStack list method.
+
+        :param list_method: method accepting ``limit`` and ``marker`` arguments.
+        :param sort_attr: attribute used to sort the returned resources.
+        :param limit: maximum number of resources to request per call.
+        :param kwargs: extra arguments passed to ``list_method``.
+        :returns: a list of resources sorted by ``sort_attr``.
+        """
+        resources = []
+        marker = None
+        # Use a marker and iter over results until we do not have more to get
+        while True:
+            batch = list_method(limit=limit, marker=marker, **kwargs)
+            resources.extend(batch)
+            if len(batch) < limit:
+                break
+            marker = batch[-1].id
+
+        return sorted(resources, key=operator.attrgetter(sort_attr))
 
     def _get_project_id(self):
         """Get the project ID from the project in the object."""

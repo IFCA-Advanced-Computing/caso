@@ -16,7 +16,6 @@
 
 """Energy Consumption extractor for cASO."""
 
-import operator
 import uuid
 from datetime import timedelta
 
@@ -83,30 +82,9 @@ class EnergyConsumptionExtractor(base.BaseOpenStackExtractor):
         self.nova = self._get_nova_client()
         self.flavors = self._get_flavors()
 
-    def _get_flavors(self):
-        """Get all flavors for the project."""
-        flavors = {}
-        for flavor in self.nova.flavors.list():
-            flavors[flavor.id] = flavor.to_dict()
-            flavors[flavor.id]["extra"] = flavor.get_keys()
-        return flavors
-
     def _get_servers(self):
         """Get all servers for the project, paginated."""
-        servers = []
-        limit = 200
-        marker = None
-
-        while True:
-            batch = self.nova.servers.list(limit=limit, marker=marker)
-            servers.extend(batch)
-            if len(batch) < limit:
-                break
-            marker = batch[-1].id
-
-        # Sort by creation date
-        servers = sorted(servers, key=operator.attrgetter("created"))
-        return servers
+        return self._list_paginated(self.nova.servers.list, "created")
 
     def _get_prometheus_client(self):
         """Create and return a Prometheus client based on configuration."""

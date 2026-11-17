@@ -42,11 +42,13 @@ class BaseProjectExtractor(abc.ABC):
         self.project = project
 
     @abc.abstractmethod
-    def extract(self, extract_from):
+    def extract(self, extract_from, extract_to):
         """Extract records for a project from given date.
 
         :param extract_from: datetime.datetime object indicating the date to
                              extract records from
+        :param extract_to: datetime.datetime object indicating the date to
+                           extract records to
         :returns: A list of accounting records
 
         This method should be overriden in a subclass.

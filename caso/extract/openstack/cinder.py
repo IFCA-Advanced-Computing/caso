@@ -16,8 +16,6 @@
 
 """Module containing the OpenStack Volume (Cinder) record extractor."""
 
-import operator
-
 import datetime
 import dateutil.parser
 from oslo_config import cfg
@@ -48,7 +46,7 @@ class CinderExtractor(base.BaseOpenStackExtractor):
         user = self.users[volume.user_id]
         measure_time = self._get_measure_time()
 
-        vol_start = volume.__getattr__("created_at")
+        vol_start = volume.created_at
         vol_created = dateutil.parser.parse(vol_start)
         if vol_created < extract_from:
             vol_created = extract_from
@@ -89,22 +87,11 @@ class CinderExtractor(base.BaseOpenStackExtractor):
 
     def _get_volumes(self, extract_from):
         """Get all volumes for a given date."""
-        volumes = []
-        limit = 200
-        marker = None
-        # Use a marker and iter over results until we do not have more to get
-        while True:
-            aux = self.cinder.volumes.list(
-                search_opts={"changes-since": extract_from}, limit=limit, marker=marker
-            )
-            volumes.extend(aux)
-
-            if len(aux) < limit:
-                break
-            marker = aux[-1].id
-
-        volumes = sorted(volumes, key=operator.attrgetter("created_at"))
-        return volumes
+        return self._list_paginated(
+            self.cinder.volumes.list,
+            "created_at",
+            search_opts={"changes-since": extract_from},
+        )
 
     def extract(self, extract_from, extract_to):
         """Extract records for a project from given date querying cinder.
