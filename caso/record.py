@@ -43,10 +43,14 @@ class _BaseRecord(pydantic.BaseModel, abc.ABC):
     cloud_type: str = caso.user_agent
     compute_service: str
 
-    @abc.abstractmethod
     def ssm_message(self):
-        """Render record as the expected SSM message."""
-        raise NotImplementedError("Method not implemented")
+        """Render record as the expected SSM message.
+
+        By default records are rendered as JSON documents using the field
+        aliases defined by each accounting record specification. Records using
+        a different format should override this method.
+        """
+        return self.model_dump_json(by_alias=True, exclude_none=True)
 
 
 class _ValidCloudStatus(str, enum.Enum):
@@ -310,14 +314,6 @@ class IPRecord(_BaseRecord):
         """Get measurement time as epoch."""
         return int(self._measure_time.timestamp())
 
-    def ssm_message(self):
-        """Render record as the expected SSM message."""
-        opts = {
-            "by_alias": True,
-            "exclude_none": True,
-        }
-        return self.model_dump_json(**opts)
-
     model_config = dict(
         alias_generator=map_ip_fields,
         populate_by_name=True,
@@ -391,14 +387,6 @@ class AcceleratorRecord(_BaseRecord):
     def active_duration(self, value: int) -> None:
         """Set the active duration for the record."""
         self._active_duration = value
-
-    def ssm_message(self):
-        """Render record as the expected SSM message."""
-        opts = {
-            "by_alias": True,
-            "exclude_none": True,
-        }
-        return self.model_dump_json(**opts)
 
     model_config = dict(
         alias_generator=map_accelerator_fields,
@@ -607,14 +595,6 @@ class EnergyRecord(_BaseRecord):
     exec_unit_finished: int
     status: str
     owner: str
-
-    def ssm_message(self):
-        """Render record as the expected SSM message."""
-        opts = {
-            "by_alias": True,
-            "exclude_none": True,
-        }
-        return self.model_dump_json(**opts)
 
     model_config = dict(
         alias_generator=map_energy_fields,
