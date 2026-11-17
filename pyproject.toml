@@ -31,9 +31,11 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
+# Configuration samples are only shipped in the source distribution, the
+# DEB and RPM packages install them into /etc/caso.
 include = [
-    "etc/caso/caso.conf.sample",
-    "voms.json.sample",
+    { path = "etc/caso/caso.conf.sample", format = "sdist" },
+    { path = "etc/caso/voms.json.sample", format = "sdist" },
 ]
 
 
