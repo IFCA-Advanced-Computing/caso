@@ -16,7 +16,6 @@
 
 """Module containing the OpenStack Volume (Cinder) record extractor."""
 
-import datetime
 import dateutil.parser
 from oslo_config import cfg
 from oslo_log import log
@@ -42,19 +41,20 @@ class CinderExtractor(base.BaseOpenStackExtractor):
         self.cinder = self._get_cinder_client()
 
     def _build_record(self, volume, extract_from, extract_to):
-        """Build an individual record."""
+        """Build an individual record.
+
+        :returns: a StorageRecord, or None if the volume was created after the
+                  extraction period.
+        """
+        volume_creation = dateutil.parser.parse(volume.created_at)
+        if volume_creation > extract_to:
+            return None
+
         user = self.users[volume.user_id]
         measure_time = self._get_measure_time()
 
-        vol_start = volume.created_at
-        vol_created = dateutil.parser.parse(vol_start)
-        if vol_created < extract_from:
-            vol_created = extract_from
-
-        active_duration_delta = extract_to - vol_created
-        ms = active_duration_delta.microseconds
-        td = datetime.timedelta(microseconds=ms)
-        active_duration = (active_duration_delta - td).total_seconds()
+        start_time = max(volume_creation, extract_from)
+        active_duration = int((extract_to - start_time).total_seconds())
 
         r = record.StorageRecord(
             uuid=volume.id,
@@ -67,21 +67,22 @@ class CinderExtractor(base.BaseOpenStackExtractor):
             status=volume.status,
             active_duration=active_duration,
             measure_time=measure_time,
-            start_time=vol_created,
-            volume_creation=dateutil.parser.parse(vol_start),
+            start_time=start_time,
+            volume_creation=volume_creation,
             capacity=volume.size,
             user_dn=user,
         )
 
-        if volume.status == "in-use":
-            attached_to = volume.attachments[0]["server_id"]
-            attached_at = volume.attachments[0]["attached_at"]
-            attached_at = dateutil.parser.parse(attached_at)
-            if attached_at < extract_from:
-                attached_at = extract_from
-            attacht = (extract_to - attached_at).total_seconds()
-            r.attached_duration = attacht
-            r.attached_to = attached_to
+        # Multi-attach volumes may be attached to several servers, report all of
+        # them and the time since the first attachment.
+        attachments = volume.attachments if volume.status == "in-use" else []
+        if attachments:
+            attached_at = min(
+                dateutil.parser.parse(a["attached_at"]) for a in attachments
+            )
+            attached_at = max(attached_at, extract_from)
+            r.attached_duration = (extract_to - attached_at).total_seconds()
+            r.attached_to = ",".join(a["server_id"] for a in attachments)
 
         return r
 
@@ -116,6 +117,8 @@ class CinderExtractor(base.BaseOpenStackExtractor):
         volumes = self._get_volumes(extract_from)
 
         for vol in volumes:
-            self.str_records[vol.id] = self._build_record(vol, extract_from, extract_to)
+            r = self._build_record(vol, extract_from, extract_to)
+            if r is not None:
+                self.str_records[vol.id] = r
 
         return list(self.str_records.values())
