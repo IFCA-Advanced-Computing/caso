@@ -173,9 +173,10 @@ class BaseOpenStackExtractor(base.BaseProjectExtractor):
             LOG.exception(e)
             return None
 
-    # FIXME(aloga): this has to go inside a record
     @staticmethod
     def _get_measure_time():
-        """Get current measurement time."""
-        measure_time = datetime.datetime.now()
-        return measure_time
+        """Get current measurement time as a naive datetime in UTC.
+
+        All the dates handled by the extractors are naive datetimes in UTC.
+        """
+        return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)

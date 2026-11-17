@@ -18,6 +18,12 @@
 
 import datetime
 import json
+import time
+
+import pytest
+
+import caso.record
+from caso.tests import conftest
 
 
 def test_cloud_record(cloud_record):
@@ -158,3 +164,38 @@ def test_energy_record_map_opts(energy_record, valid_energy_record):
         "exclude_none": True,
     }
     assert json.loads(energy_record.model_dump_json(**opts)) == valid_energy_record
+
+
+@pytest.fixture
+def non_utc_local_timezone(monkeypatch):
+    """Run the test with a local time zone that is not UTC."""
+    monkeypatch.setenv("TZ", "America/New_York")
+    time.tzset()
+    yield
+    monkeypatch.undo()
+    time.tzset()
+
+
+def test_naive_datetimes_are_treated_as_utc(non_utc_local_timezone):
+    """Naive datetimes coming from the extractors are UTC, not local time."""
+    fields = dict(conftest.valid_cloud_records_fields[0])
+    fields["start_time"] = datetime.datetime(2023, 5, 20, 21, 59, 6)
+    fields["end_time"] = datetime.datetime(2023, 5, 25, 21, 59, 6)
+    record = caso.record.CloudRecord(**fields)
+
+    assert record.start_time_epoch == 1684619946
+    assert record.end_time_epoch == 1685051946
+
+
+def test_storage_message_with_naive_datetimes(non_utc_local_timezone):
+    """Storage records must render naive datetimes as UTC."""
+    fields = dict(conftest.valid_storage_records_fields[0])
+    fields["start_time"] = datetime.datetime(2023, 5, 20, 21, 59, 6)
+    fields["measure_time"] = datetime.datetime(2023, 5, 25, 21, 59, 6)
+    fields["volume_creation"] = datetime.datetime(2023, 5, 20, 21, 59, 6)
+    record = caso.record.StorageRecord(**fields)
+
+    assert record.measure_time_epoch == 1685051946
+    message = record.ssm_message().decode()
+    assert "<sr:StartTime>2023-05-20T21:59:06+00:00</sr:StartTime>" in message
+    assert 'sr:createTime="2023-05-25T21:59:06+00:00"' in message
