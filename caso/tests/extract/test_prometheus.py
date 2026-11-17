@@ -20,6 +20,7 @@ import datetime
 import unittest.mock as mock
 
 import pytest
+import requests
 from oslo_config import cfg
 
 from caso.extract.prometheus import EnergyConsumptionExtractor
@@ -34,6 +35,13 @@ def extract_dates():
         "extract_from": datetime.datetime(2023, 5, 25, 0, 0, 0),
         "extract_to": datetime.datetime(2023, 5, 25, 23, 59, 59),
     }
+
+
+def _response(result):
+    """Return a mocked HTTP response for a successful query_range."""
+    response = mock.Mock()
+    response.json.return_value = {"status": "success", "data": {"result": result}}
+    return response
 
 
 def _server(uuid, name, created="2023-05-25T12:00:00Z", terminated=None):
@@ -120,10 +128,10 @@ def mock_prometheus_result_empty():
 class TestEnergyConsumptionExtractor:
     """Tests for the EnergyConsumptionExtractor."""
 
-    @mock.patch("caso.extract.prometheus.prometheus_api_client.PrometheusConnect")
+    @mock.patch("caso.extract.prometheus.requests.Session")
     def test_extract_with_results(
         self,
-        mock_prom_connect,
+        mock_session,
         configured_extractor,
         mock_server,
         extract_dates,
@@ -139,8 +147,8 @@ class TestEnergyConsumptionExtractor:
         ]
 
         mock_prom = mock.Mock()
-        mock_prom.custom_query_range.return_value = mock_prometheus_result_success
-        mock_prom_connect.return_value = mock_prom
+        mock_prom.get.return_value = _response(mock_prometheus_result_success)
+        mock_session.return_value = mock_prom
 
         records = configured_extractor.extract(**extract_dates)
 
@@ -158,10 +166,10 @@ class TestEnergyConsumptionExtractor:
 
         assert len(records) == 0
 
-    @mock.patch("caso.extract.prometheus.prometheus_api_client.PrometheusConnect")
+    @mock.patch("caso.extract.prometheus.requests.Session")
     def test_extract_with_no_energy_data(
         self,
-        mock_prom_connect,
+        mock_session,
         configured_extractor,
         mock_server,
         extract_dates,
@@ -172,18 +180,18 @@ class TestEnergyConsumptionExtractor:
         configured_extractor.nova.servers.list.return_value = [mock_server]
 
         mock_prom = mock.Mock()
-        mock_prom.custom_query_range.return_value = mock_prometheus_result_empty
-        mock_prom_connect.return_value = mock_prom
+        mock_prom.get.return_value = _response(mock_prometheus_result_empty)
+        mock_session.return_value = mock_prom
 
         records = configured_extractor.extract(**extract_dates)
 
         assert len(records) == 0
 
     @mock.patch("caso.extract.prometheus.LOG")
-    @mock.patch("caso.extract.prometheus.prometheus_api_client.PrometheusConnect")
+    @mock.patch("caso.extract.prometheus.requests.Session")
     def test_extract_with_prometheus_exception(
         self,
-        mock_prom_connect,
+        mock_session,
         mock_log,
         configured_extractor,
         mock_server,
@@ -194,8 +202,8 @@ class TestEnergyConsumptionExtractor:
         configured_extractor.nova.servers.list.return_value = [mock_server]
 
         mock_prom = mock.Mock()
-        mock_prom.custom_query_range.side_effect = Exception("Connection error")
-        mock_prom_connect.return_value = mock_prom
+        mock_prom.get.side_effect = Exception("Connection error")
+        mock_session.return_value = mock_prom
 
         records = configured_extractor.extract(**extract_dates)
 
@@ -257,10 +265,10 @@ class TestServerSelection:
         )
         assert configured_extractor._get_server_period(gone, **extract_dates) is None
 
-    @mock.patch("caso.extract.prometheus.prometheus_api_client.PrometheusConnect")
+    @mock.patch("caso.extract.prometheus.requests.Session")
     def test_prometheus_client_is_reused(
         self,
-        mock_prom_connect,
+        mock_session,
         configured_extractor,
         extract_dates,
         mock_prometheus_result_success,
@@ -271,10 +279,60 @@ class TestServerSelection:
             _server("e3c5aeef-37b8-4332-ad9f-9d068f156dc2", "vm1"),
             _server("f4d6bedf-48c9-5f2f-b043-ebb4f9e65d73", "vm2"),
         ]
-        prom = mock_prom_connect.return_value
-        prom.custom_query_range.return_value = mock_prometheus_result_success
+        prom = mock_session.return_value
+        prom.get.return_value = _response(mock_prometheus_result_success)
 
         records = configured_extractor.extract(**extract_dates)
 
         assert len(records) == 2
-        mock_prom_connect.assert_called_once()
+        mock_session.assert_called_once()
+
+
+class TestQueryRange:
+    """Tests for the Prometheus HTTP API call."""
+
+    @mock.patch("caso.extract.prometheus.requests.Session")
+    def test_query_range_request(
+        self, mock_session, configured_extractor, mock_prometheus_result_success
+    ):
+        """The query is sent to the query_range endpoint with UTC timestamps."""
+        get = mock_session.return_value.get
+        get.return_value = _response(mock_prometheus_result_success)
+
+        result = configured_extractor._query_range(
+            'metric{a="b"}',
+            datetime.datetime(2023, 5, 25, 0, 0, 0),
+            datetime.datetime(2023, 5, 25, 1, 0, 0),
+            30,
+        )
+
+        assert result == mock_prometheus_result_success
+        url = get.call_args.args[0]
+        assert url.endswith("/api/v1/query_range")
+        assert get.call_args.kwargs["params"] == {
+            "query": 'metric{a="b"}',
+            "start": 1684972800,
+            "end": 1684976400,
+            "step": 30,
+        }
+
+    @mock.patch("caso.extract.prometheus.requests.Session")
+    def test_query_range_http_error(self, mock_session, configured_extractor):
+        """HTTP errors are propagated to the caller."""
+        response = mock.Mock()
+        response.raise_for_status.side_effect = requests.HTTPError("500")
+        mock_session.return_value.get.return_value = response
+
+        with pytest.raises(requests.HTTPError):
+            configured_extractor._query_range(
+                "m", datetime.datetime(2023, 5, 25), datetime.datetime(2023, 5, 26), 30
+            )
+
+    def test_session_verifies_ssl_from_config(self, configured_extractor):
+        """The SSL verification option is applied to the session."""
+        CONF.set_override("prometheus_verify_ssl", False, group="prometheus")
+        try:
+            session = configured_extractor._get_prometheus_client()
+        finally:
+            CONF.clear_override("prometheus_verify_ssl", group="prometheus")
+        assert session.verify is False

@@ -1,0 +1,12 @@
+---
+other:
+  - |
+    The energy extractor (``prometheus``) no longer depends on the
+    ``prometheus-api-client`` library. It queries the Prometheus HTTP API
+    directly using ``requests``, which is now declared as a direct dependency.
+    The configuration options are unchanged.
+fixes:
+  - |
+    The energy extractor (``prometheus``) interpreted the extraction dates as
+    local time when querying Prometheus. They are now interpreted as UTC, so
+    the queried period no longer depends on the time zone of the host.
