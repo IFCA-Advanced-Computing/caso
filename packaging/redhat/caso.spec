@@ -1,67 +1,54 @@
-%{!?version:%define version 5.1.0}
+%{!?version:%define version 5.2.2}
 Name:        caso
 Version:     %{version}
 Release:     1%{?dist}
 Summary:     cASO is an OpenStack Accounting extractor
 
-License:     ASL 2.0
+License:     Apache-2.0
 URL:         https://github.com/IFCA-Advanced-Computing/caso
 Source0:     https://github.com/IFCA-Advanced-Computing/caso/archive/v%{version}/caso-%{version}.tar.gz
 
 BuildArch: noarch
 BuildRequires: python3-devel
-BuildRequires: python3-setuptools
-BuildRequires: python3-pbr
-BuildRequires: python3-rpm-macros
 BuildRequires: pyproject-rpm-macros
-Requires: python3
-Requires: python3-oslo-config
-Requires: python3-oslo-concurrency
-Requires: python3-oslo-log
-Requires: python3-oslo-utils
-Requires: python3-glanceclient
-Requires: python3-keystoneauth1
-Requires: python3-keystoneclient
-Requires: python3-novaclient
-Requires: python3-neutronclient
-Requires: python3-dateutil
-Requires: python3-stevedore
-Requires: python3-dirq
 
-%?python_enable_dependency_generator
+# Runtime dependencies (python3dist(...)) are generated automatically from the
+# package metadata.
 
-%generate_buildrequires
-%pyproject_buildrequires
-
-%description 
-
+%description
 cASO is an OpenStack Accounting extractor to be used in the EGI.eu
 Federated Cloud Infrastructure.
 
-
 %prep
 %autosetup -n caso-%{version}
+
+%generate_buildrequires
+# Only the build backend is needed to build the package, do not require the
+# runtime dependencies at build time.
+%pyproject_buildrequires -R
 
 %build
 %pyproject_wheel
 
 %install
 %pyproject_install
-mv %{buildroot}/usr/etc/ %{buildroot}/etc
+%pyproject_save_files caso
+install -Dpm 0644 etc/caso/caso.conf.sample %{buildroot}%{_sysconfdir}/caso/caso.conf.sample
+install -Dpm 0644 etc/caso/voms.json.sample %{buildroot}%{_sysconfdir}/caso/voms.json.sample
 
 %check
-# No tests available on py3.6, so lets use only the others. The GH action
-# build also builds on Ubuntu, that tests the other versions.
+# Tests are run in the CI on all the supported Python versions, and importing
+# the modules would require all the runtime dependencies at build time.
 
-%files 
+%files -f %{pyproject_files}
+%license LICENSE
+%doc README.md
 %{_bindir}/caso-extract
 %{_bindir}/caso-mapping-migrate
 %{_bindir}/caso-projects
-%{python3_sitelib}/caso/
-%{python3_sitelib}/caso-%{version}*
-%config /etc/caso/caso.conf.sample
-%config /etc/caso/voms.json.sample
-%exclude /etc/caso/caso-config-generator.conf
+%dir %{_sysconfdir}/caso
+%config %{_sysconfdir}/caso/caso.conf.sample
+%config %{_sysconfdir}/caso/voms.json.sample
 
 %changelog
 * Tue Jun 06 2023 Alvaro Lopez Garcia <aloga@ifca.unican.es> 4.2.0
