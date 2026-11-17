@@ -98,6 +98,18 @@ CONF.register_cli_opts(cli_opts)
 LOG = log.getLogger(__name__)
 
 
+def _to_utc_datetime(value):
+    """Get a timezone aware datetime from a string or datetime object.
+
+    If no time zone is specified, UTC is assumed.
+    """
+    if isinstance(value, str):
+        value = dateutil.parser.parse(value)
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=tz.tzutc())
+    return value
+
+
 class Manager(object):
     """A manager for the configured extractors.
 
@@ -252,12 +264,7 @@ class Manager(object):
         instead of the extract_to parameter
         """
         now = datetime.datetime.now(tz.tzutc())
-        extract_to = CONF.extract_to or now
-
-        if isinstance(extract_to, str):
-            extract_to = dateutil.parser.parse(extract_to)
-        if extract_to.tzinfo is None:
-            extract_to = extract_to.replace(tzinfo=tz.tzutc())
+        extract_to = _to_utc_datetime(CONF.extract_to or now)
 
         if extract_to > now:
             LOG.warning(
@@ -284,10 +291,7 @@ class Manager(object):
                 )
                 continue
 
-            if isinstance(extract_from, str):
-                extract_from = dateutil.parser.parse(extract_from)
-            if extract_from.tzinfo is None:
-                extract_from = extract_from.replace(tzinfo=tz.tzutc())
+            extract_from = _to_utc_datetime(extract_from)
 
             if extract_from >= now:
                 LOG.error(
