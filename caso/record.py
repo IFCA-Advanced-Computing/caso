@@ -34,6 +34,22 @@ from oslo_log import log
 LOG = log.getLogger(__name__)
 
 
+def _as_utc(value: datetime.datetime) -> datetime.datetime:
+    """Get a timezone aware datetime in UTC.
+
+    Naive datetimes are assumed to be in UTC, as this is what the OpenStack APIs
+    return, and how cASO handles dates internally.
+    """
+    if value.tzinfo is None:
+        return value.replace(tzinfo=datetime.timezone.utc)
+    return value.astimezone(datetime.timezone.utc)
+
+
+def _epoch(value: datetime.datetime) -> int:
+    """Get the UNIX timestamp for a datetime, assuming UTC if it is naive."""
+    return int(_as_utc(value).timestamp())
+
+
 class _BaseRecord(pydantic.BaseModel, abc.ABC):
     """This is the base cASO record object."""
 
@@ -168,7 +184,7 @@ class CloudRecord(_BaseRecord):
     @property
     def start_time_epoch(self) -> int:
         """Get start time as epoch."""
-        return int(self._start_time.timestamp())
+        return _epoch(self._start_time)
 
     @property
     def end_time(self) -> typing.Optional[datetime.datetime]:
@@ -188,7 +204,7 @@ class CloudRecord(_BaseRecord):
     def end_time_epoch(self) -> typing.Optional[int]:
         """Get end time as epoch."""
         if self.end_time:
-            return int(self.end_time.timestamp())
+            return _epoch(self.end_time)
         else:
             return 0
 
@@ -312,7 +328,7 @@ class IPRecord(_BaseRecord):
     @property
     def measure_time_epoch(self) -> int:
         """Get measurement time as epoch."""
-        return int(self._measure_time.timestamp())
+        return _epoch(self._measure_time)
 
     model_config = dict(
         alias_generator=map_ip_fields,
@@ -482,7 +498,7 @@ class StorageRecord(_BaseRecord):
     @property
     def start_time_epoch(self) -> int:
         """Get start time as epoch."""
-        return int(self._start_time.timestamp())
+        return _epoch(self._start_time)
 
     @property
     def measure_time(self) -> datetime.datetime:
@@ -498,7 +514,7 @@ class StorageRecord(_BaseRecord):
     @property
     def measure_time_epoch(self) -> int:
         """Get measurement time as epoch."""
-        return int(self._measure_time.timestamp())
+        return _epoch(self._measure_time)
 
     @property
     def volume_creation(self) -> datetime.datetime:
@@ -514,7 +530,7 @@ class StorageRecord(_BaseRecord):
     @property
     def volume_creation_epoch(self) -> int:
         """Get volume creation time as epoch."""
-        return int(self._volume_creation.timestamp())
+        return _epoch(self._volume_creation)
 
     def ssm_message(self):
         """Render record as the expected SSM message."""
@@ -524,7 +540,7 @@ class StorageRecord(_BaseRecord):
             sr,
             "sr:RecordIdentity",
             attrib={
-                "sr:createTime": self.measure_time.isoformat(),
+                "sr:createTime": _as_utc(self.measure_time).isoformat(),
                 "sr:recordId": str(self.uuid),
             },
         )
@@ -537,8 +553,8 @@ class StorageRecord(_BaseRecord):
             ETree.SubElement(subject, "sr:UserIdentity").text = self.user_dn
         if self.fqan:
             ETree.SubElement(subject, "sr:Group").text = self.fqan
-        ETree.SubElement(sr, "sr:StartTime").text = self.start_time.isoformat()
-        ETree.SubElement(sr, "sr:EndTime").text = self.measure_time.isoformat()
+        ETree.SubElement(sr, "sr:StartTime").text = _as_utc(self.start_time).isoformat()
+        ETree.SubElement(sr, "sr:EndTime").text = _as_utc(self.measure_time).isoformat()
         capacity = str(int(self.capacity * 1073741824))  # 1 GiB = 2^30
         ETree.SubElement(sr, "sr:ResourceCapacityUsed").text = capacity
         return ETree.tostring(sr)
