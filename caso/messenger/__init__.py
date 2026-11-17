@@ -21,7 +21,6 @@ import typing
 
 from oslo_config import cfg
 from oslo_log import log
-import six
 
 import caso.record
 from caso import loading
@@ -90,8 +89,7 @@ RECORD_TYPE_MAP: typing.Dict[str, type] = {
 }
 
 
-@six.add_metaclass(abc.ABCMeta)
-class BaseMessenger(object):
+class BaseMessenger(abc.ABC):
     """Base class for all messengers."""
 
     @abc.abstractmethod

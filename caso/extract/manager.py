@@ -25,7 +25,6 @@ import dateutil.parser
 from dateutil import tz
 from oslo_config import cfg
 from oslo_log import log
-import six
 
 from caso import keystone_client
 from caso import loading
@@ -255,7 +254,7 @@ class Manager(object):
         now = datetime.datetime.now(tz.tzutc())
         extract_to = CONF.extract_to or now
 
-        if isinstance(extract_to, six.string_types):
+        if isinstance(extract_to, str):
             extract_to = dateutil.parser.parse(extract_to)
         if extract_to.tzinfo is None:
             extract_to = extract_to.replace(tzinfo=tz.tzutc())
@@ -285,7 +284,7 @@ class Manager(object):
                 )
                 continue
 
-            if isinstance(extract_from, six.string_types):
+            if isinstance(extract_from, str):
                 extract_from = dateutil.parser.parse(extract_from)
             if extract_from.tzinfo is None:
                 extract_from = extract_from.replace(tzinfo=tz.tzutc())
