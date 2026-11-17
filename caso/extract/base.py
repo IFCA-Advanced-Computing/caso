@@ -20,7 +20,6 @@ import abc
 
 from oslo_config import cfg
 from oslo_log import log
-import six
 
 opts = [
     cfg.StrOpt("site_name", help="Site name as in GOCDB."),
@@ -35,8 +34,7 @@ CONF.register_opts(opts)
 LOG = log.getLogger(__name__)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class BaseProjectExtractor(object):
+class BaseProjectExtractor(abc.ABC):
     """Abstract base class for all extractors in cASO."""
 
     def __init__(self, project):

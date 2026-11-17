@@ -23,7 +23,6 @@ import fixtures
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
-import six
 import unittest
 
 CONF = cfg.CONF
@@ -68,7 +67,7 @@ class TestCase(fixtures.TestWithFixtures, unittest.TestCase):
     def flags(self, **kw):
         """Override flag variables for a test."""
         group = kw.pop("group", None)
-        for k, v in six.iteritems(kw):
+        for k, v in kw.items():
             CONF.set_override(k, v, group)
 
     def reset_flags(self):

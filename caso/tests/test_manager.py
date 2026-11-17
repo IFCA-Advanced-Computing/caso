@@ -15,7 +15,6 @@
 """Tests for `caso.manager` module."""
 
 from oslo_concurrency.fixture import lockutils as lock_fixture
-import six
 import unittest
 from unittest import mock
 
@@ -35,7 +34,7 @@ class TestCasoManager(unittest.TestCase):
             "messenger": mock.patch("caso.messenger.Manager"),
         }
         self.mocks = {}
-        for k, p in six.iteritems(self.patchers):
+        for k, p in self.patchers.items():
             self.mocks[k] = p.start()
 
         self.manager = manager.Manager()

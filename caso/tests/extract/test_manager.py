@@ -20,7 +20,6 @@ import uuid
 from unittest import mock
 
 import dateutil.parser
-import six
 from dateutil import tz
 from oslo_config import cfg
 
@@ -128,26 +127,18 @@ class TestCasoManager(unittest.TestCase):
     def test_lastrun_exists(self):
         """Test that we can open a lastrun file in the expected format."""
         expected = datetime.datetime(2014, 12, 10, 13, 10, 26, 664598)
-        if six.PY3:
-            builtins_open = "builtins.open"
-        else:
-            builtins_open = "__builtin__.open"
 
         fopen = unittest.mock.mock_open(read_data=str(expected))
         with unittest.mock.patch("os.path.exists") as path:
-            with unittest.mock.patch(builtins_open, fopen):
+            with unittest.mock.patch("builtins.open", fopen):
                 path.return_value = True
                 self.assertEqual(expected, self.manager.get_lastrun("foo"))
 
     def test_lastrun_is_invalid(self):
         """Test that we fail if lastrun file is invalid."""
-        if six.PY3:
-            builtins_open = "builtins.open"
-        else:
-            builtins_open = "__builtin__.open"
         fopen = unittest.mock.mock_open(read_data="foo")
         with unittest.mock.patch("os.path.exists") as path:
-            with unittest.mock.patch(builtins_open, fopen):
+            with unittest.mock.patch("builtins.open", fopen):
                 path.return_value = True
                 self.assertRaises(ValueError, self.manager.get_lastrun, "foo")
 
@@ -219,14 +210,10 @@ class TestCasoManager(unittest.TestCase):
 
     def test_get_lastrun_invalid_date_logs_exception(self):
         """Test that get_lastrun properly logs exceptions when date parsing fails."""
-        if six.PY3:
-            builtins_open = "builtins.open"
-        else:
-            builtins_open = "__builtin__.open"
         fopen = unittest.mock.mock_open(read_data="invalid-date-format")
 
         with unittest.mock.patch("os.path.exists") as path:
-            with unittest.mock.patch(builtins_open, fopen):
+            with unittest.mock.patch("builtins.open", fopen):
                 with unittest.mock.patch("caso.extract.manager.LOG") as mock_log:
                     path.return_value = True
 
@@ -253,19 +240,15 @@ class TestCasoManager(unittest.TestCase):
     def test_write_lastrun(self):
         """Test that we actually write lastrun files."""
         self.flags(projects=["bazonk"])
-        if six.PY3:
-            builtins_open = "builtins.open"
-        else:
-            builtins_open = "__builtin__.open"
 
-        with unittest.mock.patch(builtins_open, unittest.mock.mock_open()) as m:
+        with unittest.mock.patch("builtins.open", unittest.mock.mock_open()) as m:
             self.manager.get_records()
             m.assert_called_once_with("/tmp/caso_test/lastrun.bazonk", "w")
 
     def flags(self, **kw):
         """Override flag variables for a test."""
         group = kw.pop("group", None)
-        for k, v in six.iteritems(kw):
+        for k, v in kw.items():
             CONF.set_override(k, v, group)
 
     def reset_flags(self):
