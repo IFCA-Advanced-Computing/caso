@@ -65,15 +65,14 @@ class NeutronExtractor(base.BaseOpenStackExtractor):
         return r
 
     def _get_floating_ips(self):
-        ips = self.neutron.list_floatingips(self.project_id)
+        ips = self.neutron.list_floatingips(project_id=self.project_id)
         return ips
 
     def extract(self, extract_from, extract_to):
-        """Extract records for a project from given date querying nova.
+        """Extract records for a project from given date querying neutron.
 
-        This method will get information from nova.
+        This method will get information from neutron.
 
-        :param project: Project to extract records for.
         :param extract_from: datetime.datetime object indicating the date to
                              extract records from
         :param extract_to: datetime.datetime object indicating the date to
@@ -86,36 +85,24 @@ class NeutronExtractor(base.BaseOpenStackExtractor):
         extract_from = extract_from.replace(tzinfo=None)
         extract_to = extract_to.replace(tzinfo=None)
 
-        self.ip_records = {}
-
         floating_ips = self._get_floating_ips()
 
-        # Auxiliary variables to count ips
-        ip_counts_v4 = collections.defaultdict(lambda: 0)
-        ip_counts_v6 = collections.defaultdict(lambda: 0)
-
-        user = None
+        # Neutron does not expose the user owning a floating IP, so we can only
+        # aggregate the counts per IP version for the whole project.
+        ip_counts = collections.Counter()
         for floating_ip in floating_ips["floatingips"]:
-            ip = floating_ip["floating_ip_address"]
-            ip_version = ipaddress.ip_address(ip).version
             ip_start = datetime.strptime(
                 floating_ip["created_at"], "%Y-%m-%dT%H:%M:%SZ"
             )
             if ip_start > extract_to:
                 continue
-            else:
-                if ip_version == 4:
-                    ip_counts_v4[user] += 1
-                elif ip_version == 6:
-                    ip_counts_v6[user] += 1
+            ip = floating_ip["floating_ip_address"]
+            ip_counts[ipaddress.ip_address(ip).version] += 1
 
-        for ip_version, ip_counts in [(4, ip_counts_v4), (6, ip_counts_v6)]:
-            for user_id, count in ip_counts.items():
-                if count == 0:
-                    continue
-
-                self.ip_records[user_id] = self._build_ip_record(
-                    user_id, count, ip_version
-                )
+        user_id = None
+        self.ip_records = {
+            ip_version: self._build_ip_record(user_id, count, ip_version)
+            for ip_version, count in sorted(ip_counts.items())
+        }
 
         return list(self.ip_records.values())
