@@ -1,0 +1,22 @@
+---
+upgrade:
+  - |
+    The energy extractor (``prometheus``) now reports the energy consumed by
+    VMs that were deleted during the extraction period, which were not
+    accounted before. As a consequence, the total reported energy will
+    increase, especially on sites with short-lived VMs.
+fixes:
+  - |
+    The energy extractor (``prometheus``) only listed the VMs existing at the
+    time of the extraction, so VMs deleted during the extraction period were
+    never reported. Now it also lists the VMs that changed since the beginning
+    of the period, including the deleted ones.
+  - |
+    Energy records now cover only the time each VM was running within the
+    extraction period: for VMs that ended within the period, ``EndExecTime``,
+    ``WallClockTime_s``, ``CpuDuration_s`` and ``Work`` are computed up to the
+    termination time, and ``ExecUnitFinished`` is set to ``1``. Previously
+    ``ExecUnitFinished`` was never set.
+  - |
+    A single Prometheus client is now used for all the queries of an extraction,
+    instead of creating one per VM.

@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    The Neutron extractor did not filter the floating IPs by project, so when
+    the cASO user was allowed to list the floating IPs of other projects (e.g.
+    with administrative credentials) all of them were accounted to every
+    project. Now only the floating IPs of each project are accounted.
+  - |
+    When a project had both IPv4 and IPv6 floating IPs, the IPv6 record
+    overwrote the IPv4 one, so only the IPv6 record was published. Now both
+    records are published.
