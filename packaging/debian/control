@@ -8,6 +8,7 @@ Build-Depends:
  dh-python,
  python3-all,
  python3-all-dev,
+ python3-poetry-core,
  pybuild-plugin-pyproject
 Standards-Version: 3.9.3
 X-Python3-Version: >=3.10
@@ -27,10 +28,13 @@ Depends:
  python3-glanceclient,
  python3-dateutil,
  python3-dirq,
+ python3-cinderclient,
+ python3-pydantic (>= 2),
+ python3-requests,
+ python3-stevedore,
  ${python3:Depends},
  ${misc:Depends},
 Recommends: apel-ssm
-Provides: ${python:Provides}
 Description: An OpenStack accounting extractor.
  .
  This program will extract usage records for each tenant and
