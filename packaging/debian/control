@@ -10,7 +10,7 @@ Build-Depends:
  python3-all-dev,
  pybuild-plugin-pyproject
 Standards-Version: 3.9.3
-X-Python3-Version: >=3.5
+X-Python3-Version: >=3.10
 
 Package: python3-caso
 Architecture: all
@@ -27,7 +27,6 @@ Depends:
  python3-glanceclient,
  python3-dateutil,
  python3-dirq,
- python3-six,
  ${python3:Depends},
  ${misc:Depends},
 Recommends: apel-ssm

@@ -19,7 +19,6 @@ Requires: python3-oslo-config
 Requires: python3-oslo-concurrency
 Requires: python3-oslo-log
 Requires: python3-oslo-utils
-Requires: python3-six
 Requires: python3-glanceclient
 Requires: python3-keystoneauth1
 Requires: python3-keystoneclient
