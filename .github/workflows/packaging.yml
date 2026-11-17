@@ -102,7 +102,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg-dev debhelper devscripts dh-python \
+          sudo apt-get install -y build-essential dpkg-dev debhelper devscripts dh-python \
             python3-all python3-all-dev python3-poetry-core \
             pybuild-plugin-pyproject
 
