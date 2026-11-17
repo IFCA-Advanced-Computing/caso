@@ -119,21 +119,15 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         This method gets lists of messages to be pushed in smaller chucks as per GGUS
         ticket 143436: https://ggus.eu/index.php?mode=ticket_info&ticket_id=143436
         """
-        for i in range(0, len(entries_cloud), CONF.ssm.max_size):
-            entries = entries_cloud[i : i + CONF.ssm.max_size]  # noqa(E203)
-            self._push_message_cloud(entries)
-
-        for i in range(0, len(entries_ip), CONF.ssm.max_size):
-            entries = entries_ip[i : i + CONF.ssm.max_size]  # noqa(E203)
-            self._push_message_ip(entries)
-
-        for i in range(0, len(entries_accelerator), CONF.ssm.max_size):
-            entries = entries_accelerator[i : i + CONF.ssm.max_size]  # noqa(E203)
-            self._push_message_accelerator(entries)
-
-        for i in range(0, len(entries_storage), CONF.ssm.max_size):
-            entries = entries_storage[i : i + CONF.ssm.max_size]  # noqa(E203)
-            self._push_message_storage(entries)
+        size = CONF.ssm.max_size
+        for entries, push_message in (
+            (entries_cloud, self._push_message_cloud),
+            (entries_ip, self._push_message_ip),
+            (entries_accelerator, self._push_message_accelerator),
+            (entries_storage, self._push_message_storage),
+        ):
+            for i in range(0, len(entries), size):
+                push_message(entries[i : i + size])  # noqa(E203)
 
     def push(self, records):
         """Push all records to SSM.
@@ -150,23 +144,20 @@ class SSMMessenger(caso.messenger.BaseMessenger):
         if not records:
             return
 
-        entries_cloud = []
-        entries_ip = []
-        entries_accelerator = []
-        entries_storage = []
+        # NOTE: the order of the keys must match the arguments of self._push()
+        entries: typing.Dict[type, typing.List] = {
+            caso.record.CloudRecord: [],
+            caso.record.IPRecord: [],
+            caso.record.AcceleratorRecord: [],
+            caso.record.StorageRecord: [],
+        }
         for record in records:
-            if isinstance(record, caso.record.CloudRecord):
-                entries_cloud.append(record.ssm_message())
-            elif isinstance(record, caso.record.IPRecord):
-                entries_ip.append(record.ssm_message())
-            elif isinstance(record, caso.record.AcceleratorRecord):
-                entries_accelerator.append(record.ssm_message())
-            elif isinstance(record, caso.record.StorageRecord):
-                entries_storage.append(record.ssm_message())
-            else:
+            bucket = entries.get(type(record))
+            if bucket is None:
                 raise caso.exception.CasoError("Unexpected record format!")
+            bucket.append(record.ssm_message())
 
-        self._push(entries_cloud, entries_ip, entries_accelerator, entries_storage)
+        self._push(*entries.values())
 
 
 class SSMMessengerV04(SSMMessenger):
