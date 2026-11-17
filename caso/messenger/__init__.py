@@ -152,22 +152,28 @@ class Manager(object):
                         self.messenger_record_types[messenger_name] = list(record_types)
 
     def push_to_all(self, records):
-        """Push records to all the configured messengers."""
-        try:
-            for ext in self.mgr:
-                messenger_name = ext.name
-                record_types = self.messenger_record_types.get(messenger_name)
-                filtered_records = _filter_records(records, record_types)
-                if filtered_records:
-                    ext.obj.push(filtered_records)
-                else:
-                    LOG.debug(
-                        "No records to push to messenger %s "
-                        "after filtering for record types: %s",
-                        messenger_name,
-                        record_types,
-                    )
-        except Exception as e:
-            # Capture exception so that we can continue working
-            LOG.error("Something happeneded when pushing records.")
-            LOG.exception(e)
+        """Push records to all the configured messengers.
+
+        A failure in one messenger is logged and does not prevent the records
+        from being pushed to the remaining messengers.
+        """
+        for ext in self.mgr:
+            messenger_name = ext.name
+            record_types = self.messenger_record_types.get(messenger_name)
+            filtered_records = _filter_records(records, record_types)
+            if not filtered_records:
+                LOG.debug(
+                    "No records to push to messenger %s "
+                    "after filtering for record types: %s",
+                    messenger_name,
+                    record_types,
+                )
+                continue
+            try:
+                ext.obj.push(filtered_records)
+            except Exception:
+                # Capture exception so that we can continue working
+                LOG.exception(
+                    "Something happened when pushing records to messenger %s.",
+                    messenger_name,
+                )

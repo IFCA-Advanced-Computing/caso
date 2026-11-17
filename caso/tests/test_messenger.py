@@ -16,6 +16,8 @@
 
 """Tests for messenger module."""
 
+from unittest import mock
+
 import caso.messenger
 import caso.record
 
@@ -187,3 +189,24 @@ class TestValidRecordTypes:
             set(caso.messenger.RECORD_TYPE_MAP.keys())
             == caso.messenger.VALID_RECORD_TYPES
         )
+
+
+class TestPushToAll:
+    """Test cases for the messenger Manager push_to_all method."""
+
+    def test_failing_messenger_does_not_block_others(self, cloud_record):
+        """A messenger raising an exception must not stop the others."""
+        failing = mock.MagicMock()
+        failing.name = "failing"
+        failing.obj.push.side_effect = Exception("boom")
+        working = mock.MagicMock()
+        working.name = "working"
+
+        manager = caso.messenger.Manager.__new__(caso.messenger.Manager)
+        manager.mgr = [failing, working]
+        manager.messenger_record_types = {}
+
+        manager.push_to_all([cloud_record])
+
+        failing.obj.push.assert_called_once_with([cloud_record])
+        working.obj.push.assert_called_once_with([cloud_record])
