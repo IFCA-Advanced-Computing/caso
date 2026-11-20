@@ -1,5 +1,34 @@
 # Changelog
 
+## [5.2.3](https://github.com/IFCA-Advanced-Computing/caso/compare/v5.2.2...v5.2.3) (2026-11-20)
+
+
+### Bug Fixes
+
+* avoid Bandit false positive in Nova status map ([ec08cab](https://github.com/IFCA-Advanced-Computing/caso/commit/ec08cabd163e0677802fe2d524f3c2cdf483f592))
+* **cinder:** report all attachments and skip volumes created after period ([7174079](https://github.com/IFCA-Advanced-Computing/caso/commit/71740795b9f8021602fe7585338ee5c2e068a193))
+* **extract:** do not map a None project when reading the VO mapping file ([aefab8f](https://github.com/IFCA-Advanced-Computing/caso/commit/aefab8ff67b708976217c7105946f6ce66bbdd40))
+* **logstash:** make the messenger work with the current record objects ([a8af774](https://github.com/IFCA-Advanced-Computing/caso/commit/a8af774f9ec115fb41c99a46b46e14af696027b3))
+* **messenger:** keep pushing to other messengers when one of them fails ([76858b4](https://github.com/IFCA-Advanced-Computing/caso/commit/76858b4566aef048455d469467b9e8ef3adf0fa1))
+* **neutron:** filter floating IPs by project and keep IPv4/IPv6 records ([61b907e](https://github.com/IFCA-Advanced-Computing/caso/commit/61b907e83aa882efc4a601bb5ce94cc4a79f0276))
+* **nova:** do not use an undefined wall time for servers ended in period ([052a67c](https://github.com/IFCA-Advanced-Computing/caso/commit/052a67c02c287fb49de4a0f2a8a84efd07daeef8))
+* **prometheus:** account deleted VMs and query only their running period ([51e2d36](https://github.com/IFCA-Advanced-Computing/caso/commit/51e2d367cae1a6956bd8e0541bce1afc6b028875))
+* **prometheus:** interpolate VM name and UUID in debug message ([378d8d6](https://github.com/IFCA-Advanced-Computing/caso/commit/378d8d638cd4d83c558e2e616e8b617ec2cf75cf))
+* **record:** treat naive datetimes as UTC regardless of the host time zone ([a94340e](https://github.com/IFCA-Advanced-Computing/caso/commit/a94340ea318cbd7a05c807c49b08bb14d2677f3d))
+
+
+### Performance Improvements
+
+* **extract:** import the extractors lazily from the extract packages ([6252cdc](https://github.com/IFCA-Advanced-Computing/caso/commit/6252cdc914a9a61bf95ee2c659eb708e9018a593))
+* **loading:** get plugin names without importing all the plugins ([a24c867](https://github.com/IFCA-Advanced-Computing/caso/commit/a24c867fa148b67c60f70e1495abaf844596a052))
+
+
+### Documentation
+
+* point project URLs to the IFCA-Advanced-Computing organization ([40f487b](https://github.com/IFCA-Advanced-Computing/caso/commit/40f487bc555ce4b3875b19335d80a3c01af316b2))
+* **readme:** load the EU logo from master and fix acknowledgement typo ([a9b3846](https://github.com/IFCA-Advanced-Computing/caso/commit/a9b38465a6a3d2fb6735e15ea87069e1ac568777))
+* **releasenotes:** add notes for the record, extractor and messenger fixes ([319eadc](https://github.com/IFCA-Advanced-Computing/caso/commit/319eadcf3b711d6fb0b9dfdf27491fb75d019da1))
+
 ## [5.2.2](https://github.com/IFCA-Advanced-Computing/caso/compare/v5.2.1...v5.2.2) (2026-07-15)
 
 
