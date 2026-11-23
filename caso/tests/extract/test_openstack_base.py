@@ -46,13 +46,12 @@ def test_keystone_session_is_shared_between_clients(m_get_session):
     """All the service clients must reuse the same Keystone session."""
 
     class Extractor(base.BaseOpenStackExtractor):
-        def __init__(self):
-            self.project = "project"
-
         def extract(self, extract_from, extract_to):
             return []
 
-    extractor = Extractor()
+    # Skip __init__, as it would create the Keystone and service clients.
+    extractor = Extractor.__new__(Extractor)
+    extractor.project = "project"
 
     first = extractor._get_keystone_session()
     second = extractor._get_keystone_session()
