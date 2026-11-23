@@ -16,6 +16,8 @@
 
 """Test for SSM messenger."""
 
+import copy
+
 import pytest
 
 import caso.exception
@@ -41,6 +43,27 @@ def test_weird_record_raises(monkeypatch):
 
         with pytest.raises(caso.exception.CasoError):
             messenger.push([None, "gfaga"])
+
+
+def test_record_subclass_is_pushed(monkeypatch, cloud_record_list):
+    """Test that subclasses of the record classes are accepted."""
+
+    class CustomCloudRecord(type(cloud_record_list[0])):
+        pass
+
+    record = copy.copy(cloud_record_list[0])
+    record.__class__ = CustomCloudRecord
+    pushed = []
+
+    with monkeypatch.context() as m:
+        m.setattr("caso.utils.makedirs", lambda x: None)
+        m.setattr("dirq.QueueSimple.QueueSimple", lambda x: None)
+        messenger = ssm.SSMMessenger()
+
+        m.setattr(messenger, "_push", lambda cloud, *_: pushed.extend(cloud))
+        messenger.push([record])
+
+    assert pushed == [record.ssm_message()]
 
 
 def test_cloud_records_pushed(monkeypatch, cloud_record_list, expected_entries_cloud):

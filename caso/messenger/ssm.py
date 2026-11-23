@@ -152,10 +152,13 @@ class SSMMessenger(caso.messenger.BaseMessenger):
             caso.record.StorageRecord: [],
         }
         for record in records:
-            bucket = entries.get(type(record))
-            if bucket is None:
+            # isinstance, so that subclasses of the record classes are accepted
+            for record_class, bucket in entries.items():
+                if isinstance(record, record_class):
+                    bucket.append(record.ssm_message())
+                    break
+            else:
                 raise caso.exception.CasoError("Unexpected record format!")
-            bucket.append(record.ssm_message())
 
         self._push(*entries.values())
 
