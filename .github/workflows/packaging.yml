@@ -86,8 +86,10 @@ jobs:
 
   build-deb:
     # Do not use actions/setup-python here: the package must be built with
-    # the distribution Python and build dependencies.
-    runs-on: ubuntu-24.04
+    # the distribution Python and build dependencies. Debian 13 is used as it
+    # provides Pydantic 2, which cASO requires (Ubuntu 24.04 only has 1.10).
+    runs-on: ubuntu-latest
+    container: debian:trixie
     needs:
       - test
       - build-sdist
@@ -95,14 +97,15 @@ jobs:
       VERSION: ${{ needs.build-sdist.outputs.version }}
       DEBFULLNAME: Alvaro Lopez Garcia
       DEBEMAIL: aloga@ifca.unican.es
+      DEBIAN_FRONTEND: noninteractive
     steps:
       - name: Get cASO repo
         uses: actions/checkout@v4
 
       - name: Install build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential dpkg-dev debhelper devscripts dh-python \
+          apt-get update
+          apt-get install -y build-essential dpkg-dev debhelper devscripts dh-python \
             python3-all python3-all-dev python3-poetry-core \
             pybuild-plugin-pyproject
 
@@ -126,6 +129,11 @@ jobs:
             dpkg-deb --info "$deb"
             dpkg-deb --contents "$deb"
           done
+
+      - name: Test the package installation
+        run: |
+          apt-get install -y ./dist/python3-caso_*.deb
+          caso-extract --help
 
       - name: Upload DEB packages
         uses: actions/upload-artifact@v4
